@@ -1,0 +1,188 @@
+:root {
+  color-scheme: dark;
+  --bg: #101014;
+  --panel: #191820;
+  --line: #302c3b;
+  --text: #f3f0ff;
+  --muted: #a39bb8;
+  --purple: #a78bfa;
+  --cell: 28px;
+  --depth: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+.shell {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 36px 18px 28px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.brand-title {
+  margin: 0;
+  color: #b69aff;
+  font-family: "Courier New", monospace;
+  font-size: clamp(38px, 8vw, 58px);
+  font-weight: 1000;
+  letter-spacing: .06em;
+  line-height: 1;
+  text-shadow: 3px 3px 0 #6249a6, 6px 6px 0 #34264f;
+  -webkit-text-stroke: .6px #e0d3ff;
+}
+
+.tagline {
+  margin: 18px auto 0;
+  max-width: 420px;
+  color: #c4bdd4;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tagline strong {
+  color: #e1d5ff;
+  font-weight: 650;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.concept {
+  align-self: center;
+  width: 100%;
+  max-width: 240px;
+}
+
+.concept img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 330px;
+  object-fit: contain;
+  border: 1px solid #302b3a;
+  border-radius: 4px;
+  background: #e8e2d9;
+}
+
+.concept p {
+  margin: 12px 0 0;
+  color: #c4bdd4;
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.trainer-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  width: 100%;
+}
+
+.play-panel {
+  width: 100%;
+}
+
+.controls {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: minmax(130px, 190px) minmax(0, 1fr);
+    gap: 14px;
+  }
+  .concept img {
+    max-height: 280px;
+  }
+}
+
+@media (max-width: 560px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .concept {
+    max-width: 220px;
+    margin: 0 auto;
+  }
+  .concept p {
+    text-align: center;
+  }
+  .trainer-main {
+    width: 100%;
+  }
+  .controls {
+    max-width: 480px;
+  }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  pointer-events: none;
+  background: #211d2b;
+  border: 1px solid #51446e;
+  color: #f2eaff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: .2s;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.hidden-settings {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  :root {
+    --cell: 25px;
+  }
+  .shell {
+    padding: 28px 10px 20px;
+  }
+  .controls {
+    grid-template-columns: 1fr;
+  }
+  .key-setting {
+    grid-column: auto;
+  }
+  .board-wrap {
+    padding: 6px;
+  }
+  .brand-title {
+    font-size: 42px;
+  }
+  .tagline {
+    font-size: 13px;
+    margin-top: 15px;
+  }
+}

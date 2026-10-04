@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>180180 — Half-turn trainer</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/trainer.css">
+</head>
+<body>
+<div class="shell">
+  <header>
+    <a href="index.html" class="back-link">← Back</a>
+    <h1 class="brand-title">180180</h1>
+    <p class="tagline">A Tetris trainer made to bridge the visual gap from <strong>2D rotation to 3D.</strong></p>
+  </header>
+  <main class="layout">
+    <aside class="concept" aria-label="Finesse concept sketch">
+      <img src="assets/180180_finesse_sketch.jpg" alt="Hand-drawn sketch comparing a 2D rotation with a 3D flip">
+      <p>finesse requires the brain to remap its visual process</p>
+    </aside>
+    <div class="trainer-main">
+    <section class="play-panel" aria-label="Tetris practice">
+      <div class="board-wrap"><div class="board" id="board" aria-label="Tetris practice board"></div></div>
+    </section>
+    <section class="controls" aria-label="Trainer settings">
+      <div class="control">
+        <div class="range-row"><label for="depth">3D depth</label><output id="depthOut">55%</output></div>
+        <input class="range" id="depth" type="range" min="0" max="100" value="55">
+      </div>
+      <div class="control">
+        <div class="range-row"><label for="softScale">Soft drop</label><output id="softScaleOut">1×</output></div>
+        <input class="range" id="softScale" type="range" min="0" max="4" step="1" value="0">
+        <p class="hint">1× · 2× · 5× · 10× · ∞</p>
+      </div>
+      <div class="key-setting"><span>180° key</span><div class="bind-list" id="bindings"></div></div>
+    </section>
+    </div>
+  </main>
+  <div class="hidden-settings" aria-hidden="true">
+    <input id="das" type="range" value="127"><output id="dasOut">127 ms</output>
+    <input id="arr" type="range" value="0"><output id="arrOut">0 ms</output>
+    <button id="reset" type="button">Reset</button>
+    <span id="turns">0</span><span id="placed">0</span><span id="orient">↑</span><span id="orientName">Spawn</span>
+    <span id="moveKeys"></span><span id="dropKeys"></span><span id="quarterKeys"></span><span id="halfKey"></span>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

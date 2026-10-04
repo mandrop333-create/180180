@@ -1,0 +1,482 @@
+/* Home page styles */
+
+.home-container {
+  min-height: 100vh;
+  position: relative;
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+/* FLAWLESS graffiti */
+.flawless-graffiti {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.graffiti-svg {
+  width: 200px;
+  height: 60px;
+}
+
+.graffiti-text {
+  font-family: 'Courier New', monospace;
+  font-size: 42px;
+  font-weight: 900;
+  fill: #e8dcff;
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+}
+
+.graffiti-text-2 {
+  font-family: 'Courier New', monospace;
+  font-size: 42px;
+  font-weight: 900;
+  fill: #c4a7ff;
+  letter-spacing: 0.15em;
+  opacity: 0.4;
+}
+
+.drip {
+  fill: #d7c0ff;
+  opacity: 0.5;
+}
+
+/* Header */
+.home-header {
+  text-align: center;
+  padding: 60px 20px 40px;
+  position: relative;
+}
+
+.home-title {
+  margin: 0;
+  color: #b69aff;
+  font-family: "Courier New", monospace;
+  font-size: clamp(48px, 10vw, 72px);
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-shadow: 4px 4px 0 #6249a6, 8px 8px 0 #34264f;
+  -webkit-text-stroke: 0.8px #e0d3ff;
+  position: relative;
+}
+
+.home-title::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -15px;
+  right: -15px;
+  bottom: -10px;
+  background: linear-gradient(135deg, #a78bfa22 0%, transparent 50%);
+  z-index: -1;
+  transform: rotate(-2deg);
+}
+
+.home-tagline {
+  margin: 20px auto 0;
+  max-width: 500px;
+  color: #c4bdd4;
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Decorative elements */
+.decoration {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.decoration-1 {
+  top: 120px;
+  left: 5%;
+}
+
+.decoration-2 {
+  top: 200px;
+  right: 8%;
+}
+
+.decoration-3 {
+  bottom: 100px;
+  left: 10%;
+}
+
+.deco-svg {
+  width: 100px;
+  height: 100px;
+}
+
+.deco-line {
+  fill: none;
+  stroke: #a78bfa;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.deco-circle {
+  fill: none;
+  stroke: #c4a7ff;
+  stroke-width: 2;
+}
+
+.deco-shape {
+  fill: #a78bfa33;
+  stroke: #c4a7ff;
+  stroke-width: 1.5;
+}
+
+.deco-rect {
+  fill: #a78bfa22;
+  stroke: #c4a7ff;
+  stroke-width: 1.5;
+}
+
+.deco-triangle {
+  fill: #c4a7ff33;
+  stroke: #c4a7ff;
+  stroke-width: 1.5;
+}
+
+.deco-wave {
+  fill: none;
+  stroke: #a78bfa;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.deco-dot {
+  fill: #c4a7ff;
+}
+
+/* Main layout */
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  gap: 50px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 40px 80px;
+  align-items: start;
+  min-height: calc(100vh - 200px);
+}
+
+/* Bio section */
+.home-bio {
+  position: relative;
+}
+
+.bio-content {
+  background: linear-gradient(145deg, #191820 0%, #15141b 100%);
+  border: 1px solid #302c3b;
+  border-radius: 8px;
+  padding: 32px 28px;
+  position: relative;
+}
+
+.bio-content::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(135deg, #a78bfa44, #6249a644);
+  border-radius: 10px;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.bio-title {
+  margin: 0 0 20px;
+  color: #e1d5ff;
+  font-family: "Courier New", monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+
+.bio-text {
+  margin: 0 0 16px;
+  color: #c4bdd4;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.bio-divider {
+  height: 1px;
+  background: linear-gradient(90deg, #a78bfa66, transparent);
+  margin: 20px 0;
+}
+
+.bio-small {
+  margin: 0;
+  color: #a39bb8;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Mode cards section */
+.home-modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  padding: 20px 0;
+}
+
+.mode-card {
+  background: linear-gradient(145deg, #191820 0%, #15141b 100%);
+  border: 2px solid #302c3b;
+  border-radius: 16px;
+  padding: 32px 24px 24px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 0.8, 0.25, 1);
+  overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, var(--mode-glow) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.mode-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--mode-glow);
+  opacity: 0.6;
+  box-shadow: 0 0 15px var(--mode-glow);
+}
+
+.mode-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--mode-glow);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 20px var(--mode-glow33);
+}
+
+.mode-card:hover::before {
+  opacity: 0.15;
+}
+
+.mode-card:hover::after {
+  opacity: 1;
+  box-shadow: 0 0 25px var(--mode-glow);
+}
+
+.mode-number {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-family: "Courier New", monospace;
+  font-size: 56px;
+  font-weight: 1000;
+  color: var(--mode-glow);
+  opacity: 0.25;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 10px var(--mode-glow);
+}
+
+.mode-card:hover .mode-number {
+  opacity: 0.5;
+  text-shadow: 0 0 30px var(--mode-glow);
+}
+
+.mode-name {
+  margin: 0 0 12px;
+  color: #e1d5ff;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+.mode-description {
+  margin: 0;
+  color: #a39bb8;
+  font-size: 13px;
+  line-height: 1.5;
+  flex-grow: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.mode-preview {
+  width: 100%;
+  height: 60px;
+  margin-top: 16px;
+  background: #111016;
+  border: 1px solid #211e2a;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0.7;
+}
+
+.mode-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 4px,
+    #211e2a 4px,
+    #211e2a 5px
+  );
+  opacity: 0.3;
+}
+
+/* Mode-specific glow colors */
+.mode-card[data-mode="1"] {
+  --mode-glow: #a78bfa;
+}
+
+.mode-card[data-mode="2"] {
+  --mode-glow: #818cf8;
+}
+
+.mode-card[data-mode="3"] {
+  --mode-glow: #67e8f9;
+}
+
+.mode-card[data-mode="4"] {
+  --mode-glow: #f472b6;
+}
+
+.mode-card[data-mode="5"] {
+  --mode-glow: #fb923c;
+}
+
+.mode-card[data-mode="6"] {
+  --mode-glow: #4ade80;
+}
+
+/* Trainer link */
+.trainer-link {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.trainer-button {
+  display: inline-block;
+  padding: 14px 32px;
+  background: linear-gradient(145deg, #a78bfa, #8b5cf6);
+  color: #f3f0ff;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  border-radius: 6px;
+  border: 1px solid #c4a7ff;
+  box-shadow: 0 4px 0 #6249a6, 0 6px 20px rgba(167, 139, 250, 0.3);
+  transition: all 0.2s;
+}
+
+.trainer-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #6249a6, 0 8px 25px rgba(167, 139, 250, 0.4);
+}
+
+.trainer-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #6249a6, 0 4px 15px rgba(167, 139, 250, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .home-modes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 20px 24px 40px;
+  }
+  
+  .home-modes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .flawless-graffiti {
+    top: 15px;
+    right: 20px;
+  }
+  
+  .graffiti-svg {
+    width: 150px;
+    height: 45px;
+  }
+  
+  .graffiti-text,
+  .graffiti-text-2 {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-modes {
+    grid-template-columns: 1fr;
+  }
+  
+  .mode-card {
+    min-height: 160px;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-header {
+    padding: 40px 16px 30px;
+  }
+  
+  .home-title {
+    font-size: 36px;
+  }
+  
+  .decoration {
+    opacity: 0.2;
+  }
+  
+  .decoration-1 {
+    top: 100px;
+    left: 3%;
+  }
+  
+  .decoration-2 {
+    top: 150px;
+    right: 5%;
+  }
+  
+  .bio-content {
+    padding: 24px 20px;
+  }
+  
+  .mode-card {
+    padding: 24px 20px;
+  }
+}
