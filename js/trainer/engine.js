@@ -217,12 +217,15 @@ export class Trainer {
     if (this.gameOver || !this.piece) return;
 
     const lockedPiece={...this.piece};
+    const boardBeforeLock=this.board.map(row=>[...row]);
 
     for (const [cx,cy] of this.cellsFor(lockedPiece.type,lockedPiece.o)) {
       const x=lockedPiece.x+cx;
       const y=lockedPiece.y+cy;
       if (y>=0 && y<this.H && x>=0 && x<this.W) this.board[y][x]=1;
     }
+
+    const boardAfterLock=this.board.map(row=>[...row]);
 
     let cleared=0;
     const remaining=this.board.filter(row=>{
@@ -246,9 +249,15 @@ export class Trainer {
       this.stats.score += points * level;
     }
 
+    const boardAfterClear=this.board.map(row=>[...row]);
+
     this.placed++;
     this.stats.piecesPlaced++;
-    this.hook('place',lockedPiece,cleared);
+    this.hook('place',lockedPiece,cleared,{
+      beforeLock: boardBeforeLock,
+      afterLock: boardAfterLock,
+      afterClear: boardAfterClear
+    });
     this.options.onPlace(this.placed);
 
     // Board persistence is the normal core behavior. A mode may explicitly
