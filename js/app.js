@@ -75,6 +75,7 @@ import { getSettings } from './settings.js';
   window.addEventListener('blur',()=>trainer.handleBlur());
 
   window.trainer=trainer;
+  window.dispatchEvent(new CustomEvent('trainerready',{detail:trainer}));
 
   function tick(t){trainer.tick(t);requestAnimationFrame(tick);}
   requestAnimationFrame(tick);
