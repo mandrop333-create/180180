@@ -28,7 +28,21 @@
   border-radius: 6px;
   display: flex;
   align-items: stretch;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
+}
+
+.bonus-break-mark {
+  position: absolute;
+  inset: -8px 0 auto auto;
+  font: 900 18px/1 ui-monospace, monospace;
+  color: #f2dcff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bonus-meter.breaking .bonus-break-mark {
+  animation: bonusBreakMark 300ms ease both;
 }
 
 .bonus-fill {
@@ -49,6 +63,12 @@
   50% { transform: translateX(3px); opacity: .45; }
   75% { transform: translateX(-2px); opacity: .7; }
   100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes bonusBreakMark {
+  0% { transform: scale(.6) rotate(-12deg); opacity: 0; }
+  35% { transform: scale(1.15) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 0; }
 }
 
 .back-link {
