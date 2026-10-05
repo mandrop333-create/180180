@@ -13,7 +13,7 @@ import { getSettings } from './settings.js';
   const settings = getSettings();
   const titleEl = document.querySelector('.brand-title');
   const taglineEl = document.querySelector('.tagline');
-  if (titleEl) titleEl.textContent = `180180 — ${mode.name}`;
+  if (titleEl) titleEl.textContent = mode.name;
   if (taglineEl) taglineEl.textContent = mode.description;
 
   const trainer = new Trainer(boardEl, {
