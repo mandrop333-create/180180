@@ -12,6 +12,8 @@ export function createBonusState() {
     successful180s: 0,
     substitutionCount: 0,
     rotationHistory: null,
+    halfTurnsThisPiece: 0,
+    bonusBrokenThisPiece: false,
     currentPieceKey: null,
     lastTrainingEventAt: 0,
     bonusBreakToken: 0
@@ -30,8 +32,16 @@ function clearRotationHistory(state) {
   state.rotationHistory = null;
 }
 
+function breakBonus(state) {
+  setBonus(state, 0);
+  state.bonusBrokenThisPiece = true;
+  state.bonusBreakToken++;
+}
+
 export function onSpawn(state, piece) {
   state.currentPieceKey = piece.type + ':' + piece.x + ':' + piece.y;
+  state.halfTurnsThisPiece = 0;
+  state.bonusBrokenThisPiece = false;
   clearRotationHistory(state);
 }
 
@@ -47,10 +57,22 @@ export function onRotate(state, { delta, now }) {
   const isHalfTurn = delta === 2 || delta === -2;
 
   if (isHalfTurn) {
-    state.successful180s++;
-    setBonus(state, state.bonus + BONUS_PER_180);
     clearRotationHistory(state);
+    state.halfTurnsThisPiece++;
     state.lastTrainingEventAt = now;
+
+    // Three 180s on one piece means the player has over-rotated and then
+    // used another 180 to correct it. That is not a clean 180 and breaks
+    // the accumulated bonus so repeated half-turns cannot be spammed.
+    if (state.halfTurnsThisPiece >= 3) {
+      breakBonus(state);
+      return { type: 'over-rotation-break', bonus: state.bonus };
+    }
+
+    state.successful180s++;
+    if (!state.bonusBrokenThisPiece) {
+      setBonus(state, state.bonus + BONUS_PER_180);
+    }
     return { type: 'successful-180', bonus: state.bonus };
   }
 
@@ -72,10 +94,9 @@ export function onRotate(state, { delta, now }) {
     now - previous.time <= SUBSTITUTION_WINDOW_MS
   ) {
     state.substitutionCount++;
-    setBonus(state, 0);
+    breakBonus(state);
     clearRotationHistory(state);
     state.lastTrainingEventAt = now;
-    state.bonusBreakToken++;
     return { type: 'substitution-break', bonus: state.bonus };
   }
 
