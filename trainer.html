@@ -21,7 +21,13 @@
     </aside>
     <div class="trainer-main">
     <section class="play-panel" aria-label="Tetris practice">
-      <div class="board-wrap"><div class="board" id="board" aria-label="Tetris practice board"></div></div>
+      <div class="playfield-stage">
+        <div class="bonus-meter" id="bonusMeter" aria-label="180 Flip bonus">
+          <div class="bonus-label">BONUS</div>
+          <div class="bonus-track"><div class="bonus-fill" id="bonusFill"></div></div>
+        </div>
+        <div class="board-wrap"><div class="board" id="board" aria-label="Tetris practice board"></div></div>
+      </div>
     </section>
     <section class="controls" aria-label="Trainer settings">
       <div class="control">
