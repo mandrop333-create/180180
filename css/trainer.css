@@ -50,7 +50,7 @@
   height: 100%;
   border-radius: 4px;
   background: linear-gradient(180deg, #c8c1ff, #8d7fff);
-  transition: height 160ms ease;
+  transition: width 160ms ease;
 }
 
 .bonus-meter.breaking .bonus-fill {
