@@ -3,6 +3,7 @@
 
 import { Trainer } from './trainer/core-engine.js';
 import { getModeById } from './modes/modes.js';
+import { mountSettings } from './settings.js';
 
 (() => {
   const boardEl = document.getElementById('board');
@@ -28,11 +29,11 @@ import { getModeById } from './modes/modes.js';
 
   const trainer = new Trainer(boardEl, {
     mode,
-    onTurn: (turns) => {
+    onTurn: turns => {
       const el = document.getElementById('turns');
       if (el) el.textContent = turns;
     },
-    onPlace: (placed) => {
+    onPlace: placed => {
       const el = document.getElementById('placed');
       if (el) el.textContent = placed;
     },
@@ -54,44 +55,10 @@ import { getModeById } from './modes/modes.js';
     toastTimer = setTimeout(() => t.classList.remove('show'), 1500);
   }
   trainer.setToastCallback(say);
-
-  const depthInput = document.getElementById('depth');
-  const depthOutput = document.getElementById('depthOut');
-  if (depthInput && depthOutput) {
-    depthInput.addEventListener('input', () => {
-      depthOutput.textContent = depthInput.value + '%';
-      trainer.setDepth(Number(depthInput.value) / 100);
-    });
-  }
-
-  const softScaleInput = document.getElementById('softScale');
-  const softScaleOutput = document.getElementById('softScaleOut');
-  if (softScaleInput && softScaleOutput) {
-    softScaleInput.addEventListener('input', () => {
-      trainer.setSoftScale(Number(softScaleInput.value));
-      const f = trainer.getSoftFactor();
-      softScaleOutput.textContent = f === Infinity ? '∞' : f + '×';
-    });
-  }
+  mountSettings({ trainer });
 
   const resetBtn = document.getElementById('reset');
   if (resetBtn) resetBtn.onclick = () => trainer.reset();
-
-  const dasInput = document.getElementById('das');
-  const dasOutput = document.getElementById('dasOut');
-  if (dasInput && dasOutput) {
-    dasInput.addEventListener('input', () => {
-      dasOutput.textContent = dasInput.value + ' ms';
-    });
-  }
-
-  const arrInput = document.getElementById('arr');
-  const arrOutput = document.getElementById('arrOut');
-  if (arrInput && arrOutput) {
-    arrInput.addEventListener('input', () => {
-      arrOutput.textContent = arrInput.value + ' ms';
-    });
-  }
 
   let lastBonusBreakToken = 0;
 
@@ -139,8 +106,8 @@ import { getModeById } from './modes/modes.js';
   };
 
   trainer.updateBindUI();
-  window.addEventListener('keydown', (e) => trainer.handleKeydown(e), { passive: false });
-  window.addEventListener('keyup', (e) => trainer.handleKeyup(e));
+  window.addEventListener('keydown', e => trainer.handleKeydown(e), { passive: false });
+  window.addEventListener('keyup', e => trainer.handleKeyup(e));
   window.addEventListener('blur', () => trainer.handleBlur());
 
   function tick(t) {
