@@ -137,7 +137,7 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
   });
 }
 
-export function startHalfTurn(old, boardEl, anim, depth, cellsFor, NS, onRender) {
+export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onRender) {
   if (anim?.layer) anim.layer.remove();
 
   const shape = cellsFor(old.type, old.o);
@@ -158,6 +158,10 @@ export function startHalfTurn(old, boardEl, anim, depth, cellsFor, NS, onRender)
   layer.style.height = height + 'px';
   layer.style.setProperty('--turn-depth', depthPx + 'px');
   layer.style.setProperty('--turn-perspective', (650 - depth * 250) + 'px');
+  const shiftX = (next.x - old.x) * CELL_PITCH;
+  const shiftY = (next.y - old.y) * CELL_PITCH;
+  layer.style.setProperty('--turn-shift-x', shiftX + 'px');
+  layer.style.setProperty('--turn-shift-y', shiftY + 'px');
   layer.style.setProperty('--turn-duration', '420ms');
 
   const scene = document.createElement('div');
