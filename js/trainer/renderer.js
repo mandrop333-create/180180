@@ -145,6 +145,8 @@ export function startHalfTurn(animation, boardEl, cellsFor, NS, onRender) {
   const old = animation.from;
   const next = animation.to;
   const BOX_SIZE = 4 * CELL_PITCH;
+  // Keep the flip visually centered and controlled: the piece should read as a
+  // flat object turning through 180°, not as a wide sideways tumble.
   const oldShape = cellsFor(old.type, old.o);
   const nextShape = cellsFor(next.type, next.o);
 
@@ -166,6 +168,7 @@ export function startHalfTurn(animation, boardEl, cellsFor, NS, onRender) {
   scene.style.width = BOX_SIZE + 'px';
   scene.style.height = BOX_SIZE + 'px';
   scene.style.transformOrigin = '50% ' + pivotPx + 'px';
+  scene.style.setProperty('--turn-perspective', '1000px');
 
   const makeFace = (className, shape, gradient, transform) => {
     const face = document.createElement('div');
