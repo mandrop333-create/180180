@@ -46,7 +46,6 @@ import { getSettings } from './settings.js';
     toastTimer=setTimeout(()=>toast.classList.remove('show'),1500);
   };
   trainer.say=showToast;
-  trainer.hook('gameOver',()=>showToast('Game over — press Restart to try again.'));
 
   document.getElementById('reset')?.addEventListener('click',()=>trainer.reset());
 
