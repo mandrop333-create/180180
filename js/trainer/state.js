@@ -1,14 +1,14 @@
-// Core game constants
+// Core game constants and shared input configuration.
+
 export const W = 10;
 export const H = 20;
 export const CELL = 28;
+export const CELL_GAP = 2;
+export const CELL_PITCH = CELL + CELL_GAP;
 export const GRAVITY_MS_PER_ROW = 800;
 export const LOCK_DELAY_MS = 500;
-
-// SVG namespace
 export const NS = 'http://www.w3.org/2000/svg';
 
-// Key name mappings
 export const keyNames = {
   ArrowLeft: '←',
   ArrowRight: '→',
@@ -22,7 +22,6 @@ export const keyNames = {
   Escape: 'Esc'
 };
 
-// Default key bindings
 export const defaultBinds = {
   left: 'ArrowLeft',
   right: 'ArrowRight',
@@ -33,7 +32,6 @@ export const defaultBinds = {
   half: 'KeyC'
 };
 
-// Binding labels
 export const labels = {
   left: 'Move left',
   right: 'Move right',
@@ -44,5 +42,4 @@ export const labels = {
   half: 'Rotate 180°'
 };
 
-// Soft drop speed multipliers
 export const softFactors = [1, 2, 5, 10, Infinity];
