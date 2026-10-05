@@ -14,10 +14,11 @@ export function renderModeCards(container, onModeSelect) {
   container.innerHTML = '';
   
   modes.forEach(mode => {
-    const card = document.createElement('div');
+    const card = document.createElement(isAvailable ? 'a' : 'div');
     const isAvailable = mode.number === 1;
     
     card.className = `mode-card${isAvailable ? '' : ' mode-card-locked'}`;
+    if (isAvailable) card.href = `trainer.html?mode=${mode.id}`;
     card.dataset.mode = mode.number;
     card.dataset.modeId = mode.id;
     
@@ -35,7 +36,7 @@ export function renderModeCards(container, onModeSelect) {
       `;
     }
     
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (event) => {
       if (!isAvailable) {
         card.classList.remove('mode-card-shake');
         void card.offsetWidth;
@@ -44,6 +45,7 @@ export function renderModeCards(container, onModeSelect) {
       }
       
       if (onModeSelect) {
+        event.preventDefault();
         onModeSelect(mode);
       }
     });
