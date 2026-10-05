@@ -26,7 +26,6 @@ export function renderModeCards(container, onModeSelect) {
         <span class="mode-number">${mode.number}</span>
         <h3 class="mode-name">${mode.name}</h3>
         <p class="mode-description">${mode.description}</p>
-        <div class="mode-preview" aria-hidden="true"></div>
       `;
     } else {
       card.setAttribute('aria-label', `Mode ${mode.number} coming soon`);
