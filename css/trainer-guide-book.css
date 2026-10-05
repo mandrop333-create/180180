@@ -44,7 +44,9 @@
 .trainer-guide-cover-small { display:block; margin-top:7px; font-size:8px; letter-spacing:.12em; opacity:.75; text-transform:uppercase; }
 .trainer-guide-cover-title { display:block; margin-top:8px; font-size:22px; line-height:.85; font-weight:1000; }
 .trainer-guide-cover-subtitle { display:block; margin-top:4px; font-size:10px; font-weight:900; letter-spacing:.12em; }
-.trainer-guide-cover-star { display:block; margin-top:7px; font-size:10px; opacity:.8; }
+.trainer-guide-cover-sigil{position:relative;display:block;width:15px;height:15px;margin:7px auto 0;opacity:.72;transform:rotate(-18deg)}
+.trainer-guide-cover-sigil::before{content:"";position:absolute;inset:2px 4px 2px 1px;border:1px solid #e7d7ff;border-right-color:transparent;border-radius:58% 42% 48% 52%;transform:rotate(-28deg);box-shadow:0 0 5px #c7a9ff55}
+.trainer-guide-cover-sigil::after{content:"";position:absolute;width:4px;height:4px;right:0;top:1px;background:#e7d7ff;transform:rotate(45deg);box-shadow:0 0 5px #c7a9ff88}
 
 /*
  * Open state: the book is anchored to the same spot as the closed cover.
