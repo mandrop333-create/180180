@@ -119,13 +119,17 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
     }
   }
 
+  // The ghost is only a landing preview. It must never paint over a locked
+  // cell; doing that makes a freshly hard-dropped piece look like a shadow.
   if (piece && !anim?.layer) {
     let gy = piece.y;
     while (!collides(piece.x, gy + 1, piece.o, piece.type)) gy++;
     for (const [cx, cy] of cellsFor(piece.type, piece.o)) {
       const x = piece.x + cx;
       const y = gy + cy;
-      if (y >= 0 && y < H && x >= 0 && x < W) all[y * W + x] = 'ghost';
+      if (y >= 0 && y < H && x >= 0 && x < W && !all[y * W + x]) {
+        all[y * W + x] = 'ghost';
+      }
     }
   }
 
