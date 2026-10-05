@@ -1,12 +1,17 @@
 import { mountSettings } from './settings.js';
 
-// This controller is intentionally mounted outside the gameplay bootstrap.
-// If gameplay changes, the settings button must remain independently operable.
+// The trainer page owns the settings UI, but mounting is kept independent from
+// gameplay initialization so the button cannot become inert because of script timing.
 function mount(){
-  const trainer=window.trainer;
+  const trainer=window.trainer||null;
   const api=mountSettings({trainer});
   if(api) window.trainerSettings=api;
 }
 
-if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount,{once:true});
-else mount();
+function mountWhenReady(){
+  if(window.trainer){mount();return;}
+  window.addEventListener('trainerready',mount,{once:true});
+}
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountWhenReady,{once:true});
+else mountWhenReady();
