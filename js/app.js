@@ -93,6 +93,30 @@ import { getModeById } from './modes/modes.js';
     });
   }
 
+  let lastBonusBreakToken = 0;
+
+  function updateBonus() {
+    const meter = document.getElementById('bonusMeter');
+    const fill = document.getElementById('bonusFill');
+    if (!meter || !fill) return;
+
+    const isMode01 = mode.id === 'mode-01';
+    meter.hidden = !isMode01;
+    if (!isMode01) return;
+
+    const bonus = Number(trainer.session?.bonus ?? 0);
+    fill.style.height = Math.max(0, Math.min(100, bonus)) + '%';
+
+    const token = Number(trainer.session?.bonusBreakToken ?? 0);
+    if (token !== lastBonusBreakToken) {
+      lastBonusBreakToken = token;
+      meter.classList.remove('breaking');
+      void meter.offsetWidth;
+      meter.classList.add('breaking');
+      setTimeout(() => meter.classList.remove('breaking'), 300);
+    }
+  }
+
   function updateOrientation() {
     const orientEl = document.getElementById('orient');
     const orientNameEl = document.getElementById('orientName');
@@ -109,6 +133,7 @@ import { getModeById } from './modes/modes.js';
   trainer.render = function() {
     originalRender();
     updateOrientation();
+    updateBonus();
   };
 
   trainer.updateBindUI();
