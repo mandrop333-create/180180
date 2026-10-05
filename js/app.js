@@ -1,7 +1,7 @@
 // Application entry point. The trainer owns gameplay; settings.js owns player preferences.
 import { Trainer } from './trainer/core-engine.js';
 import { getModeById } from './modes/modes.js';
-import { getSettings, saveSettings, mountSettings } from './settings.js';
+import { getSettings, mountSettings } from './settings.js';
 
 (() => {
   const boardEl = document.getElementById('board');
@@ -30,19 +30,26 @@ import { getSettings, saveSettings, mountSettings } from './settings.js';
     }
   });
 
-  // settings.js is the single source of truth for depth, soft drop, DAS, ARR and binds.
   trainer.depth=settings.depth;
   trainer.softScale=settings.softScale;
   trainer.rules.das=settings.das;
   trainer.rules.arr=settings.arr;
   trainer.binds={...trainer.binds,...settings.binds};
 
+  // The rebuilt core no longer exposes the old setToastCallback API.
+  // Give settings the small public notification hook it actually uses.
   let toastTimer;
-  trainer.setToastCallback(s => {
-    const t=document.getElementById('toast'); if(!t)return;
-    t.textContent=s; t.classList.add('show'); clearTimeout(toastTimer);
-    toastTimer=setTimeout(()=>t.classList.remove('show'),1500);
-  });
+  const showToast = message => {
+    const toast=document.getElementById('toast');
+    if(!toast)return;
+    toast.textContent=message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>toast.classList.remove('show'),1500);
+  };
+  trainer.say=showToast;
+
+  // Mount settings only after the trainer exists so the in-game panel gets the live trainer instance.
   mountSettings({ trainer });
 
   document.getElementById('reset')?.addEventListener('click',()=>trainer.reset());
@@ -68,7 +75,6 @@ import { getSettings, saveSettings, mountSettings } from './settings.js';
   const originalRender=trainer.render.bind(trainer);
   trainer.render=function(){originalRender();updateOrientation();updateBonus();};
 
-  // The engine remains the only input dispatcher. Settings captures keybinds only while rebinding.
   window.addEventListener('keydown',e=>trainer.handleKeydown(e),{passive:false});
   window.addEventListener('keyup',e=>trainer.handleKeyup(e));
   window.addEventListener('blur',()=>trainer.handleBlur());
