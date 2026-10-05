@@ -58,7 +58,8 @@ export class Trainer {
       linesCleared: 0,
       rotations: 0,
       hardDropRows: 0,
-      softDropRows: 0
+      softDropRows: 0,
+      score: 0
     };
     this.gameOver = false;
 
@@ -145,7 +146,10 @@ export class Trainer {
     const previous={...this.piece};
     const moved=move(this.piece,dx,dy,this.board,this.W,this.H,this.cellsFor);
     if (moved) {
-      if (countSoftDrop && dy>0) this.stats.softDropRows += dy;
+      if (countSoftDrop && dy>0) {
+        this.stats.softDropRows += dy;
+        this.stats.score += dy * (this.rules.scoring?.softDropPerRow ?? 0);
+      }
       this.hook('move',previous,{...this.piece},{dx,dy});
     }
     return moved;
@@ -202,7 +206,9 @@ export class Trainer {
     if (this.gameOver || !this.piece) return;
     const startY=this.piece.y;
     while (this.movePiece(0,1)) {}
-    this.stats.hardDropRows += this.piece.y-startY;
+    const rows=this.piece.y-startY;
+    this.stats.hardDropRows += rows;
+    this.stats.score += rows * (this.rules.scoring?.hardDropPerRow ?? 0);
     this.hook('hardDrop',startY,this.piece.y);
     this.lockPiece();
   }
@@ -230,6 +236,14 @@ export class Trainer {
       this.board=remaining;
       this.lines += cleared;
       this.stats.linesCleared += cleared;
+      const level=1 + Math.floor(this.lines / 10);
+      const points = {
+        1: this.rules.scoring?.single ?? 0,
+        2: this.rules.scoring?.double ?? 0,
+        3: this.rules.scoring?.triple ?? 0,
+        4: this.rules.scoring?.tetris ?? 0
+      }[cleared] ?? 0;
+      this.stats.score += points * level;
     }
 
     this.placed++;
@@ -437,7 +451,8 @@ export class Trainer {
       linesCleared:0,
       rotations:0,
       hardDropRows:0,
-      softDropRows:0
+      softDropRows:0,
+      score:0
     };
     this.softAcc=0;
     this.gravityAcc=0;
