@@ -1,17 +1,7 @@
 .settings-gear {
-  position: fixed;
-  top: 82px;
-  right: 34px;
-  z-index: 110;
-  width: 54px;
-  height: 54px;
-  border: 1px solid #51446e;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #34294a, #17151d 70%);
-  color: #d9caff;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
+  position: fixed; top: 82px; right: 34px; z-index: 110; width: 54px; height: 54px;
+  border: 1px solid #51446e; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #34294a, #17151d 70%);
+  color: #d9caff; display: grid; place-items: center; cursor: pointer;
   box-shadow: 0 5px 18px rgba(0,0,0,.35), inset 0 0 0 3px #211d2b;
   transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
@@ -19,6 +9,8 @@
 .settings-gear svg { width: 30px; height: 30px; display: block; }
 .trainer-flawless { position: fixed; top: 12px; right: 26px; z-index: 105; pointer-events: none; }
 .trainer-flawless .graffiti-svg { width: 250px; height: 50px; display: block; overflow: visible; }
+.trainer-flawless .graffiti-text { font-family: 'Courier New', monospace; font-size: 42px; font-weight: 900; fill: #e8dcff; letter-spacing: .15em; opacity: .7; }
+.trainer-flawless .graffiti-text-2 { font-family: 'Courier New', monospace; font-size: 42px; font-weight: 900; fill: #c4a7ff; letter-spacing: .15em; opacity: .4; }
 .trainer-settings-gear { top: 64px; right: 28px; }
 .settings-panel[hidden] { display: none; }
 .settings-panel { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 20px; }
@@ -52,6 +44,7 @@
   .settings-gear svg { width: 25px; height: 25px; }
   .trainer-flawless { top: 8px; right: 10px; }
   .trainer-flawless .graffiti-svg { width: 190px; height: 42px; }
+  .trainer-flawless .graffiti-text, .trainer-flawless .graffiti-text-2 { font-size: 34px; }
   .trainer-settings-gear { top: 54px; right: 10px; }
   .settings-card { padding: 18px; border-radius: 11px; }
 }
