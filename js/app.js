@@ -1,5 +1,5 @@
-// Main application entry point
-// Initializes the trainer and handles UI events
+// Application entry point.
+// The page selects a mini-game definition; Trainer remains the shared runtime.
 
 import { Trainer } from './trainer/engine.js';
 import { getModeById } from './modes/modes.js';
@@ -10,23 +10,24 @@ import { getModeById } from './modes/modes.js';
     console.error('Board element not found');
     return;
   }
-  
-  // Get mode from URL parameter
+
   const urlParams = new URLSearchParams(window.location.search);
-  const modeId = urlParams.get('mode');
-  const mode = modeId ? getModeById(modeId) : null;
-  
-  // Update header if mode is selected
-  if (mode) {
-    const titleEl = document.querySelector('.brand-title');
-    const taglineEl = document.querySelector('.tagline');
-    if (titleEl) titleEl.textContent = `180180 — ${mode.name}`;
-    if (taglineEl) taglineEl.textContent = mode.description;
-    console.log('Training mode:', mode.name, mode.id);
+  const modeId = urlParams.get('mode') || 'mode-01';
+  const mode = getModeById(modeId);
+
+  if (!mode) {
+    console.error('Unknown training mode:', modeId);
+    window.location.href = 'index.html';
+    return;
   }
-  
-  // Create trainer instance
+
+  const titleEl = document.querySelector('.brand-title');
+  const taglineEl = document.querySelector('.tagline');
+  if (titleEl) titleEl.textContent = `180180 — ${mode.name}`;
+  if (taglineEl) taglineEl.textContent = mode.description;
+
   const trainer = new Trainer(boardEl, {
+    mode,
     onTurn: (turns) => {
       const el = document.getElementById('turns');
       if (el) el.textContent = turns;
@@ -42,14 +43,7 @@ import { getModeById } from './modes/modes.js';
       if (placedEl) placedEl.textContent = '0';
     }
   });
-  
-  // Apply mode-specific rules (placeholder for future implementation)
-  if (mode) {
-    // Future: Apply mode-specific rules, constraints, scoring, etc.
-    console.log('Mode rules would be applied here for:', mode.id);
-  }
-  
-  // Toast notification
+
   let toastTimer;
   function say(s) {
     const t = document.getElementById('toast');
@@ -59,10 +53,8 @@ import { getModeById } from './modes/modes.js';
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 1500);
   }
-  
   trainer.setToastCallback(say);
-  
-  // Settings UI
+
   const depthInput = document.getElementById('depth');
   const depthOutput = document.getElementById('depthOut');
   if (depthInput && depthOutput) {
@@ -71,23 +63,20 @@ import { getModeById } from './modes/modes.js';
       trainer.setDepth(Number(depthInput.value) / 100);
     });
   }
-  
+
   const softScaleInput = document.getElementById('softScale');
   const softScaleOutput = document.getElementById('softScaleOut');
   if (softScaleInput && softScaleOutput) {
     softScaleInput.addEventListener('input', () => {
+      trainer.setSoftScale(Number(softScaleInput.value));
       const f = trainer.getSoftFactor();
       softScaleOutput.textContent = f === Infinity ? '∞' : f + '×';
-      trainer.setSoftScale(Number(softScaleInput.value));
     });
   }
-  
+
   const resetBtn = document.getElementById('reset');
-  if (resetBtn) {
-    resetBtn.onclick = () => trainer.reset();
-  }
-  
-  // Hidden settings (for future expansion)
+  if (resetBtn) resetBtn.onclick = () => trainer.reset();
+
   const dasInput = document.getElementById('das');
   const dasOutput = document.getElementById('dasOut');
   if (dasInput && dasOutput) {
@@ -95,7 +84,7 @@ import { getModeById } from './modes/modes.js';
       dasOutput.textContent = dasInput.value + ' ms';
     });
   }
-  
+
   const arrInput = document.getElementById('arr');
   const arrOutput = document.getElementById('arrOut');
   if (arrInput && arrOutput) {
@@ -103,42 +92,35 @@ import { getModeById } from './modes/modes.js';
       arrOutput.textContent = arrInput.value + ' ms';
     });
   }
-  
-  // Orientation display
+
   function updateOrientation() {
     const orientEl = document.getElementById('orient');
     const orientNameEl = document.getElementById('orientName');
     if (orientEl && orientNameEl) {
       const arrows = ['↑', '→', '↓', '←'];
       const names = ['Spawn', 'Right', '180°', 'Left'];
-      orientEl.textContent = arrows[trainer.piece ? trainer.piece.o : 0];
-      orientNameEl.textContent = names[trainer.piece ? trainer.piece.o : 0];
+      const o = trainer.piece ? trainer.piece.o : 0;
+      orientEl.textContent = arrows[o];
+      orientNameEl.textContent = names[o];
     }
   }
-  
-  // Override render to update orientation display
+
   const originalRender = trainer.render.bind(trainer);
   trainer.render = function() {
     originalRender();
     updateOrientation();
   };
-  
-  // Initialize key binding UI
+
   trainer.updateBindUI();
-  
-  // Event listeners
   window.addEventListener('keydown', (e) => trainer.handleKeydown(e), { passive: false });
   window.addEventListener('keyup', (e) => trainer.handleKeyup(e));
-  window.addEventListener('blur', () => trainer.handleBlur());
-  
-  // Game loop
+  window.addEventListener('blur', () => trainer.handleBlur(e));
+
   function tick(t) {
     trainer.tick(t);
     requestAnimationFrame(tick);
   }
-  
+
   requestAnimationFrame(tick);
-  
-  // Expose trainer globally for debugging (optional)
   window.trainer = trainer;
 })();
