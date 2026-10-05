@@ -105,7 +105,7 @@ import { getModeById } from './modes/modes.js';
     if (!isMode01) return;
 
     const bonus = Number(trainer.session?.bonus ?? 0);
-    fill.style.height = Math.max(0, Math.min(100, bonus)) + '%';
+    fill.style.width = Math.max(0, Math.min(100, bonus)) + '%';
 
     const token = Number(trainer.session?.bonusBreakToken ?? 0);
     if (token !== lastBonusBreakToken) {
