@@ -1,7 +1,7 @@
 // Application entry point.
-// The page selects a mini-game definition; Trainer remains the shared runtime.
+// The page selects a mini-game definition; the TETR.IO-style core owns gameplay state.
 
-import { Trainer } from './trainer/engine.js';
+import { Trainer } from './trainer/core-engine.js';
 import { getModeById } from './modes/modes.js';
 
 (() => {
