@@ -1,17 +1,30 @@
-// Shared mode definition factory.
-// Modes describe training rules; the Trainer owns execution.
+// Shared mode contract. Modes describe rules; Trainer owns the universal runtime.
+
+import { W, H, GRAVITY_MS_PER_ROW, LOCK_DELAY_MS, softFactors } from '../trainer/state.js';
 
 export const baseRules = Object.freeze({
-  width: 10,
-  height: 20,
-  gravity: 800,
-  lockDelay: 500,
+  width: W,
+  height: H,
+  gravity: GRAVITY_MS_PER_ROW,
+  lockDelay: LOCK_DELAY_MS,
   das: 127,
   arr: 0,
-  clearBoardAfterPlace: true
+  softFactors,
+  clearBoardAfterPlace: false
 });
 
-export function createMode({ id, number, name, description, color, rules = {}, hooks = {}, createSession, spawn }) {
+export function createMode({
+  id,
+  number,
+  name,
+  description,
+  color,
+  rules = {},
+  hooks = {},
+  createSession,
+  createGenerator,
+  training = {}
+}) {
   return {
     id,
     number,
@@ -20,7 +33,8 @@ export function createMode({ id, number, name, description, color, rules = {}, h
     color,
     rules: { ...baseRules, ...rules },
     hooks,
+    training,
     ...(createSession ? { createSession } : {}),
-    ...(spawn ? { spawn } : {})
+    ...(createGenerator ? { createGenerator } : {})
   };
 }
