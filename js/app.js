@@ -70,8 +70,15 @@ import { getSettings } from './settings.js';
   const originalRender=trainer.render.bind(trainer);
   trainer.render=function(){originalRender();updateOrientation();updateBonus();};
 
-  window.addEventListener('keydown',e=>trainer.handleKeydown(e),{passive:false});
-  window.addEventListener('keyup',e=>trainer.handleKeyup(e));
+  const settingsOpen=()=>document.body.classList.contains('settings-open');
+  window.addEventListener('keydown',e=>{
+    if(settingsOpen())return;
+    trainer.handleKeydown(e);
+  },{passive:false});
+  window.addEventListener('keyup',e=>{
+    if(settingsOpen())return;
+    trainer.handleKeyup(e);
+  });
   window.addEventListener('blur',()=>trainer.handleBlur());
 
   window.trainer=trainer;
