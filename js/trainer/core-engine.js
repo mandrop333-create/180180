@@ -13,8 +13,11 @@ export class Trainer extends BaseTrainer {
     super(boardEl,inherited);
     this.phase='active';
     this.pieceQueue=[];
+    this.toastCallback=null;
     this.ensureQueue();
   }
+  setToastCallback(callback){this.toastCallback=typeof callback==='function'?callback:null;return this;}
+  say(message){if(this.toastCallback)this.toastCallback(String(message));}
   ensureQueue(){while(this.pieceQueue.length<QUEUE_PREVIEW_SIZE)this.pieceQueue.push(this.generator.next());}
   nextPieceType(){this.ensureQueue();const type=this.pieceQueue.shift();this.ensureQueue();return type;}
   getNextQueue(){this.ensureQueue();return [...this.pieceQueue];}
