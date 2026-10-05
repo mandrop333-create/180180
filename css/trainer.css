@@ -232,8 +232,7 @@
 .turn-scene {
   position: relative;
   transform-style: preserve-3d;
-  transform-origin: 50% var(--turn-origin-y);
-  perspective: var(--turn-perspective);
+  transform-origin: 50% 50%;
   animation: halfFlip var(--turn-duration) cubic-bezier(.2, .82, .2, 1) both;
   will-change: transform;
 }
@@ -257,24 +256,19 @@
 
 @keyframes halfFlip {
   0% {
-    transform: translate3d(0, 0, 0) rotateX(0deg);
-    filter: brightness(1) drop-shadow(0 2px 1px #0003);
+    transform: translate3d(0, 0, 0) rotateX(0deg) scale(1);
   }
   18% {
-    transform: translate3d(calc(var(--turn-shift-x) * .08), calc(var(--turn-shift-y) * .08), 0) rotateX(42deg);
-    filter: brightness(.93) drop-shadow(0 5px 3px #0004);
+    transform: translate3d(calc(var(--turn-shift-x) * .08), calc(var(--turn-shift-y) * .08), 0) rotateX(42deg) scale(.985);
   }
   50% {
-    transform: translate3d(calc(var(--turn-shift-x) * .5), calc(var(--turn-shift-y) * .5), 0) rotateX(90deg);
-    filter: brightness(.58) drop-shadow(0 10px 8px #0006);
+    transform: translate3d(calc(var(--turn-shift-x) * .5), calc(var(--turn-shift-y) * .5), 0) rotateX(90deg) scale(.88);
   }
   72% {
-    transform: translate3d(calc(var(--turn-shift-x) * .8), calc(var(--turn-shift-y) * .8), 0) rotateX(138deg);
-    filter: brightness(.88) drop-shadow(0 6px 4px #0005);
+    transform: translate3d(calc(var(--turn-shift-x) * .8), calc(var(--turn-shift-y) * .8), 0) rotateX(138deg) scale(.985);
   }
   100% {
-    transform: translate3d(var(--turn-shift-x), var(--turn-shift-y), 0) rotateX(180deg);
-    filter: brightness(1) drop-shadow(0 2px 1px #0003);
+    transform: translate3d(var(--turn-shift-x), var(--turn-shift-y), 0) rotateX(180deg) scale(1);
   }
 }
 
