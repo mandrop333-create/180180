@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://mandrop333-create.github.io/180180/sitemap.xml
