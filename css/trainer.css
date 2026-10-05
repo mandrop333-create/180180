@@ -6,11 +6,12 @@
 }
 
 .bonus-meter {
-  width: 132px;
+  width: 56px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .bonus-label {
@@ -19,56 +20,25 @@
   color: #c4a7ff;
 }
 
-.bonus-track {
-  width: 120px;
-  height: 8px;
-  padding: 1px;
-  background: #211e2a;
-  border: 1px solid #51446e;
-  border-radius: 6px;
-  display: flex;
-  align-items: stretch;
-  overflow: visible;
-  position: relative;
+.bonus-number {
+  font: 900 28px/1 ui-monospace, monospace;
+  color: #eee8ff;
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+  text-align: center;
+  transition: transform 120ms ease;
 }
 
-.bonus-break-mark {
-  position: absolute;
-  inset: -8px 0 auto auto;
-  font: 900 18px/1 ui-monospace, monospace;
-  color: #f2dcff;
-  opacity: 0;
-  pointer-events: none;
+.bonus-meter.breaking .bonus-number {
+  animation: bonusNumberBreak 300ms ease;
 }
 
-.bonus-meter.breaking .bonus-break-mark {
-  animation: bonusBreakMark 300ms ease both;
-}
-
-.bonus-fill {
-  width: 0%;
-  height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #c8c1ff, #8d7fff);
-  transition: width 160ms ease;
-}
-
-.bonus-meter.breaking .bonus-fill {
-  animation: bonusBreak 260ms ease;
-}
-
-@keyframes bonusBreak {
-  0% { transform: translateX(0); opacity: 1; }
-  25% { transform: translateX(-3px); opacity: .7; }
-  50% { transform: translateX(3px); opacity: .45; }
-  75% { transform: translateX(-2px); opacity: .7; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes bonusBreakMark {
-  0% { transform: scale(.6) rotate(-12deg); opacity: 0; }
-  35% { transform: scale(1.15) rotate(8deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 0; }
+@keyframes bonusNumberBreak {
+  0% { transform: scale(1); opacity: 1; }
+  25% { transform: translateX(-3px) scale(.96); opacity: .7; }
+  50% { transform: translateX(3px) scale(1.04); opacity: .45; }
+  75% { transform: translateX(-2px) scale(.98); opacity: .7; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
 }
 
 .back-link {
