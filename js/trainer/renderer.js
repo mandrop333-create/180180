@@ -140,11 +140,15 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
 export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onRender) {
   if (anim?.layer) anim.layer.remove();
 
-  const shape = cellsFor(old.type, old.o);
-  const minX = Math.min(...shape.map(c => c[0]));
-  const minY = Math.min(...shape.map(c => c[1]));
-  const maxX = Math.max(...shape.map(c => c[0]));
-  const maxY = Math.max(...shape.map(c => c[1]));
+  const oldShape = cellsFor(old.type, old.o);
+  const minX = Math.min(...oldShape.map(c => c[0]));
+  const minY = Math.min(...oldShape.map(c => c[1]));
+  const maxX = Math.max(...oldShape.map(c => c[0]));
+  const maxY = Math.max(...oldShape.map(c => c[1]));
+
+  const nextShape = cellsFor(next.type, next.o);
+  const nextMinX = Math.min(...nextShape.map(c => c[0]));
+  const nextMinY = Math.min(...nextShape.map(c => c[1]));
 
   const width = (maxX - minX + 1) * CELL_PITCH;
   const height = (maxY - minY + 1) * CELL_PITCH;
@@ -158,8 +162,12 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   layer.style.height = height + 'px';
   layer.style.setProperty('--turn-depth', depthPx + 'px');
   layer.style.setProperty('--turn-perspective', (650 - depth * 250) + 'px');
-  const shiftX = (next.x - old.x) * CELL_PITCH;
-  const shiftY = (next.y - old.y) * CELL_PITCH;
+
+  // The orientation arrays use a fixed piece origin. A half-turn can move the
+  // visible bounding box inside that origin (notably Z/S/T/J/L), so the
+  // animation must include that geometry delta, not only x/y kicks.
+  const shiftX = ((next.x + nextMinX) - (old.x + minX)) * CELL_PITCH;
+  const shiftY = ((next.y + nextMinY) - (old.y + minY)) * CELL_PITCH;
   layer.style.setProperty('--turn-shift-x', shiftX + 'px');
   layer.style.setProperty('--turn-shift-y', shiftY + 'px');
   layer.style.setProperty('--turn-duration', '420ms');
@@ -185,7 +193,10 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   ], NS);
   front.append(defs);
 
-  const localShape = shape.map(([x, y]) => [x - minX, y - minY]);
+  // A true 180° orientation is a half-turn in the playfield plane. The 3D
+  // illusion is layered onto that motion so asymmetric pieces (especially
+  // S/Z) finish in their actual orientation instead of visually snapping back.
+  const localShape = oldShape.map(([x, y]) => [x - minX, y - minY]);
   appendPieceGeometry(front, localShape, depthPx, NS, {
     frontGradient: TURN_FRONT_GRADIENT
   });
