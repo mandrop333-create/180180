@@ -1,7 +1,7 @@
-// Application entry point. The trainer owns gameplay; settings.js owns player preferences.
+// Application entry point. The trainer owns gameplay; the trainer page mounts its own settings controller.
 import { Trainer } from './trainer/core-engine.js';
 import { getModeById } from './modes/modes.js';
-import { getSettings, mountSettings } from './settings.js';
+import { getSettings } from './settings.js';
 
 (() => {
   const boardEl = document.getElementById('board');
@@ -36,8 +36,6 @@ import { getSettings, mountSettings } from './settings.js';
   trainer.rules.arr=settings.arr;
   trainer.binds={...trainer.binds,...settings.binds};
 
-  // The rebuilt core no longer exposes the old setToastCallback API.
-  // Give settings the small public notification hook it actually uses.
   let toastTimer;
   const showToast = message => {
     const toast=document.getElementById('toast');
@@ -48,9 +46,6 @@ import { getSettings, mountSettings } from './settings.js';
     toastTimer=setTimeout(()=>toast.classList.remove('show'),1500);
   };
   trainer.say=showToast;
-
-  // Mount settings only after the trainer exists so the in-game panel gets the live trainer instance.
-  mountSettings({ trainer });
 
   document.getElementById('reset')?.addEventListener('click',()=>trainer.reset());
 
@@ -79,7 +74,8 @@ import { getSettings, mountSettings } from './settings.js';
   window.addEventListener('keyup',e=>trainer.handleKeyup(e));
   window.addEventListener('blur',()=>trainer.handleBlur());
 
+  window.trainer=trainer;
+
   function tick(t){trainer.tick(t);requestAnimationFrame(tick);}
   requestAnimationFrame(tick);
-  window.trainer=trainer;
 })();
