@@ -173,15 +173,15 @@ export class Trainer {
     this.options.onTurn(this.turns);
     this.hook('rotate',before,{...this.piece},delta);
 
-    if (halfTurnOld) this.startHalfTurn(halfTurnOld);
+    if (halfTurnOld) this.startHalfTurn(halfTurnOld, { ...this.piece });
 
     return true;
   }
 
-  startHalfTurn(old) {
+  startHalfTurn(old, next) {
     this.anim={};
     startHalfTurn(
-      old,this.boardEl,this.anim,this.depth,this.cellsFor,NS,
+      old,next,this.boardEl,this.anim,this.depth,this.cellsFor,NS,
       ()=>this.render()
     );
   }
