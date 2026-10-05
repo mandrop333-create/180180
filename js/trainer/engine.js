@@ -179,10 +179,24 @@ export class Trainer {
   }
 
   startHalfTurn(old, next) {
-    this.anim={};
+    const animation = {
+      from: { ...old },
+      to: { ...next },
+      layer: null,
+      started: 0,
+      duration: 420
+    };
+
+    if (this.anim?.layer) this.anim.layer.remove();
+    this.anim = animation;
+
     startHalfTurn(
-      old,next,this.boardEl,this.anim,this.depth,this.cellsFor,NS,
-      ()=>this.render()
+      animation,this.boardEl,this.cellsFor,NS,
+      () => {
+        if (this.anim !== animation) return;
+        this.anim = null;
+        this.render();
+      }
     );
   }
 
@@ -335,11 +349,6 @@ export class Trainer {
 
     if (this.lockAcc>=this.rules.lockDelay) this.lockPiece();
 
-    if (this.anim && t>this.anim.until) {
-      if (this.anim.layer) this.anim.layer.remove();
-      this.anim=null;
-    }
-
     this.hook('tick',dt);
     this.render();
   }
@@ -473,27 +482,18 @@ export class Trainer {
     this.session=this.mode.createSession ? this.mode.createSession() : {};
     if (this.generator.reset) this.generator.reset();
     this.emptyBoard();
-    this.spawn();
-    this.hook('reset');
+    this.piece=null;
+    this.anim=null;
     this.options.onReset();
-    this.say('Practice reset');
+    this.spawn();
   }
 
-  setDepth(value){ this.depth=value; }
-  setSoftScale(value){ this.softScale=value; }
-  getSoftFactor(){ return this.rules.softFactors[this.softScale] ?? 1; }
-
-  getState() {
-    return {
-      mode:this.mode.id || null,
-      piece:this.piece ? {...this.piece} : null,
-      turns:this.turns,
-      placed:this.placed,
-      lines:this.lines,
-      stats:{...this.stats},
-      gameOver:this.gameOver,
-      session:this.session,
-      board:this.board.map(row=>[...row])
+  start() {
+    this.lastTime=performance.now();
+    const loop=(t)=>{
+      this.tick(t);
+      if (!this.gameOver) requestAnimationFrame(loop);
     };
+    requestAnimationFrame(loop);
   }
 }
