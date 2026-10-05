@@ -98,14 +98,16 @@ import { getModeById } from './modes/modes.js';
   function updateBonus() {
     const meter = document.getElementById('bonusMeter');
     const number = document.getElementById('bonusNumber');
+    const liquid = document.getElementById('bonusLiquid');
     if (!meter || !number) return;
 
     const isMode01 = mode.id === 'mode-01';
     meter.hidden = !isMode01;
     if (!isMode01) return;
 
-    const bonus = Number(trainer.session?.bonus ?? 0);
-    number.textContent = String(Math.max(0, Math.floor(bonus)));
+    const bonus = Math.max(0, Math.min(100, Number(trainer.session?.bonus ?? 0)));
+    number.textContent = String(Math.floor(bonus));
+    if (liquid) liquid.style.width = `${bonus}%`;
 
     const token = Number(trainer.session?.bonusBreakToken ?? 0);
     if (token !== lastBonusBreakToken) {
@@ -113,7 +115,7 @@ import { getModeById } from './modes/modes.js';
       meter.classList.remove('breaking');
       void meter.offsetWidth;
       meter.classList.add('breaking');
-      setTimeout(() => meter.classList.remove('breaking'), 300);
+      setTimeout(() => meter.classList.remove('breaking'), 340);
     }
   }
 
