@@ -350,6 +350,58 @@
   opacity: 0.3;
 }
 
+/* Modes 2-6 are placeholders until their training modules are built. */
+.mode-card-locked {
+  cursor: pointer;
+}
+
+.mode-card-locked:hover {
+  transform: none;
+  border-color: #302c3b;
+  box-shadow: none;
+}
+
+.mode-card-locked:hover::before {
+  opacity: 0;
+}
+
+.mode-card-locked:hover::after {
+  opacity: 0.6;
+  box-shadow: 0 0 15px var(--mode-glow);
+}
+
+.mode-card-locked .mode-number {
+  opacity: 0.25;
+}
+
+.mode-question {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mode-glow);
+  font-family: "Courier New", monospace;
+  font-size: 72px;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 0 18px var(--mode-glow);
+  opacity: 0.75;
+  user-select: none;
+}
+
+.mode-card-shake {
+  animation: mode-card-shake 0.32s ease-in-out;
+}
+
+@keyframes mode-card-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
 /* Mode-specific glow colors */
 .mode-card[data-mode="1"] {
   --mode-glow: #a78bfa;
