@@ -140,12 +140,12 @@ export class Trainer {
     return collides(px,py,o,this.board,this.W,this.H,this.cellsFor,type);
   }
 
-  movePiece(dx,dy) {
+  movePiece(dx,dy,{ countSoftDrop=false } = {}) {
     if (this.gameOver || !this.piece) return false;
     const previous={...this.piece};
     const moved=move(this.piece,dx,dy,this.board,this.W,this.H,this.cellsFor);
     if (moved) {
-      if (dy>0) this.stats.softDropRows += dy;
+      if (countSoftDrop && dy>0) this.stats.softDropRows += dy;
       this.hook('move',previous,{...this.piece},{dx,dy});
     }
     return moved;
@@ -192,7 +192,7 @@ export class Trainer {
       return;
     }
 
-    if (this.movePiece(0,1)) {
+    if (this.movePiece(0,1,{ countSoftDrop:true })) {
       this.softAcc=0;
       this.lockAcc=0;
     }
@@ -288,7 +288,7 @@ export class Trainer {
         this.softAcc += dt;
         while (this.softAcc>=interval) {
           this.softAcc -= interval;
-          if (!this.movePiece(0,1)) {
+          if (!this.movePiece(0,1,{ countSoftDrop:true })) {
             this.softAcc=0;
             break;
           }
