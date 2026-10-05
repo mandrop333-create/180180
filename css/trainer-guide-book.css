@@ -10,6 +10,7 @@
 
 .trainer-guide-book > * { pointer-events: auto; }
 
+/* Closed state: the little book stays beside the board. */
 .trainer-guide-cover {
   position: absolute;
   inset: 0;
@@ -45,14 +46,19 @@
 .trainer-guide-cover-subtitle { display:block; margin-top:4px; font-size:10px; font-weight:900; letter-spacing:.12em; }
 .trainer-guide-cover-star { display:block; margin-top:7px; font-size:10px; opacity:.8; }
 
+/*
+ * Open state: the book is anchored to the same spot as the closed cover.
+ * The spread grows to the LEFT instead of jumping to the center of the screen.
+ */
 .trainer-guide-spread {
-  position: fixed;
+  position: absolute;
   z-index: 1000;
   top: 50%;
-  left: 50%;
-  width: min(520px, calc(100vw - 32px));
+  right: 0;
+  width: 430px;
   min-height: 250px;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
+  transform-origin: right center;
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid #6e5b42;
@@ -62,6 +68,11 @@
   box-shadow: 8px 10px 0 #08070b99, 0 12px 35px #0009;
   overflow: hidden;
   animation: trainerGuideOpen .22s ease-out both;
+}
+
+/* The HTML hidden attribute must win over the display rule above. */
+.trainer-guide-spread[hidden] {
+  display: none !important;
 }
 
 .trainer-guide-spread::before {
@@ -92,12 +103,26 @@
 .trainer-guide-controls button:disabled { opacity:.35; cursor:default; }
 
 @keyframes trainerGuideOpen {
-  from { opacity:0; transform:translate(-50%,-50%) scale(.88); }
-  to { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  from { opacity:0; transform:translateY(-50%) scaleX(.18) scaleY(.88); }
+  to { opacity:1; transform:translateY(-50%) scaleX(1) scaleY(1); }
 }
 
 @media (max-width: 850px) {
   .trainer-guide-book { margin:2px auto 0; }
+  .trainer-guide-spread {
+    position: fixed;
+    top: 50%;
+    left: auto;
+    right: 14px;
+    width: min(430px, calc(100vw - 28px));
+    transform: translateY(-50%);
+    transform-origin: right center;
+  }
+
+  @keyframes trainerGuideOpen {
+    from { opacity:0; transform:translateY(-50%) scaleX(.18) scaleY(.88); }
+    to { opacity:1; transform:translateY(-50%) scaleX(1) scaleY(1); }
+  }
 }
 
 @media (max-width: 500px) {
