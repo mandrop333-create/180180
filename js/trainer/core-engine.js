@@ -1,22 +1,69 @@
 // TETR.IO-style gameplay core layered over the shared trainer renderer/UI.
 // Gameplay state remains authoritative; animation is presentation only.
+// The core also keeps an explicit piece queue and deterministic RNG option so
+// gameplay sequences can be reproduced exactly when testing.
 
 import { Trainer as BaseTrainer } from './engine.js';
 import { tryRotate } from './rotation.js';
+import { SevenBagGenerator } from './generator.js';
+import { spawnFor } from './pieces.js';
 
 const MAX_LOCK_RESETS = 15;
 const MAX_FRAME_DT = 50;
+const QUEUE_PREVIEW_SIZE = 5;
 
 export class Trainer extends BaseTrainer {
   constructor(boardEl, options = {}) {
-    super(boardEl, options);
+    const inherited = { ...options };
+    if (!inherited.generator && !inherited.mode?.createGenerator) {
+      inherited.generator = new SevenBagGenerator({ seed: options.seed });
+    }
+    super(boardEl, inherited);
     this.lockResets = 0;
     this.lastHorizontal = 0;
   }
 
+  ensureQueue() {
+    if (!this.pieceQueue) this.pieceQueue = [];
+    while (this.pieceQueue.length < QUEUE_PREVIEW_SIZE) {
+      this.pieceQueue.push(this.generator.next());
+    }
+  }
+
+  nextPieceType() {
+    this.ensureQueue();
+    const type = this.pieceQueue.shift();
+    this.ensureQueue();
+    return type;
+  }
+
+  getNextQueue() {
+    this.ensureQueue();
+    return [...this.pieceQueue];
+  }
+
   spawn() {
-    super.spawn();
+    if (this.anim?.layer) this.anim.layer.remove();
+
+    const type = this.nextPieceType();
+    this.piece = spawnFor(type);
+    this.gravityAcc = 0;
+    this.softAcc = 0;
+    this.lockAcc = 0;
+    this.anim = null;
+    this.phase = 'active';
     this.lockResets = 0;
+
+    if (this.collides(this.piece.x, this.piece.y, this.piece.o, this.piece.type)) {
+      this.gameOver = true;
+      this.phase = 'gameover';
+      this.hook('gameOver', { ...this.piece });
+      this.render();
+      return;
+    }
+
+    this.hook('spawn', { ...this.piece });
+    this.render();
   }
 
   isGrounded() {
@@ -146,6 +193,12 @@ export class Trainer extends BaseTrainer {
     return true;
   }
 
+  lockPiece() {
+    if (this.gameOver || !this.piece) return;
+    this.phase = 'locking';
+    super.lockPiece();
+  }
+
   tick(t) {
     if (!this.lastTime) this.lastTime = t;
     const dt = Math.max(0, Math.min(MAX_FRAME_DT, t - this.lastTime));
@@ -184,6 +237,13 @@ export class Trainer extends BaseTrainer {
     super.handleBlur();
     this.moveState.elapsed = 0;
     this.moveState.repeatElapsed = 0;
+  }
+
+  reset(...args) {
+    this.pieceQueue = [];
+    this.phase = 'active';
+    this.lockResets = 0;
+    return super.reset(...args);
   }
 
   setDepth(value) {
