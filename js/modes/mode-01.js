@@ -12,33 +12,14 @@ import {
   onReset as onBonusReset
 } from './mode-01-bonus.js';
 
-function createSession() {
-  return createBonusState();
-}
+function createSession() { return createBonusState(); }
 
 const hooks = {
-  spawn(trainer, piece) {
-    onBonusSpawn(trainer.session, piece);
-  },
-
-  input(trainer, _event, action) {
-    onBonusInput(trainer.session, action);
-  },
-
-  rotate(trainer, _before, _after, delta) {
-    onBonusRotate(trainer.session, {
-      delta,
-      now: performance.now()
-    });
-  },
-
-  place(trainer, lockedPiece, cleared, boards) {
-    onBonusPlace(trainer.session, trainer, lockedPiece, cleared, boards);
-  },
-
-  reset(trainer) {
-    onBonusReset(trainer.session);
-  }
+  spawn(trainer, piece) { onBonusSpawn(trainer.session, piece); },
+  input(trainer, _event, action) { onBonusInput(trainer.session, action); },
+  rotate(trainer, _before, _after, delta) { onBonusRotate(trainer.session, { delta, now: performance.now() }); },
+  place(trainer, lockedPiece, cleared, boards) { onBonusPlace(trainer.session, trainer, lockedPiece, cleared, boards); },
+  reset(trainer) { onBonusReset(trainer.session); }
 };
 
 export default createMode({
@@ -48,14 +29,12 @@ export default createMode({
   description: 'Train the 180° rotation as one deliberate movement',
   color: '#a78bfa',
   createSession,
-  createGenerator: () => new AfterBagGenerator(
-    new SevenBagGenerator(),
+  // Explicit mode customization, but the trainer remains the sole owner and
+  // propagates the run seed into every generator in the chain.
+  createGenerator: ({ seed } = {}) => new AfterBagGenerator(
+    new SevenBagGenerator({ seed }),
     ['T', 'T']
   ),
-  training: {
-    bonusMax: BONUS_MAX,
-    bonusPer180: BONUS_PER_180,
-    substitutionWindowMs: SUBSTITUTION_WINDOW_MS
-  },
+  training: { bonusMax: BONUS_MAX, bonusPer180: BONUS_PER_180, substitutionWindowMs: SUBSTITUTION_WINDOW_MS },
   hooks
 });
