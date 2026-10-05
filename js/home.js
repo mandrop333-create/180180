@@ -1,7 +1,7 @@
 // Home page logic
 // Initializes the home page and handles mode card interactions
 
-import { renderModeCards } from './components/mode-card.js';
+import { renderModeCards } from './components/mode-card.js?v=guide-books';
 
 (() => {
   const modeCardsContainer = document.getElementById('modeCards');
