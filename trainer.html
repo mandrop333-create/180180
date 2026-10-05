@@ -6,6 +6,7 @@
 <title>180180 — Half-turn trainer</title>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/trainer.css">
+<link rel="stylesheet" href="css/trainer-guide-book.css">
 </head>
 <body>
 <div class="shell">
@@ -34,6 +35,32 @@
           </div>
         </div>
         <div class="board-wrap"><div class="board" id="board" aria-label="Tetris practice board"></div></div>
+        <div class="trainer-guide-book" data-trainer-guide-book aria-expanded="false">
+          <button class="trainer-guide-cover" type="button" data-guide-cover aria-label="Open 180 Flip guide">
+            <span class="trainer-guide-cover-small">guide</span>
+            <span class="trainer-guide-cover-title">180</span>
+            <span class="trainer-guide-cover-subtitle">FLIP</span>
+            <span class="trainer-guide-cover-star">✦</span>
+          </button>
+          <div class="trainer-guide-spread" data-guide-spread hidden>
+            <button class="trainer-guide-close" type="button" data-guide-close aria-label="Close guide">×</button>
+            <article class="trainer-guide-page">
+              <p class="trainer-guide-kicker">180 practice</p>
+              <h2 class="trainer-guide-heading">180 FLIP</h2>
+              <p class="trainer-guide-text" data-guide-page-text></p>
+              <span class="trainer-guide-mark" aria-hidden="true">✦</span>
+            </article>
+            <article class="trainer-guide-page">
+              <p class="trainer-guide-kicker">keep going</p>
+              <p class="trainer-guide-text">Use the 3D scaler as a bridge. The goal is for the piece to feel like it is flipping, rather than rotating twice.</p>
+            </article>
+            <div class="trainer-guide-controls">
+              <button type="button" data-guide-prev aria-label="Previous page">‹</button>
+              <span data-guide-page-number>1 / 2</span>
+              <button type="button" data-guide-next aria-label="Next page">›</button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
     <section class="controls" aria-label="Trainer settings">
@@ -60,5 +87,6 @@
 </div>
 <div class="toast" id="toast"></div>
 <script type="module" src="js/app.js"></script>
+<script type="module" src="js/trainer/guide-book.js"></script>
 </body>
 </html>
