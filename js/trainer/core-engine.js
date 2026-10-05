@@ -6,7 +6,7 @@ import { spawnFor } from './pieces.js';
 const QUEUE_PREVIEW_SIZE=5;
 export class Trainer extends BaseTrainer {
   constructor(boardEl,options={}){
-    const inherited={...options};
+    const inherited={...options, deferInit:true};
     if(!inherited.generator) inherited.generator=inherited.mode?.createGenerator
       ? inherited.mode.createGenerator({seed:options.seed})
       : new SevenBagGenerator({seed:options.seed});
@@ -14,6 +14,7 @@ export class Trainer extends BaseTrainer {
     this.phase='active';
     this.pieceQueue=[];
     this.toastCallback=null;
+    this.init();
     this.ensureQueue();
   }
   setToastCallback(callback){this.toastCallback=typeof callback==='function'?callback:null;return this;}
