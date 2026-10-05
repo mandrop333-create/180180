@@ -97,15 +97,15 @@ import { getModeById } from './modes/modes.js';
 
   function updateBonus() {
     const meter = document.getElementById('bonusMeter');
-    const fill = document.getElementById('bonusFill');
-    if (!meter || !fill) return;
+    const number = document.getElementById('bonusNumber');
+    if (!meter || !number) return;
 
     const isMode01 = mode.id === 'mode-01';
     meter.hidden = !isMode01;
     if (!isMode01) return;
 
     const bonus = Number(trainer.session?.bonus ?? 0);
-    fill.style.width = Math.max(0, Math.min(100, bonus)) + '%';
+    number.textContent = String(Math.max(0, Math.floor(bonus)));
 
     const token = Number(trainer.session?.bonusBreakToken ?? 0);
     if (token !== lastBonusBreakToken) {
