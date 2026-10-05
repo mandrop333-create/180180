@@ -50,12 +50,15 @@ import { getSettings } from './settings.js';
   document.getElementById('reset')?.addEventListener('click',()=>trainer.reset());
 
   let lastBonusBreakToken=0;
+  let lastBonusValue=Number.NaN;
   function updateBonus(){
     const meter=document.getElementById('bonusMeter'); const number=document.getElementById('bonusNumber'); const liquid=document.getElementById('bonusLiquid');
     if(!meter||!number)return;
     const active=mode.id==='mode-01'; meter.hidden=!active; if(!active)return;
     const bonus=Math.max(0,Math.min(100,Number(trainer.session?.bonus??0)));
-    number.textContent=String(Math.floor(bonus)); if(liquid)liquid.style.width=`${bonus}%`;
+    const increased=Number.isFinite(lastBonusValue)&&bonus>lastBonusValue;
+    number.textContent=String(Math.floor(bonus)); if(liquid){liquid.style.width=`${bonus}%`;if(increased){liquid.classList.remove("boosting");void liquid.offsetWidth;liquid.classList.add("boosting");setTimeout(()=>liquid.classList.remove("boosting"),520);}}
+    lastBonusValue=bonus;
     const token=Number(trainer.session?.bonusBreakToken??0);
     if(token!==lastBonusBreakToken){lastBonusBreakToken=token;meter.classList.remove('breaking');void meter.offsetWidth;meter.classList.add('breaking');setTimeout(()=>meter.classList.remove('breaking'),340);}
   }
