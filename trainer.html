@@ -23,8 +23,15 @@
     <section class="play-panel" aria-label="Tetris practice">
       <div class="playfield-stage">
         <div class="bonus-meter" id="bonusMeter" aria-label="180 Flip bonus">
-          <div class="bonus-label">BONUS</div>
-          <div class="bonus-number" id="bonusNumber">0</div>
+          <div class="bonus-topline">
+            <span class="bonus-label">ELIXIR</span>
+            <span class="bonus-cap">BONUS</span>
+          </div>
+          <div class="bonus-vessel">
+            <div class="bonus-liquid" id="bonusLiquid"></div>
+            <div class="bonus-glint"></div>
+            <div class="bonus-number" id="bonusNumber">0</div>
+          </div>
         </div>
         <div class="board-wrap"><div class="board" id="board" aria-label="Tetris practice board"></div></div>
       </div>
