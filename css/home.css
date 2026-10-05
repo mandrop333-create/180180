@@ -385,8 +385,13 @@
   font-size: 72px;
   font-weight: 1000;
   line-height: 1;
-  text-shadow: 0 0 18px var(--mode-glow);
-  opacity: 0.75;
+  text-shadow:
+    0 0 6px var(--mode-glow),
+    0 0 16px var(--mode-glow),
+    0 0 32px var(--mode-glow),
+    0 0 54px var(--mode-glow);
+  filter: drop-shadow(0 0 8px var(--mode-glow));
+  opacity: 0.95;
   user-select: none;
 }
 
