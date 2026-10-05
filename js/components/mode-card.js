@@ -14,8 +14,8 @@ export function renderModeCards(container, onModeSelect) {
   container.innerHTML = '';
   
   modes.forEach(mode => {
-    const card = document.createElement(isAvailable ? 'a' : 'div');
     const isAvailable = mode.number === 1;
+    const card = document.createElement(isAvailable ? 'a' : 'div');
     
     card.className = `mode-card${isAvailable ? '' : ' mode-card-locked'}`;
     if (isAvailable) card.href = `trainer.html?mode=${mode.id}`;
