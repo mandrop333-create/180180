@@ -1,6 +1,8 @@
 // Mode #1 bonus rule layer.
-// This module owns only the 180 Flip training feedback.
+// This module owns the 180 Flip training feedback.
 // It does not know about rendering, DOM, scoring, gravity, or collisions.
+
+import { analyzePlacement } from './mode-01-placement.js';
 
 export const BONUS_MAX = 100;
 export const BONUS_PER_180 = 10;
@@ -16,7 +18,9 @@ export function createBonusState() {
     bonusBrokenThisPiece: false,
     currentPieceKey: null,
     lastTrainingEventAt: 0,
-    bonusBreakToken: 0
+    bonusBreakToken: 0,
+    pendingPlacement: null,
+    lastPlacementAnalysis: null
   };
 }
 
@@ -35,6 +39,7 @@ function clearRotationHistory(state) {
 function breakBonus(state) {
   setBonus(state, 0);
   state.bonusBrokenThisPiece = true;
+  state.pendingPlacement = null;
   state.bonusBreakToken++;
 }
 
@@ -42,6 +47,8 @@ export function onSpawn(state, piece) {
   state.currentPieceKey = piece.type + ':' + piece.x + ':' + piece.y;
   state.halfTurnsThisPiece = 0;
   state.bonusBrokenThisPiece = false;
+  state.pendingPlacement = null;
+  state.lastPlacementAnalysis = null;
   clearRotationHistory(state);
 }
 
@@ -69,11 +76,14 @@ export function onRotate(state, { delta, now }) {
       return { type: 'over-rotation-break', bonus: state.bonus };
     }
 
-    state.successful180s++;
-    if (!state.bonusBrokenThisPiece) {
-      setBonus(state, state.bonus + BONUS_PER_180);
-    }
-    return { type: 'successful-180', bonus: state.bonus };
+    // Do not award the bonus yet. The piece still has to prove that the
+    // 180 resulted in a clean Tetris placement when it locks.
+    state.pendingPlacement = {
+      halfTurns: state.halfTurnsThisPiece,
+      pieceKey: state.currentPieceKey
+    };
+
+    return { type: 'pending-180', bonus: state.bonus };
   }
 
   const direction = delta === 1 ? 'cw' : 'ccw';
@@ -84,9 +94,6 @@ export function onRotate(state, { delta, now }) {
   // - same 90-degree direction twice
   // - second turn happens quickly
   // - no unrelated input occurred between the two turns
-  //
-  // This specifically detects CW->CW / CCW->CCW as one uninterrupted
-  // 180-degree substitution instead of punishing unrelated rotations.
   if (
     previous &&
     previous.direction === direction &&
@@ -110,8 +117,29 @@ export function onRotate(state, { delta, now }) {
   return { type: 'quarter-turn', bonus: state.bonus };
 }
 
-export function onPlace(state) {
+export function onPlace(state, _trainer, _lockedPiece, cleared, boards) {
   clearRotationHistory(state);
+
+  if (state.pendingPlacement && !state.bonusBrokenThisPiece && boards) {
+    const analysis = analyzePlacement({
+      beforeBoard: boards.beforeLock,
+      afterLockBoard: boards.afterLock,
+      afterClearBoard: boards.afterClear,
+      cleared
+    });
+
+    state.lastPlacementAnalysis = analysis;
+
+    if (analysis.misdrop) {
+      breakBonus(state);
+    } else {
+      const earned = state.pendingPlacement.halfTurns * BONUS_PER_180;
+      state.successful180s += state.pendingPlacement.halfTurns;
+      setBonus(state, state.bonus + earned);
+    }
+  }
+
+  state.pendingPlacement = null;
   state.currentPieceKey = null;
 }
 
@@ -119,4 +147,6 @@ export function onReset(state) {
   // Trainer.reset() creates the session and spawns the new piece before
   // calling this hook, so keep the freshly spawned piece identity intact.
   clearRotationHistory(state);
+  state.pendingPlacement = null;
+  state.lastPlacementAnalysis = null;
 }
