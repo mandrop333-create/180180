@@ -1,20 +1,14 @@
-/* Isolated styling for the in-game 180 Flip guide. */
-
 .trainer-guide-book {
-  position: absolute;
+  position: relative;
   z-index: 20;
-  top: 50%;
-  right: max(10px, calc(50% - 285px));
+  flex: 0 0 78px;
   width: 78px;
   height: 96px;
-  transform: translateY(-50%);
   font-family: "Courier New", monospace;
   pointer-events: none;
 }
 
-.trainer-guide-book > * {
-  pointer-events: auto;
-}
+.trainer-guide-book > * { pointer-events: auto; }
 
 .trainer-guide-cover {
   position: absolute;
@@ -24,9 +18,7 @@
   padding: 8px;
   border: 1px solid #9c7ce8;
   border-radius: 4px 8px 8px 4px;
-  background:
-    linear-gradient(90deg, #241b39 0 7px, transparent 7px),
-    linear-gradient(145deg, #8060c8, #3a2b5d 82%);
+  background: linear-gradient(90deg, #241b39 0 7px, transparent 7px), linear-gradient(145deg, #8060c8, #3a2b5d 82%);
   color: #f5efff;
   box-shadow: 4px 5px 0 #09070d, 0 0 18px #8d69e944;
   cursor: pointer;
@@ -48,45 +40,19 @@
   box-shadow: 5px 8px 0 #09070d, 0 0 24px #9a74ee77;
 }
 
-.trainer-guide-cover-small {
-  display: block;
-  margin-top: 7px;
-  font-size: 8px;
-  letter-spacing: .12em;
-  opacity: .75;
-  text-transform: uppercase;
-}
-
-.trainer-guide-cover-title {
-  display: block;
-  margin-top: 8px;
-  font-size: 22px;
-  line-height: .85;
-  font-weight: 1000;
-}
-
-.trainer-guide-cover-subtitle {
-  display: block;
-  margin-top: 4px;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: .12em;
-}
-
-.trainer-guide-cover-star {
-  display: block;
-  margin-top: 7px;
-  font-size: 10px;
-  opacity: .8;
-}
+.trainer-guide-cover-small { display:block; margin-top:7px; font-size:8px; letter-spacing:.12em; opacity:.75; text-transform:uppercase; }
+.trainer-guide-cover-title { display:block; margin-top:8px; font-size:22px; line-height:.85; font-weight:1000; }
+.trainer-guide-cover-subtitle { display:block; margin-top:4px; font-size:10px; font-weight:900; letter-spacing:.12em; }
+.trainer-guide-cover-star { display:block; margin-top:7px; font-size:10px; opacity:.8; }
 
 .trainer-guide-spread {
-  position: absolute;
+  position: fixed;
+  z-index: 1000;
   top: 50%;
-  right: 0;
-  width: 430px;
+  left: 50%;
+  width: min(520px, calc(100vw - 32px));
   min-height: 250px;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid #6e5b42;
@@ -98,158 +64,45 @@
   animation: trainerGuideOpen .22s ease-out both;
 }
 
-.trainer-guide-page {
-  position: relative;
-  min-width: 0;
-  padding: 28px 25px 48px;
-  background:
-    linear-gradient(90deg, #c1ac83aa, transparent 12px),
-    linear-gradient(180deg, #ead9b6, #d8c59f);
-  box-shadow: inset 0 0 0 1px #ffffff33;
-}
-
-.trainer-guide-page + .trainer-guide-page {
-  border-left: 2px solid #a28d69;
-  box-shadow: inset 10px 0 14px #7e694322, inset 0 0 0 1px #ffffff33;
-}
-
-.trainer-guide-page::after {
+.trainer-guide-spread::before {
   content: "";
   position: absolute;
-  inset: 12px;
-  border: 1px solid #806c4c55;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #806b4b, #f1dfb9 48%, #806b4b);
+  opacity: .8;
   pointer-events: none;
 }
 
-.trainer-guide-kicker {
-  position: relative;
-  z-index: 1;
-  margin: 0 0 10px;
-  color: #756143;
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-}
-
-.trainer-guide-heading {
-  position: relative;
-  z-index: 1;
-  margin: 0 0 15px;
-  color: #34291c;
-  font-size: 21px;
-  line-height: .95;
-  font-weight: 1000;
-}
-
-.trainer-guide-text {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  font-family: Georgia, serif;
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.trainer-guide-mark {
-  position: absolute;
-  right: 23px;
-  bottom: 22px;
-  color: #826b48;
-  font-size: 26px;
-  opacity: .55;
-}
-
-.trainer-guide-close {
-  position: absolute;
-  z-index: 5;
-  top: 7px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border: 1px solid #8a7655;
-  border-radius: 50%;
-  background: #cbb58b;
-  color: #463a29;
-  font: 700 16px/20px Georgia, serif;
-  cursor: pointer;
-}
-
-.trainer-guide-close:hover {
-  background: #e6d3ad;
-}
-
-.trainer-guide-controls {
-  position: absolute;
-  z-index: 5;
-  left: 0;
-  right: 0;
-  bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-size: 10px;
-  color: #68553a;
-}
-
-.trainer-guide-controls button {
-  width: 25px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid #8a7655;
-  border-radius: 4px;
-  background: #cbb58b;
-  color: #463a29;
-  font: 700 18px/18px Georgia, serif;
-  cursor: pointer;
-}
-
-.trainer-guide-controls button:disabled {
-  opacity: .35;
-  cursor: default;
-}
+.trainer-guide-page { position:relative; min-width:0; min-height:250px; padding:28px 25px 48px; background:linear-gradient(90deg,#c1ac83aa,transparent 12px),linear-gradient(180deg,#ead9b6,#d8c59f); box-shadow:inset 0 0 0 1px #ffffff33; }
+.trainer-guide-page + .trainer-guide-page { box-shadow:inset -10px 0 14px #7e694322, inset 0 0 0 1px #ffffff33; }
+.trainer-guide-page::after { content:""; position:absolute; inset:12px; border:1px solid #806c4c55; pointer-events:none; }
+.trainer-guide-kicker { position:relative; z-index:1; margin:0 0 10px; color:#756143; font-size:9px; font-weight:900; letter-spacing:.18em; text-transform:uppercase; }
+.trainer-guide-heading { position:relative; z-index:1; margin:0 0 15px; color:#34291c; font-size:21px; line-height:.95; font-weight:1000; }
+.trainer-guide-text { position:relative; z-index:1; margin:0; font-family:Georgia,serif; font-size:13px; line-height:1.55; }
+.trainer-guide-mark { position:absolute; right:23px; bottom:22px; color:#826b48; font-size:26px; opacity:.55; }
+.trainer-guide-close { position:absolute; z-index:5; top:7px; right:8px; width:24px; height:24px; border:1px solid #8a7655; border-radius:50%; background:#cbb58b; color:#463a29; font:700 16px/20px Georgia,serif; cursor:pointer; }
+.trainer-guide-close:hover { background:#e6d3ad; }
+.trainer-guide-controls { position:absolute; z-index:5; left:0; right:0; bottom:8px; display:flex; align-items:center; justify-content:center; gap:12px; font-size:10px; color:#68553a; }
+.trainer-guide-controls button { width:25px; height:22px; padding:0; border:1px solid #8a7655; border-radius:4px; background:#cbb58b; color:#463a29; font:700 18px/18px Georgia,serif; cursor:pointer; }
+.trainer-guide-controls button:disabled { opacity:.35; cursor:default; }
 
 @keyframes trainerGuideOpen {
-  from { opacity: 0; transform: translateY(-50%) scale(.88); }
-  to { opacity: 1; transform: translateY(-50%) scale(1); }
+  from { opacity:0; transform:translate(-50%,-50%) scale(.88); }
+  to { opacity:1; transform:translate(-50%,-50%) scale(1); }
 }
 
 @media (max-width: 850px) {
-  .trainer-guide-book {
-    position: relative;
-    top: auto;
-    right: auto;
-    width: 78px;
-    height: 96px;
-    transform: none;
-    margin: 2px auto 0;
-  }
-
-  .trainer-guide-spread {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    right: auto;
-    width: min(430px, calc(100vw - 28px));
-    max-height: calc(100vh - 40px);
-    transform: translate(-50%, -50%);
-    overflow: auto;
-  }
-
-  @keyframes trainerGuideOpen {
-    from { opacity: 0; transform: translate(-50%, -50%) scale(.88); }
-    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  }
+  .trainer-guide-book { margin:2px auto 0; }
 }
 
 @media (max-width: 500px) {
-  .trainer-guide-spread {
-    grid-template-columns: 1fr;
-  }
-
-  .trainer-guide-page + .trainer-guide-page {
-    border-left: 0;
-    border-top: 2px solid #a28d69;
-  }
+  .trainer-guide-spread { grid-template-columns:1fr; max-height:calc(100vh - 28px); overflow:auto; }
+  .trainer-guide-spread::before { display:none; }
+  .trainer-guide-page { min-height:210px; }
+  .trainer-guide-page + .trainer-guide-page { border-top:2px solid #a28d69; }
 }
