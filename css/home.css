@@ -17,8 +17,10 @@
 }
 
 .graffiti-svg {
-  width: 200px;
+  width: 300px;
   height: 60px;
+  display: block;
+  overflow: visible;
 }
 
 .graffiti-text {
@@ -429,8 +431,8 @@
   }
   
   .graffiti-svg {
-    width: 150px;
-    height: 45px;
+    width: 240px;
+    height: 48px;
   }
   
   .graffiti-text,
