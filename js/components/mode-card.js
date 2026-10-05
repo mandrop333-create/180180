@@ -6,7 +6,7 @@ import { modes } from '../modes/modes.js';
 /**
  * Render all mode cards into the specified container
  * @param {HTMLElement} container - Container element to render cards into
- * @param {Function} onModeSelect - Callback when a mode is selected
+ * @param {Function} onModeSelect - Callback when an active mode is selected
  */
 export function renderModeCards(container, onModeSelect) {
   if (!container) return;
@@ -15,18 +15,35 @@ export function renderModeCards(container, onModeSelect) {
   
   modes.forEach(mode => {
     const card = document.createElement('div');
-    card.className = 'mode-card';
+    const isAvailable = mode.number === 1;
+    
+    card.className = `mode-card${isAvailable ? '' : ' mode-card-locked'}`;
     card.dataset.mode = mode.number;
     card.dataset.modeId = mode.id;
     
-    card.innerHTML = `
-      <span class="mode-number">${mode.number}</span>
-      <h3 class="mode-name">${mode.name}</h3>
-      <p class="mode-description">${mode.description}</p>
-      <div class="mode-preview" aria-hidden="true"></div>
-    `;
+    if (isAvailable) {
+      card.innerHTML = `
+        <span class="mode-number">${mode.number}</span>
+        <h3 class="mode-name">${mode.name}</h3>
+        <p class="mode-description">${mode.description}</p>
+        <div class="mode-preview" aria-hidden="true"></div>
+      `;
+    } else {
+      card.setAttribute('aria-label', `Mode ${mode.number} coming soon`);
+      card.innerHTML = `
+        <span class="mode-number">${mode.number}</span>
+        <div class="mode-question" aria-hidden="true">?</div>
+      `;
+    }
     
     card.addEventListener('click', () => {
+      if (!isAvailable) {
+        card.classList.remove('mode-card-shake');
+        void card.offsetWidth;
+        card.classList.add('mode-card-shake');
+        return;
+      }
+      
       if (onModeSelect) {
         onModeSelect(mode);
       }
