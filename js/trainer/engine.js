@@ -134,6 +134,7 @@ export class Trainer {
   }
 
   startHalfTurn(old) {
+    this.anim = {};
     startHalfTurn(old, this.boardEl, this.anim, this.depth, this.cellsFor, NS, () => this.render());
   }
 
