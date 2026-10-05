@@ -10,7 +10,15 @@ export const baseRules = Object.freeze({
   das: 127,
   arr: 0,
   softFactors,
-  clearBoardAfterPlace: false
+  clearBoardAfterPlace: false,
+  scoring: {
+    single: 100,
+    double: 300,
+    triple: 500,
+    tetris: 800,
+    softDropPerRow: 1,
+    hardDropPerRow: 2
+  }
 });
 
 export function createMode({
