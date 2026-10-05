@@ -90,7 +90,7 @@ function appendPieceGeometry(root, shape, depthPx, NS, { frontGradient = ACTIVE_
 
 export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS) {
   pieceSvg.replaceChildren();
-  if (!piece || anim) return;
+  if (!piece || anim?.layer) return;
 
   const pitch = CELL_PITCH;
   const depthPx = depth * 12;
@@ -119,7 +119,7 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
     }
   }
 
-  if (piece && !anim) {
+  if (piece && !anim?.layer) {
     let gy = piece.y;
     while (!collides(piece.x, gy + 1, piece.o, piece.type)) gy++;
     for (const [cx, cy] of cellsFor(piece.type, piece.o)) {
@@ -143,6 +143,7 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   const BOX_SIZE = 4 * CELL_PITCH;
   const oldShape = cellsFor(old.type, old.o);
   const nextShape = cellsFor(next.type, next.o);
+  const depthPx = Math.max(0, depth) * 16;
 
   const layer = document.createElement('div');
   layer.className = 'turn-layer playing';
@@ -150,7 +151,7 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   layer.style.top = (old.y * CELL_PITCH) + 'px';
   layer.style.width = BOX_SIZE + 'px';
   layer.style.height = BOX_SIZE + 'px';
-  layer.style.setProperty('--turn-depth', '0px');
+  layer.style.setProperty('--turn-depth', depthPx + 'px');
   layer.style.setProperty('--turn-perspective', (650 - depth * 250) + 'px');
   const shiftX = (next.x - old.x) * CELL_PITCH;
   const shiftY = (next.y - old.y) * CELL_PITCH;
@@ -167,32 +168,33 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   scene.style.height = BOX_SIZE + 'px';
   scene.style.transformOrigin = '50% ' + pivotPx + 'px';
 
-  const front = document.createElementNS(NS, 'svg');
-  front.setAttribute('viewBox', '0 0 ' + BOX_SIZE + ' ' + BOX_SIZE);
-  front.setAttribute('width', String(BOX_SIZE));
-  front.setAttribute('height', String(BOX_SIZE));
-  front.classList.add('turn-face', 'turn-front');
+  const makeFace = (className, shape, gradient, transform) => {
+    const face = document.createElement('div');
+    face.className = 'turn-face ' + className;
+    face.style.width = BOX_SIZE + 'px';
+    face.style.height = BOX_SIZE + 'px';
+    face.style.transform = transform;
 
-  const defs = svgEl('defs', {}, '', NS);
-  addGradient(defs, TURN_FRONT_GRADIENT, [
-    { offset: '0%', color: '#d2caff' },
-    { offset: '55%', color: '#a899ff' },
-    { offset: '100%', color: '#7664e8' }
-  ], NS);
-  front.append(defs);
-  appendPieceGeometry(front, oldShape, 0, NS, {
-    frontGradient: TURN_FRONT_GRADIENT
-  });
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + BOX_SIZE + ' ' + BOX_SIZE);
+    svg.setAttribute('width', String(BOX_SIZE));
+    svg.setAttribute('height', String(BOX_SIZE));
+    svg.setAttribute('aria-hidden', 'true');
 
-  const back = document.createElementNS(NS, 'svg');
-  back.setAttribute('viewBox', '0 0 ' + BOX_SIZE + ' ' + BOX_SIZE);
-  back.setAttribute('width', String(BOX_SIZE));
-  back.setAttribute('height', String(BOX_SIZE));
-  back.classList.add('turn-face', 'turn-back');
+    const defs = svgEl('defs', {}, '', NS);
+    addGradient(defs, gradient, [
+      { offset: '0%', color: '#d2caff' },
+      { offset: '55%', color: '#a899ff' },
+      { offset: '100%', color: '#7664e8' }
+    ], NS);
+    svg.append(defs);
+    appendPieceGeometry(svg, shape, depthPx, NS, { frontGradient: gradient });
+    face.append(svg);
+    return face;
+  };
 
-  appendPieceGeometry(back, nextShape, 0, NS, {
-    frontGradient: TURN_BACK_GRADIENT
-  });
+  const front = makeFace('turn-front', oldShape, TURN_FRONT_GRADIENT, 'translateZ(calc(var(--turn-depth) * .5))');
+  const back = makeFace('turn-back', nextShape, TURN_BACK_GRADIENT, 'rotateX(180deg) translateZ(calc(var(--turn-depth) * .5))');
 
   scene.append(front, back);
   layer.append(scene);
