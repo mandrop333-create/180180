@@ -3,7 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>180180 — Half-turn trainer</title>
+<title>180180 — Tetris 180° Rotation Trainer</title>
+<meta name="description" content="Practice 180° Tetris rotation with 180180, a dedicated visual rotation and piece orientation trainer.">
+<meta name="application-name" content="180180">
+<meta name="theme-color" content="#101014">
+<meta property="og:type" content="website">
+<meta property="og:title" content="180180 — Tetris 180° Rotation Trainer">
+<meta property="og:description" content="Practice 180° Tetris rotation with a dedicated visual rotation and piece orientation trainer.">
+<meta property="og:site_name" content="180180">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="180180 — Tetris 180° Rotation Trainer">
+<meta name="twitter:description" content="Practice 180° Tetris rotation with a dedicated visual rotation and piece orientation trainer.">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","@id":"#application","name":"180180","description":"A free web-based Tetris training application focused on 180° rotation, visual rotation, and piece orientation practice.","applicationCategory":"EducationalApplication","applicationSubCategory":"Tetris rotation training","featureList":["180° rotation practice","Visual rotation training","Piece orientation practice","Configurable training settings"],"operatingSystem":"Any","browserRequirements":"Requires a modern web browser"},{"@type":"WebPage","@id":"#trainer-page","name":"180180 — Tetris 180° Rotation Trainer","description":"Practice 180° Tetris rotation with a dedicated visual rotation and piece orientation trainer.","mainEntity":{"@id":"#application"}}]}</script>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/trainer.css">
 <link rel="stylesheet" href="css/trainer-guide-book.css">
@@ -19,11 +30,11 @@
     <div class="trainer-actions"><button id="reset" class="trainer-restart" type="button">Restart</button></div>
   </header>
   <main class="layout">
-    <aside class="concept" aria-label="Finesse concept sketch"><div class="bonus-meter" id="bonusMeter" aria-label="180 Flip bonus"><div class="bonus-topline"><span class="bonus-label">180 BOOST</span></div><div class="bonus-vessel"><div class="bonus-liquid" id="bonusLiquid"></div><div class="bonus-glint"></div><div class="bonus-number" id="bonusNumber">0</div></div></div><img src="assets/180180_finesse_sketch.jpg" alt="Hand-drawn sketch comparing a 2D rotation with a 3D flip"><p>finesse requires the brain to remap its visual process</p></aside>
+    <aside class="concept" aria-label="180° rotation training concept"><div class="bonus-meter" id="bonusMeter" aria-label="180 Flip bonus"><div class="bonus-topline"><span class="bonus-label">180 BOOST</span></div><div class="bonus-vessel"><div class="bonus-liquid" id="bonusLiquid"></div><div class="bonus-glint"></div><div class="bonus-number" id="bonusNumber">0</div></div></div><img src="assets/180180_finesse_sketch.jpg" alt="Hand-drawn sketch comparing a 2D rotation with a 3D flip"><p>finesse requires the brain to remap its visual process</p></aside>
     <div class="trainer-main">
-      <section class="play-panel" aria-label="Tetris practice">
+      <section class="play-panel" aria-label="Tetris 180° rotation practice">
         <div class="playfield-stage">
-          <div class="board-wrap"><div class="board" id="board" aria-label="Tetris practice board"></div></div>
+          <div class="board-wrap"><div class="board" id="board" aria-label="Tetris 180° rotation practice board"></div></div>
 
           <div class="trainer-guide-book" data-trainer-guide-book aria-expanded="false"><button class="trainer-guide-cover" type="button" data-guide-cover aria-label="Open 180 Flip guide"><span class="trainer-guide-cover-small">guide</span><span class="trainer-guide-cover-title">180</span><span class="trainer-guide-cover-subtitle">FLIP</span><span class="trainer-guide-cover-sigil" aria-hidden="true"></span></button><div class="trainer-guide-spread" data-guide-spread hidden><button class="trainer-guide-close" type="button" data-guide-close aria-label="Close guide">×</button><article class="trainer-guide-page"><p class="trainer-guide-kicker">180 practice</p><h2 class="trainer-guide-heading">180 FLIP</h2><p class="trainer-guide-text">180 flip is designed to process the illusion of visual rotation on a different axis.</p><span class="trainer-guide-mark-sigil" aria-hidden="true"></span></article><article class="trainer-guide-page"><p class="trainer-guide-kicker">the exercise</p><p class="trainer-guide-text">You will naturally use a 2d axis to rotate around instead of 3d for a flip. Start with the scaler at max 3d and slowly decrease it, play the mode until the piece feels like it is flipping not rotating twice.</p></article></div></div>
 
