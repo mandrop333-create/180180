@@ -110,7 +110,7 @@ export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS
   appendPieceGeometry(pieceSvg, shape, depthPx, NS);
 }
 
-export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides, depth) {
+export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides, depth, shadowOpacity = .6, shadowBrightness = 1) {
   const all = Array(H * W).fill('');
 
   for (let y = 0; y < H; y++) {
@@ -135,6 +135,8 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
 
   document.documentElement.style.setProperty('--depth', (depth * 12) + 'px');
   document.documentElement.style.setProperty('--depth-factor', depth);
+  document.documentElement.style.setProperty('--shadow-opacity', shadowOpacity);
+  document.documentElement.style.setProperty('--shadow-brightness', shadowBrightness);
 
   cells.forEach((el, i) => {
     el.className = 'cell' + (all[i] ? ' ' + all[i] : '');
