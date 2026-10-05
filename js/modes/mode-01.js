@@ -11,7 +11,8 @@ function createSession(){
     substitutionCount:0,
     successful180s:0,
     rotationHistory:null,
-    lastTrainingEventAt:0
+    lastTrainingEventAt:0,
+    bonusBreakToken:0
   };
 }
 
@@ -57,7 +58,7 @@ const hooks={
       setBonus(session,0);
       clearRotationHistory(session);
       session.lastTrainingEventAt=now;
-      trainer.hook('bonusBreak',session.substitutionCount);
+      session.bonusBreakToken++;
       return;
     }
 
