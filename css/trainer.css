@@ -111,6 +111,7 @@
   background: #111016;
   perspective: 700px;
   perspective-origin: 50% 50%;
+  overflow: visible;
 }
 
 .active-piece-svg {
@@ -124,98 +125,90 @@
   height: 100%;
 }
 
-.active-piece-svg .side-face {
+.active-piece-svg .side-face,
+.turn-face .side-face {
   fill: #59458e;
   stroke: #44336e;
   stroke-width: .8;
   stroke-linejoin: round;
 }
 
-.active-piece-svg .top-face {
-  fill: #c7b5ff;
-  stroke: #e6dcff;
-  stroke-width: .8;
-  stroke-linejoin: round;
-}
-
-.active-piece-svg .front-face {
-  fill: url(#tFront);
+.active-piece-svg .front-face,
+.turn-face .front-face {
   stroke: #ded0ff;
   stroke-width: 1.15;
   stroke-linejoin: round;
 }
 
-.turn-layer .front-face {
-  fill: url(#turnFront);
-  stroke: #ded0ff;
-  stroke-width: 1.15;
+.turn-face .back-face {
+  stroke: #3b2f78;
+  stroke-width: 1;
   stroke-linejoin: round;
 }
 
-.active-piece-svg .seam {
+.active-piece-svg .seam,
+.turn-face .seam {
   fill: none;
   stroke: #8c72d3;
   stroke-width: .9;
   opacity: .8;
 }
 
-.active-piece-svg .edge-glow {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 1.1;
-  opacity: .42;
-  stroke-linejoin: round;
-}
-
 .turn-layer {
   position: absolute;
   z-index: 5;
   pointer-events: none;
-  transform-origin: center center;
-  display: grid;
-  grid-template-columns: repeat(3, var(--cell));
-  grid-template-rows: repeat(3, var(--cell));
-  gap: 2px;
+  transform-origin: 50% 50%;
+  perspective: var(--turn-perspective);
+  overflow: visible;
   will-change: transform;
 }
 
-.turn-layer .turn-block {
-  position: absolute;
-  width: var(--cell);
-  height: var(--cell);
-  border-radius: 2px;
-  background: linear-gradient(145deg, #c9baff, #987cff);
-  border: 1px solid #e5dcff;
-  box-shadow: inset 0 2px 0 #ffffff4a, calc(var(--depth) * .7) calc(var(--depth) * .7) 0 #6256bf;
+.turn-scene {
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  perspective: var(--turn-perspective);
+  animation: halfFlip var(--turn-duration) cubic-bezier(.2, .82, .2, 1) both;
+  will-change: transform;
 }
 
-.turn-layer.playing {
-  animation: halfFlip 420ms cubic-bezier(.22, .8, .25, 1) both;
-  transform-origin: 50% 50%;
+.turn-face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: visible;
+  backface-visibility: hidden;
   transform-style: preserve-3d;
-  backface-visibility: visible;
-  will-change: transform, filter;
+}
+
+.turn-front {
+  transform: translateZ(calc(var(--turn-depth) * .5));
+}
+
+.turn-back {
+  transform: rotateX(180deg) translateZ(calc(var(--turn-depth) * .5));
 }
 
 @keyframes halfFlip {
   0% {
-    transform: perspective(700px) rotateX(0deg) scale(1);
+    transform: rotateX(0deg) scale(1);
     filter: brightness(1) drop-shadow(0 2px 1px #0003);
   }
-  22% {
-    transform: perspective(700px) rotateX(42deg) scale(.99);
-    filter: brightness(.96) drop-shadow(0 5px 3px #0004);
+  18% {
+    transform: rotateX(42deg) scale(.985);
+    filter: brightness(.93) drop-shadow(0 5px 3px #0004);
   }
-  48% {
-    transform: perspective(700px) rotateX(92deg) scale(.94);
-    filter: brightness(.78) drop-shadow(0 8px 5px #0005);
+  50% {
+    transform: rotateX(90deg) scale(.88);
+    filter: brightness(.58) drop-shadow(0 10px 8px #0006);
   }
   72% {
-    transform: perspective(700px) rotateX(142deg) scale(.98);
-    filter: brightness(.91) drop-shadow(0 5px 3px #0004);
+    transform: rotateX(138deg) scale(.985);
+    filter: brightness(.88) drop-shadow(0 6px 4px #0005);
   }
   100% {
-    transform: perspective(700px) rotateX(180deg) scale(1);
+    transform: rotateX(180deg) scale(1);
     filter: brightness(1) drop-shadow(0 2px 1px #0003);
   }
 }
