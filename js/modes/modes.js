@@ -1,50 +1,31 @@
-// Mode registry and configuration
-// This file will manage the six training modes and their configurations
+// Six mini-games share one Trainer engine.
+// A mode owns only its identity, rules, and optional hooks.
+// The engine owns board state, movement, collision, rotation, timing,
+// rendering, input, and lifecycle.
+
+const baseRules = {
+  width: 10,
+  height: 20,
+  gravity: 800,
+  lockDelay: 500,
+  das: 127,
+  arr: 0,
+  clearBoardAfterPlace: true
+};
+
+const makeMode = (id, number, name, description, color) => ({
+  id, number, name, description, color,
+  rules: { ...baseRules },
+  hooks: {}
+});
 
 export const modes = [
-  {
-    id: 'mode-01',
-    number: 1,
-    name: 'Foundation',
-    description: 'Master the basic 180° rotation and build spatial awareness',
-    color: '#a78bfa',
-    // Future: rules, constraints, scoring, book content, etc.
-  },
-  {
-    id: 'mode-02',
-    number: 2,
-    name: 'Precision',
-    description: 'Train exact piece placement with minimal movement',
-    color: '#818cf8',
-  },
-  {
-    id: 'mode-03',
-    number: 3,
-    name: 'Flow',
-    description: 'Develop smooth transitions between rotations',
-    color: '#67e8f9',
-  },
-  {
-    id: 'mode-04',
-    number: 4,
-    name: 'Speed',
-    description: 'Push your rotation timing under pressure',
-    color: '#f472b6',
-  },
-  {
-    id: 'mode-05',
-    number: 5,
-    name: 'Pattern',
-    description: 'Recognize and execute complex rotation sequences',
-    color: '#fb923c',
-  },
-  {
-    id: 'mode-06',
-    number: 6,
-    name: 'Mastery',
-    description: 'Combine all skills into flawless execution',
-    color: '#4ade80',
-  },
+  makeMode('mode-01', 1, 'Foundation', 'Master the basic 180° rotation and build spatial awareness', '#a78bfa'),
+  makeMode('mode-02', 2, 'Precision', 'Train exact piece placement with minimal movement', '#818cf8'),
+  makeMode('mode-03', 3, 'Flow', 'Develop smooth transitions between rotations', '#67e8f9'),
+  makeMode('mode-04', 4, 'Speed', 'Push your rotation timing under pressure', '#f472b6'),
+  makeMode('mode-05', 5, 'Pattern', 'Recognize and execute complex rotation sequences', '#fb923c'),
+  makeMode('mode-06', 6, 'Mastery', 'Combine all skills into flawless execution', '#4ade80')
 ];
 
 export function getModeById(id) {
