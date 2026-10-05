@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>180 Practice — Tetris Training</title>
 <link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="css/home.css?v=flawless-full">
 </head>
 <body>
 <div class="home-container">
   <!-- FLAWLESS graffiti -->
   <div class="flawless-graffiti">
-    <svg viewBox="0 0 300 60" class="graffiti-svg">
+    <svg viewBox="0 0 300 60" class="graffiti-svg" preserveAspectRatio="xMaxYMin meet">
       <defs>
         <filter id="spray">
           <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" result="noise"/>
@@ -22,13 +22,13 @@
           <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" yChannelSelector="R"/>
         </filter>
       </defs>
-      <text x="10" y="45" filter="url(#spray)" class="graffiti-text">FLAWLESS</text>
-      <text x="12" y="47" filter="url(#drip)" class="graffiti-text-2">FLAWLESS</text>
+      <text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" filter="url(#spray)" class="graffiti-text">FLAWLESS</text>
+      <text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" filter="url(#drip)" class="graffiti-text-2">FLAWLESS</text>
       <!-- Drips -->
-      <ellipse cx="55" cy="55" rx="3" ry="8" class="drip"/>
+      <ellipse cx="45" cy="55" rx="3" ry="8" class="drip"/>
       <ellipse cx="105" cy="58" rx="2" ry="6" class="drip"/>
-      <ellipse cx="155" cy="56" rx="2.5" ry="7" class="drip"/>
-      <ellipse cx="215" cy="54" rx="3" ry="5" class="drip"/>
+      <ellipse cx="165" cy="56" rx="2.5" ry="7" class="drip"/>
+      <ellipse cx="225" cy="54" rx="3" ry="5" class="drip"/>
     </svg>
   </div>
 
