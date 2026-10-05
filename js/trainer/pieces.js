@@ -1,45 +1,52 @@
-// Piece definitions and rotation logic
-// Currently T-piece only, but structured for future expansion to all 7 pieces
+// Tetromino definitions and orientation geometry.
 
-/**
- * Get cell coordinates for a piece at a given orientation
- * @param {number} o - Orientation (0=spawn/up, 1=right, 2=180°, 3=left)
- * @returns {Array<Array<number>>} Array of [x, y] coordinates relative to pivot
- */
-export function cellsFor(o) {
-  // 3x3 pivot-centered T, orientations are quarter-turns from spawn-up
-  const base = [[0, 1], [1, 1], [2, 1], [1, 0]];
-  return base.map(([x, y]) => {
-    let a = x - 1, b = y - 1;
-    for (let i = 0; i < o; i++) {
-      [a, b] = [-b, a];
-    }
-    return [a + 1, b + 1];
-  });
+export const PIECE_TYPES = Object.freeze(['I', 'O', 'T', 'S', 'Z', 'J', 'L']);
+
+const DEFINITIONS = {
+  I: { spawn:{x:3,y:0}, cells:[
+    [[0,1],[1,1],[2,1],[3,1]], [[2,0],[2,1],[2,2],[2,3]],
+    [[0,2],[1,2],[2,2],[3,2]], [[1,0],[1,1],[1,2],[1,3]]
+  ]},
+  O: { spawn:{x:4,y:0}, cells:[
+    [[0,0],[1,0],[0,1],[1,1]], [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]], [[0,0],[1,0],[0,1],[1,1]]
+  ]},
+  T: { spawn:{x:3,y:0}, cells:[
+    [[1,0],[0,1],[1,1],[2,1]], [[1,0],[1,1],[2,1],[1,2]],
+    [[0,1],[1,1],[2,1],[1,2]], [[1,0],[0,1],[1,1],[1,2]]
+  ]},
+  S: { spawn:{x:3,y:0}, cells:[
+    [[1,0],[2,0],[0,1],[1,1]], [[1,0],[1,1],[2,1],[2,2]],
+    [[1,1],[2,1],[0,2],[1,2]], [[0,0],[0,1],[1,1],[1,2]]
+  ]},
+  Z: { spawn:{x:3,y:0}, cells:[
+    [[0,0],[1,0],[1,1],[2,1]], [[2,0],[1,1],[2,1],[1,2]],
+    [[0,1],[1,1],[1,2],[2,2]], [[1,0],[0,1],[1,1],[0,2]]
+  ]},
+  J: { spawn:{x:3,y:0}, cells:[
+    [[0,0],[0,1],[1,1],[2,1]], [[1,0],[2,0],[1,1],[1,2]],
+    [[0,1],[1,1],[2,1],[2,2]], [[1,0],[1,1],[0,2],[1,2]]
+  ]},
+  L: { spawn:{x:3,y:0}, cells:[
+    [[2,0],[0,1],[1,1],[2,1]], [[1,0],[1,1],[1,2],[2,2]],
+    [[0,1],[1,1],[2,1],[0,2]], [[0,0],[1,0],[1,1],[1,2]]
+  ]}
+};
+
+export function getPieceDefinition(type) {
+  return DEFINITIONS[type] || DEFINITIONS.T;
 }
 
-/**
- * Calculate target orientation for a rotation
- * @param {number} from - Current orientation
- * @param {number} delta - Rotation delta (1=CW, -1=CCW, 2=180°, -2=180°)
- * @returns {number} Target orientation (0-3)
- */
+export function cellsFor(type, orientation = 0) {
+  const definition = getPieceDefinition(type);
+  return definition.cells[((orientation % 4) + 4) % 4].map(([x,y]) => [x,y]);
+}
+
+export function spawnFor(type) {
+  const definition = getPieceDefinition(type);
+  return { type, x: definition.spawn.x, y: definition.spawn.y, o: 0 };
+}
+
 export function targetOrientation(from, delta) {
-  // A 180 input is a single direct orientation transition: 0↔2 or R↔L.
-  // It is never implemented by invoking CW/CCW twice.
   return (from + (delta === 2 || delta === -2 ? 2 : delta) + 4) % 4;
-}
-
-/**
- * Get kick table for a rotation
- * @param {number} delta - Rotation delta
- * @returns {Array<Array<number>>} Array of [dx, dy] kick offsets
- */
-export function getKicks(delta) {
-  // TETR.IO-inspired direct half-turn: test offsets as a single transition.
-  // The 180 list is deliberately conservative; verify against official kick diagram before claiming exact parity.
-  if (delta === 2 || delta === -2) {
-    return [[0, 0], [0, -1], [1, 0], [-1, 0], [0, 1], [1, -1], [-1, -1], [2, 0], [-2, 0]];
-  }
-  return [[0, 0], [0, -1], [1, 0], [-1, 0], [0, 1], [1, -1], [-1, -1]];
 }
