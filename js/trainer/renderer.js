@@ -137,13 +137,12 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
   });
 }
 
-export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onRender) {
-  if (anim?.layer) anim.layer.remove();
-
+export function startHalfTurn(animation, boardEl, cellsFor, NS, onRender) {
+  const old = animation.from;
+  const next = animation.to;
   const BOX_SIZE = 4 * CELL_PITCH;
   const oldShape = cellsFor(old.type, old.o);
   const nextShape = cellsFor(next.type, next.o);
-  const depthPx = Math.max(0, depth) * 16;
 
   const layer = document.createElement('div');
   layer.className = 'turn-layer playing';
@@ -151,13 +150,9 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   layer.style.top = (old.y * CELL_PITCH) + 'px';
   layer.style.width = BOX_SIZE + 'px';
   layer.style.height = BOX_SIZE + 'px';
-  layer.style.setProperty('--turn-depth', depthPx + 'px');
-  layer.style.setProperty('--turn-perspective', (650 - depth * 250) + 'px');
-  const shiftX = (next.x - old.x) * CELL_PITCH;
-  const shiftY = (next.y - old.y) * CELL_PITCH;
-  layer.style.setProperty('--turn-shift-x', shiftX + 'px');
-  layer.style.setProperty('--turn-shift-y', shiftY + 'px');
-  layer.style.setProperty('--turn-duration', '420ms');
+  layer.style.setProperty('--turn-shift-x', ((next.x - old.x) * CELL_PITCH) + 'px');
+  layer.style.setProperty('--turn-shift-y', ((next.y - old.y) * CELL_PITCH) + 'px');
+  layer.style.setProperty('--turn-duration', animation.duration + 'ms');
 
   const pivotY = old.type === 'I' ? 1.5 : old.type === 'O' ? 0.5 : 1;
   const pivotPx = pivotY * CELL_PITCH + CELL_PITCH * .5;
@@ -188,27 +183,25 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
       { offset: '100%', color: '#7664e8' }
     ], NS);
     svg.append(defs);
-    appendPieceGeometry(svg, shape, depthPx, NS, { frontGradient: gradient });
+    appendPieceGeometry(svg, shape, 0, NS, { frontGradient: gradient });
     face.append(svg);
     return face;
   };
 
-  const front = makeFace('turn-front', oldShape, TURN_FRONT_GRADIENT, 'translateZ(calc(var(--turn-depth) * .5))');
-  const back = makeFace('turn-back', nextShape, TURN_BACK_GRADIENT, 'rotateX(180deg) translateZ(calc(var(--turn-depth) * .5))');
+  const front = makeFace('turn-front', oldShape, TURN_FRONT_GRADIENT, 'translateZ(1px)');
+  const back = makeFace('turn-back', nextShape, TURN_BACK_GRADIENT, 'rotateX(180deg) translateZ(1px)');
 
   scene.append(front, back);
   layer.append(scene);
   boardEl.appendChild(layer);
 
-  anim.layer = layer;
-  anim.until = performance.now() + 440;
+  animation.layer = layer;
+  animation.started = performance.now();
 
-  scene.addEventListener('animationend', () => {
+  scene.addEventListener('animationend', event => {
+    if (event.animationName !== 'halfFlip') return;
     if (layer.isConnected) layer.remove();
-    if (anim.layer === layer) {
-      anim.layer = null;
-      anim.until = null;
-    }
+    if (animation.layer === layer) animation.layer = null;
     if (onRender) onRender();
   }, { once: true });
 }
