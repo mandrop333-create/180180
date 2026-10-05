@@ -140,13 +140,9 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
 export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onRender) {
   if (anim?.layer) anim.layer.remove();
 
-  // Keep the entire SRS coordinate box fixed during the flip. The existing
-  // piece definitions use that box, so the front and back faces stay aligned
-  // with the same rotation center instead of rotating a bounding-box crop.
   const BOX_SIZE = 4 * CELL_PITCH;
   const oldShape = cellsFor(old.type, old.o);
   const nextShape = cellsFor(next.type, next.o);
-  const depthPx = Math.max(0, depth) * 16;
 
   const layer = document.createElement('div');
   layer.className = 'turn-layer playing';
@@ -154,7 +150,7 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   layer.style.top = (old.y * CELL_PITCH) + 'px';
   layer.style.width = BOX_SIZE + 'px';
   layer.style.height = BOX_SIZE + 'px';
-  layer.style.setProperty('--turn-depth', depthPx + 'px');
+  layer.style.setProperty('--turn-depth', '0px');
   layer.style.setProperty('--turn-perspective', (650 - depth * 250) + 'px');
   const shiftX = (next.x - old.x) * CELL_PITCH;
   const shiftY = (next.y - old.y) * CELL_PITCH;
@@ -162,17 +158,14 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   layer.style.setProperty('--turn-shift-y', shiftY + 'px');
   layer.style.setProperty('--turn-duration', '420ms');
 
-  // SRS rotation centers: JLSTZ rotate around the center of the (1,1) mino;
-  // I rotates around the 1.5,1.5 grid intersection. O is visually invariant.
   const pivotY = old.type === 'I' ? 1.5 : old.type === 'O' ? 0.5 : 1;
-  layer.style.setProperty('--turn-origin-y', (pivotY * CELL_PITCH + CELL_PITCH * .5) + 'px');
+  const pivotPx = pivotY * CELL_PITCH + CELL_PITCH * .5;
 
   const scene = document.createElement('div');
   scene.className = 'turn-scene';
   scene.style.width = BOX_SIZE + 'px';
   scene.style.height = BOX_SIZE + 'px';
-  scene.style.setProperty('--turn-depth', depthPx + 'px');
-  scene.style.setProperty('--turn-perspective', (650 - depth * 250) + 'px');
+  scene.style.transformOrigin = '50% ' + pivotPx + 'px';
 
   const front = document.createElementNS(NS, 'svg');
   front.setAttribute('viewBox', '0 0 ' + BOX_SIZE + ' ' + BOX_SIZE);
@@ -187,7 +180,7 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
     { offset: '100%', color: '#7664e8' }
   ], NS);
   front.append(defs);
-  appendPieceGeometry(front, oldShape, depthPx, NS, {
+  appendPieceGeometry(front, oldShape, 0, NS, {
     frontGradient: TURN_FRONT_GRADIENT
   });
 
@@ -197,9 +190,7 @@ export function startHalfTurn(old, next, boardEl, anim, depth, cellsFor, NS, onR
   back.setAttribute('height', String(BOX_SIZE));
   back.classList.add('turn-face', 'turn-back');
 
-  // The back is the actual target orientation. This is the key flip-card rule:
-  // pre-rotate the back face 180deg, then rotate the scene 180deg to reveal it.
-  appendPieceGeometry(back, nextShape, depthPx, NS, {
+  appendPieceGeometry(back, nextShape, 0, NS, {
     frontGradient: TURN_BACK_GRADIENT
   });
 
