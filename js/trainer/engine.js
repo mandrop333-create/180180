@@ -20,7 +20,7 @@ export class Trainer {
     this.board=[];this.piece=null;this.generator=options.generator||(this.mode.createGenerator?this.mode.createGenerator({seed:options.seed}):new SevenBagGenerator({seed:options.seed}));
     this.turns=0;this.placed=0;this.lines=0;this.stats={piecesPlaced:0,linesCleared:0,rotations:0,hardDropRows:0,softDropRows:0,score:0};this.gameOver=false;
     this.session=this.mode.createSession?this.mode.createSession():{};this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.anim=null;this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0};
-    this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.init();
+    this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.cells=[];this.pieceSvg=null;this.toastCallback=null;if(!options.deferInit)this.init();
   }
   hook(name,...args){const fn=this.mode.hooks?.[name];return typeof fn==='function'?fn(this,...args):undefined;}
   init(){this.pieceSvg=document.createElementNS(NS,'svg');this.pieceSvg.setAttribute('class','active-piece-svg');this.pieceSvg.setAttribute('width','100%');this.pieceSvg.setAttribute('height','100%');this.pieceSvg.setAttribute('aria-hidden','true');this.boardEl.appendChild(this.pieceSvg);for(let y=0;y<this.H;y++)for(let x=0;x<this.W;x++){const el=document.createElement('div');el.className='cell';this.boardEl.appendChild(el);this.cells.push(el);}this.emptyBoard();this.hook('init');this.spawn();}
