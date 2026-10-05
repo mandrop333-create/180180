@@ -32,8 +32,8 @@ const hooks = {
     });
   },
 
-  place(trainer) {
-    onBonusPlace(trainer.session);
+  place(trainer, lockedPiece, cleared, boards) {
+    onBonusPlace(trainer.session, trainer, lockedPiece, cleared, boards);
   },
 
   reset(trainer) {
