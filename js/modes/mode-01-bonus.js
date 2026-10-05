@@ -95,6 +95,7 @@ export function onPlace(state) {
 }
 
 export function onReset(state) {
+  // Trainer.reset() creates the session and spawns the new piece before
+  // calling this hook, so keep the freshly spawned piece identity intact.
   clearRotationHistory(state);
-  state.currentPieceKey = null;
 }
