@@ -20,6 +20,8 @@ import { getSettings } from './settings.js';
     mode,
     depth: settings.depth,
     softScale: settings.softScale,
+    shadowOpacity: settings.shadowOpacity,
+    shadowBrightness: settings.shadowBrightness,
     das: settings.das,
     arr: settings.arr,
     onTurn: turns => { const el=document.getElementById('turns'); if(el) el.textContent=turns; },
@@ -32,6 +34,8 @@ import { getSettings } from './settings.js';
 
   trainer.depth=settings.depth;
   trainer.softScale=settings.softScale;
+  trainer.shadowOpacity=settings.shadowOpacity;
+  trainer.shadowBrightness=settings.shadowBrightness;
   trainer.rules.das=settings.das;
   trainer.rules.arr=settings.arr;
   trainer.binds={...trainer.binds,...settings.binds};
