@@ -97,7 +97,9 @@
 .trainer-guide-kicker { position:relative; z-index:1; margin:0 0 10px; color:#756143; font-size:9px; font-weight:900; letter-spacing:.18em; text-transform:uppercase; }
 .trainer-guide-heading { position:relative; z-index:1; margin:0 0 15px; color:#34291c; font-size:21px; line-height:.95; font-weight:1000; }
 .trainer-guide-text { position:relative; z-index:1; margin:0; font-family:Georgia,serif; font-size:13px; line-height:1.55; }
-.trainer-guide-mark { position:absolute; right:23px; bottom:22px; color:#826b48; font-size:26px; opacity:.55; }
+.trainer-guide-mark-sigil{position:absolute;right:24px;bottom:22px;width:21px;height:21px;opacity:.58;transform:rotate(-18deg)}
+.trainer-guide-mark-sigil::before{content:"";position:absolute;inset:2px 6px 2px 1px;border:1px solid #826b48;border-right-color:transparent;border-radius:58% 42% 48% 52%;transform:rotate(-28deg);box-shadow:0 0 5px #826b4833}
+.trainer-guide-mark-sigil::after{content:"";position:absolute;width:5px;height:5px;right:0;top:1px;background:#826b48;transform:rotate(45deg);box-shadow:0 0 5px #826b4855}
 .trainer-guide-close { position:absolute; z-index:5; top:7px; right:8px; width:24px; height:24px; border:1px solid #8a7655; border-radius:50%; background:#cbb58b; color:#463a29; font:700 16px/20px Georgia,serif; cursor:pointer; }
 .trainer-guide-close:hover { background:#e6d3ad; }
 .trainer-guide-controls { position:absolute; z-index:5; left:0; right:0; bottom:8px; display:flex; align-items:center; justify-content:center; gap:12px; font-size:10px; color:#68553a; }
