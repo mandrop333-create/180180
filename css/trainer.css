@@ -1,3 +1,58 @@
+.playfield-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.bonus-meter {
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.bonus-label {
+  font: 800 10px ui-monospace, monospace;
+  letter-spacing: .12em;
+  color: #c4a7ff;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.bonus-track {
+  width: 8px;
+  height: 210px;
+  padding: 1px;
+  background: #211e2a;
+  border: 1px solid #51446e;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.bonus-fill {
+  width: 100%;
+  height: 0%;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #c8c1ff, #8d7fff);
+  transition: height 160ms ease;
+}
+
+.bonus-meter.breaking .bonus-fill {
+  animation: bonusBreak 260ms ease;
+}
+
+@keyframes bonusBreak {
+  0% { transform: translateX(0); opacity: 1; }
+  25% { transform: translateX(-3px); opacity: .7; }
+  50% { transform: translateX(3px); opacity: .45; }
+  75% { transform: translateX(-2px); opacity: .7; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
 .back-link {
   position: absolute;
   top: 0;
