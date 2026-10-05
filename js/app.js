@@ -114,7 +114,7 @@ import { getModeById } from './modes/modes.js';
   trainer.updateBindUI();
   window.addEventListener('keydown', (e) => trainer.handleKeydown(e), { passive: false });
   window.addEventListener('keyup', (e) => trainer.handleKeyup(e));
-  window.addEventListener('blur', () => trainer.handleBlur(e));
+  window.addEventListener('blur', () => trainer.handleBlur());
 
   function tick(t) {
     trainer.tick(t);
