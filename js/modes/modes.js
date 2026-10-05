@@ -1,51 +1,14 @@
-// Mode registry and configuration
-// This file will manage the six training modes and their configurations
+// Central registry for the six mini-games.
+// Each mini-game is a mode definition consumed by the same Trainer engine.
 
-export const modes = [
-  {
-    id: 'mode-01',
-    number: 1,
-    name: 'Foundation',
-    description: 'Master the basic 180° rotation and build spatial awareness',
-    color: '#a78bfa',
-    // Future: rules, constraints, scoring, book content, etc.
-  },
-  {
-    id: 'mode-02',
-    number: 2,
-    name: 'Precision',
-    description: 'Train exact piece placement with minimal movement',
-    color: '#818cf8',
-  },
-  {
-    id: 'mode-03',
-    number: 3,
-    name: 'Flow',
-    description: 'Develop smooth transitions between rotations',
-    color: '#67e8f9',
-  },
-  {
-    id: 'mode-04',
-    number: 4,
-    name: 'Speed',
-    description: 'Push your rotation timing under pressure',
-    color: '#f472b6',
-  },
-  {
-    id: 'mode-05',
-    number: 5,
-    name: 'Pattern',
-    description: 'Recognize and execute complex rotation sequences',
-    color: '#fb923c',
-  },
-  {
-    id: 'mode-06',
-    number: 6,
-    name: 'Mastery',
-    description: 'Combine all skills into flawless execution',
-    color: '#4ade80',
-  },
-];
+import mode01 from './mode-01.js';
+import mode02 from './mode-02.js';
+import mode03 from './mode-03.js';
+import mode04 from './mode-04.js';
+import mode05 from './mode-05.js';
+import mode06 from './mode-06.js';
+
+export const modes = [mode01, mode02, mode03, mode04, mode05, mode06];
 
 export function getModeById(id) {
   return modes.find(mode => mode.id === id);

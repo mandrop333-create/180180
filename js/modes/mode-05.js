@@ -1,8 +1,11 @@
-// Mode 5 - Training mode implementation
-// This file will contain the specific rules and configuration for Mode 5
+import { createMode } from './mode-base.js';
 
-export default {
+// Mini-game 5: Pattern
+// Add this mode's training rules/hooks here without touching the core engine.
+export default createMode({
   id: 'mode-05',
-  name: 'Mode 5',
-  // Future: mode-specific rules, constraints, scoring, etc.
-};
+  number: 5,
+  name: 'Pattern',
+  description: 'Recognize and execute complex rotation sequences',
+  color: '#fb923c'
+});

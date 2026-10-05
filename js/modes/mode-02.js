@@ -1,8 +1,11 @@
-// Mode 2 - Training mode implementation
-// This file will contain the specific rules and configuration for Mode 2
+import { createMode } from './mode-base.js';
 
-export default {
+// Mini-game 2: Precision
+// Add this mode's training rules/hooks here without touching the core engine.
+export default createMode({
   id: 'mode-02',
-  name: 'Mode 2',
-  // Future: mode-specific rules, constraints, scoring, etc.
-};
+  number: 2,
+  name: 'Precision',
+  description: 'Train exact piece placement with minimal movement',
+  color: '#818cf8'
+});

@@ -1,8 +1,11 @@
-// Mode 4 - Training mode implementation
-// This file will contain the specific rules and configuration for Mode 4
+import { createMode } from './mode-base.js';
 
-export default {
+// Mini-game 4: Speed
+// Add this mode's training rules/hooks here without touching the core engine.
+export default createMode({
   id: 'mode-04',
-  name: 'Mode 4',
-  // Future: mode-specific rules, constraints, scoring, etc.
-};
+  number: 4,
+  name: 'Speed',
+  description: 'Push your rotation timing under pressure',
+  color: '#f472b6'
+});

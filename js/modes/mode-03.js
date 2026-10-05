@@ -1,8 +1,11 @@
-// Mode 3 - Training mode implementation
-// This file will contain the specific rules and configuration for Mode 3
+import { createMode } from './mode-base.js';
 
-export default {
+// Mini-game 3: Flow
+// Add this mode's training rules/hooks here without touching the core engine.
+export default createMode({
   id: 'mode-03',
-  name: 'Mode 3',
-  // Future: mode-specific rules, constraints, scoring, etc.
-};
+  number: 3,
+  name: 'Flow',
+  description: 'Develop smooth transitions between rotations',
+  color: '#67e8f9'
+});
