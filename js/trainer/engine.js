@@ -191,7 +191,7 @@ export class Trainer {
     const factor=this.rules.softFactors[this.softScale] ?? 1;
 
     if (factor===Infinity) {
-      while (this.movePiece(0,1)) {}
+      while (this.movePiece(0,1,{ countSoftDrop:true })) {}
       this.softAcc=0;
       return;
     }
@@ -295,7 +295,7 @@ export class Trainer {
     if (softHeld) {
       const factor=this.rules.softFactors[this.softScale] ?? 1;
       if (factor===Infinity) {
-        while (this.movePiece(0,1)) {}
+        while (this.movePiece(0,1,{ countSoftDrop:true })) {}
         this.softAcc=0;
       } else {
         const interval=Math.max(16,this.rules.gravity/factor);
