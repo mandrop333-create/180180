@@ -432,6 +432,187 @@
   --mode-glow: #4ade80;
 }
 
+/* Mini-game guide books */
+.mode-book {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  width: 68px;
+  height: 84px;
+  z-index: 5;
+  perspective: 500px;
+}
+
+.book-cover {
+  width: 68px;
+  height: 84px;
+  padding: 7px 6px;
+  border: 1px solid color-mix(in srgb, var(--mode-glow) 70%, #17151d);
+  border-radius: 3px 7px 7px 3px;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.25) 0 5px, transparent 5px),
+    linear-gradient(145deg, color-mix(in srgb, var(--mode-glow) 82%, #241d31), color-mix(in srgb, var(--mode-glow) 38%, #17151d));
+  color: #fff;
+  font-family: "Courier New", monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 3px 4px 0 rgba(0,0,0,.35), 0 0 14px color-mix(in srgb, var(--mode-glow) 35%, transparent);
+  transform: rotate(2deg);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.book-cover::before {
+  content: '';
+  position: absolute;
+  inset: 5px 5px 5px 8px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 2px 5px 5px 2px;
+  pointer-events: none;
+}
+
+.book-cover:hover {
+  transform: rotate(0deg) translateY(-3px);
+  box-shadow: 4px 7px 0 rgba(0,0,0,.35), 0 0 22px color-mix(in srgb, var(--mode-glow) 55%, transparent);
+}
+
+.book-cover-small {
+  font-size: 8px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+
+.book-cover-title {
+  font-size: 22px;
+  font-weight: 1000;
+  line-height: .9;
+  text-shadow: 0 0 8px rgba(255,255,255,.35);
+}
+
+.book-cover-subtitle {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.book-cover-star {
+  font-size: 9px;
+  opacity: .8;
+  margin-top: 3px;
+}
+
+.book-cover-future {
+  cursor: default;
+  opacity: .72;
+}
+
+.book-cover-future:hover {
+  transform: rotate(2deg);
+  box-shadow: 3px 4px 0 rgba(0,0,0,.35), 0 0 14px color-mix(in srgb, var(--mode-glow) 35%, transparent);
+}
+
+.book-cover-mark {
+  font-size: 30px;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 0 12px var(--mode-glow);
+}
+
+.book-cover-number {
+  font-size: 8px;
+  opacity: .7;
+}
+
+.book-pages {
+  position: absolute;
+  inset: -18px -92px -18px -92px;
+  width: 252px;
+  min-height: 120px;
+  padding: 18px 24px 12px;
+  background: #eee7d5;
+  color: #332d3b;
+  border: 1px solid #b8ad96;
+  border-radius: 3px;
+  box-shadow: 5px 7px 0 rgba(0,0,0,.35), 0 0 22px color-mix(in srgb, var(--mode-glow) 25%, transparent);
+  transform: rotate(-1deg);
+  z-index: 20;
+}
+
+.book-pages::before,
+.book-pages::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  width: 1px;
+  background: #d1c5ad;
+}
+
+.book-pages::before { left: 50%; }
+.book-pages::after { display: none; }
+
+.book-close {
+  position: absolute;
+  top: 4px;
+  right: 7px;
+  border: 0;
+  background: transparent;
+  color: #756a78;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.book-page-content {
+  position: relative;
+  z-index: 1;
+  min-height: 78px;
+  padding: 7px 2px 5px;
+  font-family: Georgia, serif;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.book-page-controls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 3px;
+  border-top: 1px solid #d1c5ad;
+  padding-top: 5px;
+}
+
+.book-page-controls button {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #c0b49e;
+  border-radius: 4px;
+  background: #e2dac8;
+  color: #4b4252;
+  font-size: 17px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.book-page-controls button:disabled {
+  opacity: .3;
+  cursor: default;
+}
+
+.book-page-number {
+  font-family: "Courier New", monospace;
+  font-size: 8px;
+  color: #81768a;
+}
+
 /* Trainer link */
 .trainer-link {
   text-align: center;
@@ -537,5 +718,17 @@
   
   .mode-card {
     padding: 24px 20px;
+  }
+
+  .mode-book {
+    right: 10px;
+    bottom: 10px;
+    transform: scale(.9);
+    transform-origin: bottom right;
+  }
+
+  .book-pages {
+    inset: -14px -70px -14px -170px;
+    width: 232px;
   }
 }
