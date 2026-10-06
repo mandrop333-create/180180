@@ -374,7 +374,7 @@
   opacity: 0.25;
 }
 
-.mode-question {
+.mode-auto-pilot {
   position: absolute;
   inset: 0;
   display: flex;
@@ -382,9 +382,10 @@
   justify-content: center;
   color: var(--mode-glow);
   font-family: "Courier New", monospace;
-  font-size: 72px;
+  font-size: clamp(26px, 4vw, 42px);
   font-weight: 1000;
-  line-height: 1;
+  line-height: 0.95;
+  letter-spacing: 0.08em;
   text-shadow:
     0 0 6px var(--mode-glow),
     0 0 16px var(--mode-glow),
