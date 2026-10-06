@@ -32,7 +32,7 @@ export function renderModeCards(container, onModeSelect) {
       card.setAttribute('aria-label', `Mode ${mode.number} coming soon`);
       card.innerHTML = `
         <span class="mode-number">${mode.number}</span>
-        <div class="mode-auto-pilot" aria-hidden="true">AUTO<br>PILOT</div>
+        <div class="mode-question" aria-hidden="true">?</div>
       `;
     }
     
