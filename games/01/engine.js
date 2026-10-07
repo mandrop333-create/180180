@@ -126,12 +126,13 @@ export class Trainer {
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
     if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
-    const movementSuppressed=(this.downKeys.has(this.binds.soft)&&this.rules.preferSoftDrop);
-    if(movementSuppressed&&!this.moveSuppressedAt)this.moveSuppressedAt=t;
-    else if(!movementSuppressed&&this.moveSuppressedAt){const pause=t-this.moveSuppressedAt;if(this.moveState.nextRepeatAt!==Infinity)this.moveState.nextRepeatAt+=pause;if(this.moveState.startedAt)this.moveState.startedAt+=pause;this.moveSuppressedAt=0;}
+    // Soft drop never suppresses horizontal handling. TETR.IO keeps
+    // left/right DAS/ARR active while soft drop is held, including during
+    // lock delay after the piece reaches the floor.
+    this.moveSuppressedAt=0;
     // Horizontal movement remains fully active during lock delay; successful
     // moves reset the lock timer subject to the configured reset cap.
-    if(this.moveState.dir&&!movementSuppressed&&this.dasCutRemaining<=0){
+    if(this.moveState.dir&&this.dasCutRemaining<=0){
       const das=this.das();
       const arr=this.arr();
       if(this.moveState.nextRepeatAt===Infinity)this.moveState.nextRepeatAt=this.moveState.startedAt+das;
