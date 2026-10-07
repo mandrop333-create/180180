@@ -32,7 +32,7 @@ export class Trainer {
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.hardDropBlockedUntil=0;this.dasCutRemaining=0;this.anim=null;
     this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0};this.lastAction=null;this.lastRotation=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
-    this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.lastRenderedPieceKey='';this.lastRenderedBoardKey='';if(!options.deferInit)this.init();
+    this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
   hook(name,...args){const fn=this.mode.hooks?.[name];return typeof fn==='function'?fn(this,...args):undefined;}
   init(){this.pieceSvg=document.createElementNS(NS,'svg');this.pieceSvg.setAttribute('class','active-piece-svg');this.pieceSvg.setAttribute('width','100%');this.pieceSvg.setAttribute('height','100%');this.pieceSvg.setAttribute('aria-hidden','true');this.boardEl.appendChild(this.pieceSvg);for(let y=0;y<this.H;y++)for(let x=0;x<this.W;x++){const el=document.createElement('div');el.className='cell';this.boardEl.appendChild(el);this.cells.push(el);}this.emptyBoard();this.ensureQueue();this.hook('init');this.spawn();}
@@ -116,7 +116,7 @@ export class Trainer {
     return ({1:s.single,2:s.double,3:s.triple,4:s.tetris}[cleared]??0);
   }
   markRender(){this.renderDirty=true;}
-  flushRender(){if(!this.renderDirty)return;this.renderDirty=false;renderBoard(this.board,this.piece,this.anim,this.cells,this.W,this.H,this.cellsFor,this.collides.bind(this),this.depth,this.shadowOpacity,this.shadowBrightness,this.rules.showGhost);drawActivePiece(this.piece,this.pieceSvg,this.anim,this.W,this.H,this.depth,this.cellsFor,NS);this.hook('render');this.emitState();}
+  flushRender(){if(!this.renderDirty)return;this.renderDirty=false;renderBoard(this.board,this.piece,this.anim,this.cells,this.W,this.H,this.cellsFor,this.collides.bind(this),this.depth,this.shadowOpacity,this.shadowBrightness,this.rules.showGhost,this.renderCache);drawActivePiece(this.piece,this.pieceSvg,this.anim,this.W,this.H,this.depth,this.cellsFor,NS,this.renderCache);this.hook('render');this.emitState();}
   render(){this.markRender();this.flushRender();}
   emitState(){this.options.onState({piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
   tick(t){
