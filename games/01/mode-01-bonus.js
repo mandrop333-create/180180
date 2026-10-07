@@ -52,7 +52,7 @@ export function onSpawn(state, piece) {
   clearRotationHistory(state);
 }
 
-export function onInput(state, action) {
+export function onInput(state, { action } = {}) {
   // A quarter-turn chain is only considered a substitution when it is
   // uninterrupted. Movement, dropping, or another action ends the attempt.
   if (action !== 'cw' && action !== 'ccw') {
@@ -60,7 +60,7 @@ export function onInput(state, action) {
   }
 }
 
-export function onRotate(state, { delta, now }) {
+export function onRotate(state, { delta, now } = {}) {
   const isHalfTurn = delta === 2 || delta === -2;
 
   if (isHalfTurn) {
@@ -117,14 +117,14 @@ export function onRotate(state, { delta, now }) {
   return { type: 'quarter-turn', bonus: state.bonus };
 }
 
-export function onPlace(state, _trainer, _lockedPiece, cleared, boards) {
+export function onPlace(state, { cleared, beforeLock, afterLock, afterClear } = {}) {
   clearRotationHistory(state);
 
-  if (state.pendingPlacement && !state.bonusBrokenThisPiece && boards) {
+  if (state.pendingPlacement && !state.bonusBrokenThisPiece && beforeLock && afterLock) {
     const analysis = analyzePlacement({
-      beforeBoard: boards.beforeLock,
-      afterLockBoard: boards.afterLock,
-      afterClearBoard: boards.afterClear,
+      beforeBoard: beforeLock,
+      afterLockBoard: afterLock,
+      afterClearBoard: afterClear,
       cleared
     });
 
