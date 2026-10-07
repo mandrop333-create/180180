@@ -49,7 +49,7 @@ export function createMode({
     name,
     description,
     color,
-    rules: { ...baseRules, ...rules },
+    rules: Object.freeze({ ...baseRules, ...rules, softFactors: Object.freeze([...(rules.softFactors || baseRules.softFactors)]), scoring: Object.freeze({ ...baseRules.scoring, ...(rules.scoring || {}) }) }),
     hooks,
     training,
     capabilities: { ...baseCapabilities, ...capabilities },
