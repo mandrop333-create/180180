@@ -5,6 +5,7 @@ import { validateJolChunk } from './jol-chunks.js';
 const training = {
   pageTitle: '180180 — JOL CHUNKS',
   description: 'Build J, O, and L together into a perfect 3×4 or 4×3 spatial chunk.',
+  conceptImage: 'assets/jol-chunks.svg',
   conceptAlt: 'J, O, and L tetrominoes arranged as a spatial JOL chunk',
   conceptText: 'Turn the J → O → L rhythm into a spatial chunk. Place the three pieces until their combined shape becomes a perfect rectangle.',
   guide: {
@@ -54,8 +55,6 @@ const hooks = {
   },
 
   hardInput() {
-    // In JOL CHUNKS, Space means “place here”, not “drop to the floor”.
-    // Vertical position is chosen with the existing soft-drop control.
     return true;
   },
 
@@ -73,8 +72,7 @@ const hooks = {
     session.lastResult = result;
 
     if (result.valid) {
-      const now = performance.now();
-      const chunkMs = Math.max(0, now - session.chunkStartedAt);
+      const chunkMs = Math.max(0, performance.now() - session.chunkStartedAt);
       session.lastChunkMs = chunkMs;
       session.bestChunkMs = session.bestChunkMs === null
         ? chunkMs
