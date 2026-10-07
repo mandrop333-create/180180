@@ -1,7 +1,7 @@
 // JOL CHUNKS spatial rule.
 // One J, one O, and one L form a valid chunk when their occupied cells
 // exactly fill a 3x4 or 4x3 rectangle. The pieces remain normal Tetris
-// tetrominoes; their positions and orientations create the larger shape.
+// tetrominoes; the player discovers the arrangement through placement and rotation.
 
 export const JOL_SEQUENCE = Object.freeze(['J', 'O', 'L']);
 export const JOL_CHUNK_DIMENSIONS = Object.freeze([[3, 4], [4, 3]]);
@@ -47,6 +47,9 @@ export function validateJolChunk(placements, cellsFor) {
 
   const cells = placements.flatMap(piece => absoluteCells(piece, cellsFor));
   const unique = new Set(cells.map(([x, y]) => `${x},${y}`));
+
+  // Three tetrominoes must contribute twelve different cells. This rejects
+  // overlaps before the rectangle test and makes the rule deterministic.
   if (unique.size !== 12) {
     return { valid: false, reason: 'The three pieces cannot overlap.' };
   }
@@ -64,8 +67,17 @@ export function validateJolChunk(placements, cellsFor) {
     };
   }
 
-  // Three tetrominoes contain exactly 12 cells, so a 3x4 or 4x3 envelope
-  // with 12 unique cells is completely filled: there are no holes.
+  // A J, O and L contain exactly 12 cells. A 3×4/4×3 envelope also contains
+  // exactly 12 cells, so twelve unique cells means the rectangle is completely filled.
+  const cellSet = new Set(cells.map(([x, y]) => `${x},${y}`));
+  for (let y = envelope.minY; y <= envelope.maxY; y++) {
+    for (let x = envelope.minX; x <= envelope.maxX; x++) {
+      if (!cellSet.has(`${x},${y}`)) {
+        return { valid: false, reason: 'The rectangle contains a gap.', bounds: envelope };
+      }
+    }
+  }
+
   return {
     valid: true,
     width: envelope.width,
