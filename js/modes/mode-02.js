@@ -33,6 +33,8 @@ const hooks = {
     trainer.training.rhythm = createRhythmState(JOL_RHYTHM, now);
   },
   beforeSpawn(trainer) {
+    // Only a failed JOL clears the board. A valid 3×4/4×3 chunk stays in
+    // place so completed spatial relationships accumulate on the board.
     if (trainer.session.pendingBoardReset) {
       trainer.emptyBoard();
       trainer.session.pendingBoardReset = false;
@@ -60,6 +62,7 @@ const hooks = {
     session.attempts++;
     const result = validateJolChunk(session.placements, trainer.cellsFor);
     session.lastResult = result;
+
     if (result.valid) {
       const chunkMs = Math.max(0, now - session.chunkStartedAt);
       session.lastChunkMs = chunkMs;
@@ -67,11 +70,20 @@ const hooks = {
       session.completedChunks++;
       trainer.stats.score += 1000;
       trainer.say(`JOL CHUNK COMPLETE — ${result.orientation}`);
-    } else trainer.say(result.reason);
+
+      // A successful chunk remains on the board. The next JOL is built
+      // without destroying the spatial result the player just created.
+      session.pendingBoardReset = false;
+    } else {
+      trainer.say(result.reason);
+
+      // A failed three-piece attempt is the mistake condition. The board is
+      // cleared when the next piece spawns, giving the player a clean retry.
+      session.pendingBoardReset = true;
+    }
 
     session.placements = [];
     session.chunkStartedAt = now;
-    session.pendingBoardReset = true;
   },
   reset(trainer) {
     const now = performance.now();
