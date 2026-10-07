@@ -55,6 +55,7 @@ export class Trainer {
     return moved;
   }
   resetLockAfterAction(){if(!this.piece||!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type)){this.lockAcc=0;return;}if(this.lockResets<(this.rules.maxLockResets??15)){this.lockAcc=0;this.lockResets++;this.stats.lockResets++;}}
+  isLockDelayed(){return !!this.piece&&this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type)&&this.lockAcc>0;}
   rotate(delta){
     if(this.gameOver||!this.piece)return false;const before={...this.piece};let halfTurnOld=null;
     const success=tryRotate(this.piece,delta,this.board,this.W,this.H,this.cellsFor,old=>{halfTurnOld=old;});
@@ -125,6 +126,8 @@ export class Trainer {
     const movementSuppressed=(this.downKeys.has(this.binds.soft)&&this.rules.preferSoftDrop);
     if(movementSuppressed&&!this.moveSuppressedAt)this.moveSuppressedAt=t;
     else if(!movementSuppressed&&this.moveSuppressedAt){const pause=t-this.moveSuppressedAt;if(this.moveState.nextRepeatAt!==Infinity)this.moveState.nextRepeatAt+=pause;if(this.moveState.startedAt)this.moveState.startedAt+=pause;this.moveSuppressedAt=0;}
+    // Horizontal movement remains fully active during lock delay; successful
+    // moves reset the lock timer subject to the configured reset cap.
     if(this.moveState.dir&&!movementSuppressed&&this.dasCutRemaining<=0){
       const das=this.das();
       const arr=this.arr();
