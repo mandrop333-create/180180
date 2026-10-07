@@ -73,7 +73,7 @@ export class Trainer {
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
-  hardDrop(){if(this.gameOver||!this.piece)return;if(this.rules.safeLock&&performance.now()<this.hardDropBlockedUntil)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
+  hardDrop(){if(this.gameOver||!this.piece)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
   isTSpin(piece){
     if(!piece||piece.type!=='T'||!this.lastRotation)return null;
     const cx=piece.x+1,cy=piece.y+1;let corners=0;
