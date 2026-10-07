@@ -61,7 +61,7 @@ export class Trainer {
     if(!success)return false;
     this.resetLockAfterAction();this.turns++;this.stats.rotations++;if(Math.abs(delta)===2)this.stats.halfTurns++;
     this.options.onTurn(this.turns);this.lastAction='rotate';this.lastRotation=true;this.dasCutRemaining=this.rules.dcd||0;
-    recordTrainingRotation(this.training,delta,before,this.piece);this.hook('rotate',before,{...this.piece},delta);
+    recordTrainingRotation(this.training,delta,before,this.piece);this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
     if(halfTurnOld)this.startHalfTurn(halfTurnOld,{...this.piece});this.emitState();return true;
   }
   startHalfTurn(old,next){const animation={from:{...old},to:{...next},layer:null,started:0,duration:240};if(this.anim?.layer)this.anim.layer.remove();this.anim=animation;startHalfTurn(animation,this.boardEl,this.cellsFor,NS,()=>{if(this.anim!==animation)return;this.anim=null;this.render();});}
@@ -95,8 +95,8 @@ export class Trainer {
     if(cleared===0)this.combo=-1;else{this.combo++;if(this.combo>0)this.stats.combos++;}
     if(cleared===4)this.stats.tetrises++;
     if(spin)this.stats.tspins++;
-    if(cleared===0&&spin===null)this.b2b=false;
     const difficult=(cleared===4)||!!spin;
+    if(cleared>0&&!difficult)this.b2b=false;
     if(difficult&&cleared>0){if(this.b2b)this.stats.score+=Math.round((this.rules.scoring?.b2bMultiplier??1.5)*this.spinOrLineScore(cleared,spin));else this.stats.score+=this.spinOrLineScore(cleared,spin);this.b2b=true;}
     else if(cleared>0){this.stats.score+=this.spinOrLineScore(cleared,spin);this.b2b=false;}
     if(this.combo>0)this.stats.score+=50*this.combo;
@@ -105,7 +105,7 @@ export class Trainer {
     this.placed++;this.stats.piecesPlaced++;
     this.holdUsed=false;
     this.stats.pieceInputs=this.pieceInputCount;if(this.pieceInputCount<=2)this.stats.finessePerfect++;else this.stats.finesseFaults++;
-    this.hook('place',lockedPiece,cleared,{beforeLock:before,afterLock,afterClear,spin});
+    this.hook('place',{lockedPiece,cleared,spin,beforeLock:before,afterLock,afterClear});
     this.options.onPlace(this.placed);if(this.rules.clearBoardAfterPlace)this.emptyBoard();
     this.spawn();this.emitState();
   }
@@ -116,7 +116,7 @@ export class Trainer {
     return ({1:s.single,2:s.double,3:s.triple,4:s.tetris}[cleared]??0);
   }
   render(){renderBoard(this.board,this.piece,this.anim,this.cells,this.W,this.H,this.cellsFor,this.collides.bind(this),this.depth,this.shadowOpacity,this.shadowBrightness,this.rules.showGhost);drawActivePiece(this.piece,this.pieceSvg,this.anim,this.W,this.H,this.depth,this.cellsFor,NS);this.hook('render');this.emitState();}
-  emitState(){this.options.onState({piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver});}
+  emitState(){this.options.onState({piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,t-this.lastTime);this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
     if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
@@ -131,7 +131,7 @@ export class Trainer {
     if(this.gameOver)return;const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(!action)return;
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
-    if(this.hook('input',e,action)===true)return;
+    if(this.hook('input',{event:e,action})===true)return;
     if(action==='left'||action==='right'){if(this.downKeys.has(this.binds.soft)&&this.rules.preferSoftDrop)return;this.pieceInputCount++;this.moveState.dir=action==='left'?-1:1;this.moveState.elapsed=this.rules.cancelDas?0:this.moveState.elapsed;this.moveState.repeatElapsed=0;this.movePiece(this.moveState.dir,0);this.render();}
     else if(action==='soft'){this.applySoftDrop();this.render();}
     else if(action==='hard'){this.hardDrop();this.render();}
