@@ -78,41 +78,80 @@ export class Trainer {
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
   setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseProgress=0;this.finesseMistakes=0;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
-  finesseInput(action){if(!this.finesseEnabled||!this.finesseActions.length)return;if(action===this.finesseActions[this.finesseProgress]){this.finesseProgress++;if(this.finesseProgress>=this.finesseActions.length){this.finesseProgress=this.finesseActions.length;this.say('Finesse complete');}}else{this.finesseMistakes++;this.finesseProgress=0;this.say('Retry finesse');}this.emitState();}
-  finesseLabel(action){const code=this.binds?.[action];return keyNames[code]||String(code||action).replace(/^Key/,'').replace(/^Digit/,'');}
+  finesseInput(action,phase='press'){
+    if(!this.finesseEnabled||!this.finesseActions.length)return false;
+    const expected=this.finesseActions[this.finesseProgress];
+    if(!expected)return false;
+    const expectedAction=typeof expected==='string'?expected:expected.action;
+    const expectedMode=typeof expected==='string'?'tap':expected.mode;
+    if(action!==expectedAction)return this.finesseFault();
+    if(expectedMode==='das'&&phase!=='dasComplete')return true;
+    if(expectedMode==='tap'&&phase!=='press')return true;
+    this.finesseProgress++;
+    if(this.finesseProgress>=this.finesseActions.length)this.say('Finesse complete');
+    this.emitState();
+    return true;
+  }
+  finesseFault(){
+    this.finesseMistakes++;this.stats.finesseFaults++;this.finesseProgress=0;this.say('Retry finesse');this.emitState();
+  }
+  finesseLabel(step){
+    const action=typeof step==='string'?step:step.action;
+    const code=this.binds?.[action];
+    const key=keyNames[code]||String(code||action).replace(/^Key/,'').replace(/^Digit/,'');
+    return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
+  }
   generateFinessePrompt(){
     this.finesseActions=[];this.finesseProgress=0;
     if(!this.finesseEnabled||this.gameOver||!this.piece)return;
-    // Finesse is about minimizing movement/rotation inputs, not finding the
-    // "best" stack placement. Use a short legal SRS route from the actual spawn.
+    // Real movement finesse is about the final placement, with DAS-to-wall
+    // counting as one movement input. Enumerate legal 0G SRS two-step routes:
+    // tap left/right, DAS to either wall, or rotate/180, then hard drop.
     const start={...this.piece};
-    const queue=[{piece:start,actions:[]}];
-    const seen=new Set([start.x+','+start.y+','+start.o]);
-    const candidates=[];
+    const clone=p=>({...p});
+    const tap=(p,dir)=>{const n=clone(p);return move(n,dir,0,this.board,this.W,this.H,this.cellsFor)?n:null;};
+    const das=(p,dir)=>{const n=clone(p);let moved=false;while(move(n,dir,0,this.board,this.W,this.H,this.cellsFor))moved=true;return moved?n:null;};
+    const rot=(p,d)=>{const n=clone(p);return tryRotate(n,d,this.board,this.W,this.H,this.cellsFor)?n:null;};
     const transitions=[
-      ['left',p=>{const n={...p};return move(n,-1,0,this.board,this.W,this.H,this.cellsFor)?n:null;}],
-      ['right',p=>{const n={...p};return move(n,1,0,this.board,this.W,this.H,this.cellsFor)?n:null;}],
-      ['cw',p=>{const n={...p};return tryRotate(n,1,this.board,this.W,this.H,this.cellsFor)?n:null;}],
-      ['ccw',p=>{const n={...p};return tryRotate(n,-1,this.board,this.W,this.H,this.cellsFor)?n:null;}],
-      ['half',p=>{const n={...p};return tryRotate(n,2,this.board,this.W,this.H,this.cellsFor)?n:null;}]
+      [{action:'left',mode:'tap'},p=>tap(p,-1)],
+      [{action:'right',mode:'tap'},p=>tap(p,1)],
+      [{action:'left',mode:'das'},p=>das(p,-1)],
+      [{action:'right',mode:'das'},p=>das(p,1)],
+      [{action:'cw',mode:'tap'},p=>rot(p,1)],
+      [{action:'ccw',mode:'tap'},p=>rot(p,-1)],
+      [{action:'half',mode:'tap'},p=>rot(p,2)]
     ];
-    while(queue.length){
-      const node=queue.shift();
-      if(node.actions.length>0&&node.actions.length<=2)candidates.push(node.actions);
-      if(node.actions.length>=2)continue;
-      for(const [action,apply] of transitions){
-        const next=apply(node.piece);if(!next)continue;
-        const k=next.x+','+next.y+','+next.o;
-        if(seen.has(k))continue;
-        seen.add(k);queue.push({piece:next,actions:[...node.actions,action]});
+    const key=p=>p.x+','+p.y+','+p.o;
+    const candidates=[];
+    const pushCandidate=(p,actions)=>{
+      if(!actions.length)return;
+      if(p.x===start.x&&p.y===start.y&&p.o===start.o)return;
+      const landing={...p};while(move(landing,0,1,this.board,this.W,this.H,this.cellsFor)){}
+      candidates.push({piece:p,actions,landing});
+    };
+    for(const [step,apply] of transitions){
+      const p=apply(start);if(p)pushCandidate(p,[step]);
+    }
+    for(const [step1,apply1] of transitions){
+      const p1=apply1(start);if(!p1)continue;
+      for(const [step2,apply2] of transitions){
+        const p2=apply2(p1);if(!p2)continue;
+        if(p2.x===start.x&&p2.y===start.y&&p2.o===start.o)continue;
+        pushCandidate(p2,[step1,step2]);
       }
     }
-    if(!candidates.length){this.finesseActions=['hard'];return;}
-    // Prefer the shortest legal route; among equal routes vary the target so
-    // the trainer does not always teach the same placement.
-    const shortest=candidates.filter(x=>x.length===Math.min(...candidates.map(y=>y.length)));
+    const seen=new Set();
+    const unique=candidates.filter(c=>{
+      const k2=key(c.landing)+':'+c.actions.map(a=>(a.mode||'tap')+a.action).join(',');
+      if(seen.has(k2))return false;seen.add(k2);return true;
+    });
+    const min=Math.min(...unique.map(c=>c.actions.length));
+    const shortest=unique.filter(c=>c.actions.length===min);
+    if(!shortest.length){this.finesseActions=[{action:'hard',mode:'tap'}];return;}
+    // Vary the legal target placement instead of teaching an arbitrary
+    // left/right/rotation loop. Every generated route ends in a valid landing.
     const chosen=shortest[(this.placed*7+this.piece.type.charCodeAt(0))%shortest.length];
-    this.finesseActions=[...chosen,'hard'];
+    this.finesseActions=[...chosen,{action:'hard',mode:'tap'}];
   }
   reapplyHeldHorizontalInput(){if(this.gameOver||!this.piece)return;const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);if(left===right)return;const dir=left?-1:1;const now=performance.now();this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();this.movePiece(dir,0);}
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
@@ -169,6 +208,16 @@ export class Trainer {
     // Soft drop never suppresses horizontal handling. TETR.IO keeps
     // left/right DAS/ARR active while soft drop is held, including during
     // lock delay after the piece reaches the floor.
+    if(this.finesseEnabled&&this.finesseActions.length){
+      const expected=this.finesseActions[this.finesseProgress];
+      if(expected&&typeof expected==='object'&&expected.mode==='das'&&
+         (expected.action==='left'||expected.action==='right')){
+        const dir=expected.action==='left'?-1:1;
+        if(this.piece&&this.piece.x===this.dasWallX(dir)){
+          this.finesseInput(expected.action,'dasComplete');
+        }
+      }
+    }
     this.moveSuppressedAt=0;
     // Horizontal movement remains fully active during lock delay; successful
     // moves reset the lock timer subject to the configured reset cap.
@@ -197,19 +246,39 @@ export class Trainer {
     if(!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type))this.lockAcc=0;else this.lockAcc+=dt;
     if(this.lockAcc>=this.rules.lockDelay)this.lockPiece(true);this.hook('tick',dt,t);this.flushRender();
   }
+  dasWallX(dir){
+    if(!this.piece)return null;
+    const p={...this.piece};
+    while(move(p,dir,0,this.board,this.W,this.H,this.cellsFor)){}
+    return p.x;
+  }
   das(){return this.rules.das;}arr(){return this.rules.arr;}
   handleKeydown(e){
     if(this.gameOver)return;const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(!action)return;
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
     if(this.hook('input',{event:e,action})===true)return;
-    if(action==='left'||action==='right'||action==='cw'||action==='ccw'||action==='half'||action==='hard')this.finesseInput(action);
-    if(action==='left'||action==='right'){this.pieceInputCount++;const nextDir=action==='left'?-1:1;this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);}
+    const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
+    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
+    const expectedMode=expected&&(typeof expected==='string'?'tap':expected.mode);
+    if(action==='left'||action==='right'){
+      this.pieceInputCount++;
+      const nextDir=action==='left'?-1:1;
+      if(this.finesseEnabled&&expectedAction===action&&expectedMode==='tap')this.finesseInput(action,'press');
+      else if(this.finesseEnabled&&expectedAction!==action)this.finesseFault();
+this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);}
     else if(action==='soft'){this.applySoftDrop();}
-    else if(action==='hard'){this.hardDrop();}
-    else if(action==='cw'){this.pieceInputCount++;this.rotate(1);}
-    else if(action==='ccw'){this.pieceInputCount++;this.rotate(-1);}
-    else if(action==='half'){this.pieceInputCount++;this.rotate(2);}
+    else if(action==='hard'){
+      if(this.finesseEnabled){
+        const expected=this.finesseActions[this.finesseProgress];
+        if(expected&&(typeof expected==='string'?expected:expected.action)==='hard')this.finesseInput('hard','press');
+        else this.finesseFault();
+      }
+      this.hardDrop();
+    }
+    else if(action==='cw'){this.pieceInputCount++;if(this.finesseEnabled){const expected=this.finesseActions[this.finesseProgress];if(expected&&(typeof expected==='string'?expected:expected.action)==='cw')this.finesseInput('cw','press');else this.finesseFault();}this.rotate(1);}
+    else if(action==='ccw'){this.pieceInputCount++;if(this.finesseEnabled){const expected=this.finesseActions[this.finesseProgress];if(expected&&(typeof expected==='string'?expected:expected.action)==='ccw')this.finesseInput('ccw','press');else this.finesseFault();}this.rotate(-1);}
+    else if(action==='half'){this.pieceInputCount++;if(this.finesseEnabled){const expected=this.finesseActions[this.finesseProgress];if(expected&&(typeof expected==='string'?expected:expected.action)==='half')this.finesseInput('half','press');else this.finesseFault();}this.rotate(2);}
     else if(action==='hold'){this.hold();}
   }
   handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
