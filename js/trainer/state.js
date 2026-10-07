@@ -27,9 +27,9 @@ export const defaultBinds = {
   right: 'ArrowRight',
   soft: 'ArrowDown',
   hard: 'Space',
-  cw: 'ArrowUp',
+  cw: 'KeyX',
   ccw: 'KeyZ',
-  half: 'KeyC',
+  half: 'KeyA',
   hold: 'ShiftLeft'
 };
 
