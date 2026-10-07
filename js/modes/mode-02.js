@@ -28,31 +28,11 @@ const training = {
   guide: {
     title: 'JOL CHUNKS',
     pages: [
-      {
-        kicker: 'the order',
-        heading: 'J → O → L',
-        text: 'The pieces always arrive in this order. They never shuffle. Each piece keeps its normal Tetris shape and can still move and rotate normally.'
-      },
-      {
-        kicker: 'the rhythm',
-        heading: '2.0s HIDDEN',
-        text: 'For two seconds you play normally while the board result is hidden. Your real movement, rotation, drop, lock, and timing continue underneath.'
-      },
-      {
-        kicker: 'the reveal',
-        heading: '0.5s REVEAL',
-        text: 'The result appears for half a second. Use that brief reveal to recognize what your inputs produced, then the next hidden window begins.'
-      },
-      {
-        kicker: 'the chunk',
-        heading: 'ONE RECTANGLE',
-        text: 'Place J, O, and L so their combined occupied cells exactly fill a 3×4 or 4×3 rectangle. The pieces themselves remain recognizable.'
-      },
-      {
-        kicker: 'the loop',
-        heading: 'VERIFY → KEEP / RESET',
-        text: 'A valid JOL chunk stays on the board. A failed three-piece attempt clears the board and starts the next J → O → L attempt.'
-      }
+      { kicker: 'the order', heading: 'J → O → L', text: 'The pieces always arrive in this order. They never shuffle. Each piece keeps its normal Tetris shape and can still move and rotate normally.' },
+      { kicker: 'the rhythm', heading: '2.0s HIDDEN', text: 'For two seconds you play normally while the board result is hidden. Your real movement, rotation, drop, lock, and timing continue underneath.' },
+      { kicker: 'the reveal', heading: '0.5s REVEAL', text: 'The result appears for half a second. Use that brief reveal to recognize what your inputs produced, then the next hidden window begins.' },
+      { kicker: 'the chunk', heading: 'ONE RECTANGLE', text: 'Place J, O, and L so their combined occupied cells exactly fill a 3×4 or 4×3 rectangle. The pieces themselves remain recognizable.' },
+      { kicker: 'the loop', heading: 'VERIFY → KEEP / RESET', text: 'A valid JOL chunk stays on the board. A failed three-piece attempt clears the board and starts the next J → O → L attempt.' }
     ]
   }
 };
@@ -65,24 +45,16 @@ const hooks = {
     trainer.training.rhythm = createRhythmState(JOL_RHYTHM, now);
   },
 
-  tick(trainer, now) {
-    trainer.session.elapsedMs = Math.max(0, now - trainer.session.startedAt);
-    advanceRhythm(trainer.training.rhythm, now);
+  tick(trainer, _dt, now) {
+    const clock = Number.isFinite(now) ? now : performance.now();
+    trainer.session.elapsedMs = Math.max(0, clock - trainer.session.startedAt);
+    advanceRhythm(trainer.training.rhythm, clock);
   },
 
   render(trainer) {
-    const rhythm = trainer.training.rhythm;
-    trainer.boardEl.classList.toggle(
-      'jol-rhythm-hidden',
-      !!rhythm && !rhythm.visible
-    );
-
     const completed = new Set(
-      trainer.session.completedCells
-        .flat()
-        .map(([x, y]) => `${x},${y}`)
+      trainer.session.completedCells.flat().map(([x, y]) => `${x},${y}`)
     );
-
     trainer.cells.forEach((cell, index) => {
       const x = index % trainer.W;
       const y = Math.floor(index / trainer.W);
@@ -97,12 +69,10 @@ const hooks = {
   beforeClear(trainer, lockedPiece) {
     const session = trainer.session;
     session.pieces.push({ ...lockedPiece });
-
     if (session.pieces.length !== 3) {
       session.lastResult = null;
       return true;
     }
-
     session.attempts++;
     session.lastResult = validateJolChunk(session.pieces, trainer.cellsFor);
     return true;
@@ -111,16 +81,13 @@ const hooks = {
   place(trainer) {
     const session = trainer.session;
     if (session.pieces.length < 3) return;
-
     const now = performance.now();
     const result = session.lastResult;
 
     if (result?.valid) {
       const chunkMs = Math.max(0, now - session.chunkStartedAt);
       session.lastChunkMs = chunkMs;
-      session.bestChunkMs = session.bestChunkMs === null
-        ? chunkMs
-        : Math.min(session.bestChunkMs, chunkMs);
+      session.bestChunkMs = session.bestChunkMs === null ? chunkMs : Math.min(session.bestChunkMs, chunkMs);
       session.completedChunks++;
       session.completedCells.push(result.cells.map(([x, y]) => [x, y]));
       trainer.say(`JOL CHUNK COMPLETE — ${result.orientation}`);
@@ -158,14 +125,9 @@ export default createMode({
   name: 'JOL CHUNKS',
   description: 'Recognize the rhythm, then build J → O → L into a complete 3×4 or 4×3 spatial chunk.',
   color: '#818cf8',
-  rules: {
-    clearLines: false,
-    clearBoardAfterPlace: false,
-    showGhost: true
-  },
+  rules: { clearLines: false, clearBoardAfterPlace: false, showGhost: true },
   training,
   createSession,
-  // Deliberately deterministic: Mode 2 is always J → O → L, never a random bag.
   createGenerator: () => new JolChunkGenerator(['J', 'O', 'L']),
   hooks,
   capabilities: { rhythm: true, spatial: true }
