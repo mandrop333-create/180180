@@ -51,9 +51,12 @@ function appendPieceGeometry(root, shape, depthPx, NS, { frontGradient = ACTIVE_
   }
 }
 
-export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS) {
+export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS, cache = {}) {
+  if (!piece || anim?.layer) { if (!anim?.layer) cache.activeKey = null; pieceSvg.replaceChildren(); return; }
+  const key = piece.type + ':' + piece.x + ':' + piece.y + ':' + piece.o + ':' + depth;
+  if (cache.activeKey === key) return;
+  cache.activeKey = key;
   pieceSvg.replaceChildren();
-  if (!piece || anim?.layer) return;
   const pitch = CELL_PITCH, depthPx = depth * 12;
   pieceSvg.setAttribute('viewBox', '0 0 ' + W * pitch + ' ' + H * pitch);
   const defs = svgEl('defs', {}, '', NS);
@@ -63,7 +66,7 @@ export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS
   appendPieceGeometry(pieceSvg, shape, depthPx, NS);
 }
 
-export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides, depth, shadowOpacity = .6, shadowBrightness = 1, showGhost = true) {
+export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides, depth, shadowOpacity = .6, shadowBrightness = 1, showGhost = true, cache = {}) {
   const all = Array(H * W).fill('');
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (board[y][x]) {
@@ -85,7 +88,8 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
   document.documentElement.style.setProperty('--depth-factor', depth);
   document.documentElement.style.setProperty('--shadow-opacity', shadowOpacity);
   document.documentElement.style.setProperty('--shadow-brightness', shadowBrightness);
-  cells.forEach((el, i) => { el.className = 'cell' + (all[i] ? ' ' + all[i] : ''); });
+  const previous = cache.cellClasses || (cache.cellClasses = []);
+  cells.forEach((el, i) => { const cls = 'cell' + (all[i] ? ' ' + all[i] : ''); if (previous[i] !== cls) { el.className = cls; previous[i] = cls; } });
 }
 
 export function startHalfTurn(animation, boardEl, cellsFor, NS, onRender) {
