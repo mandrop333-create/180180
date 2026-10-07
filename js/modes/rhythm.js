@@ -41,11 +41,45 @@ export function beginBeat(state, now = performance.now()) {
   return state.expectedPiece;
 }
 
+export function advanceRhythm(state, now = performance.now()) {
+  if (!state?.active || !state.sequence.length || !state.intervals.length) return 0;
+
+  let advanced = 0;
+  const maxAdvance = state.sequence.length;
+  while (advanced < maxAdvance) {
+    const interval = state.intervals[state.beatIndex % state.intervals.length] ?? 700;
+    const deadline = state.beatStartedAt + interval + state.timingWindowMs;
+    if (now <= deadline) break;
+
+    const expected = currentBeat(state);
+    const expectedAt = state.beatStartedAt + interval;
+    state.misses += 1;
+    state.lastTimingErrorMs = now - expectedAt;
+    state.lastResult = {
+      expected,
+      actual: null,
+      timingErrorMs: now - expectedAt,
+      typeCorrect: false,
+      timingCorrect: false,
+      valid: false,
+      reason: 'timeout'
+    };
+    state.lastBeatAt = expectedAt;
+    state.beatIndex = (state.beatIndex + 1) % state.sequence.length;
+    state.beatStartedAt = expectedAt;
+    state.expectedPiece = currentBeat(state);
+    advanced += 1;
+  }
+
+  return advanced;
+}
+
 export function evaluateBeat(state, pieceType, now = performance.now()) {
   if (!state?.active || !state.sequence.length) {
     return { valid: false, reason: 'No active rhythm.' };
   }
 
+  advanceRhythm(state, now);
   const expected = currentBeat(state);
   const interval = state.intervals[state.beatIndex % state.intervals.length] ?? 700;
   const expectedAt = state.beatStartedAt + interval;
