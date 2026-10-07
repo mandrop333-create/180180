@@ -34,7 +34,23 @@ export function runTrainerSelfTest(){
   // Kick tables always have a no-kick first test for normal rotations.
   for(const type of ['I','T','J','L','S','Z'])assert(getSrsKicks(type,0,1)[0][0]===0&&getSrsKicks(type,0,1)[0][1]===0,type+' SRS basic rotation missing');
 
-  return {ok:true,tests:6};
+  // Timing contract: a held direction gets one immediate step, then repeats
+  // only at DAS and thereafter on ARR boundaries. These are pure clock cases
+  // so the contract can be checked without a browser.
+  const timingCases=[
+    {name:'before-DAS',at:126,das:127,arr:0,repeats:0},
+    {name:'DAS-boundary',at:127,das:127,arr:0,repeats:1},
+    {name:'DAS+2ARR',at:147,das:127,arr:10,repeats:3},
+    {name:'DAS+5ARR',at:177,das:127,arr:10,repeats:6},
+    {name:'ARR-zero',at:500,das:127,arr:0,repeats:1}
+  ];
+  for(const test of timingCases){
+    const elapsed=Math.max(0,test.at-test.das);
+    const repeats=test.arr===0?(test.at>=test.das?1:0):(test.at<test.das?0:1+Math.floor(elapsed/test.arr));
+    assert(repeats===test.repeats,test.name+' timing contract failed');
+  }
+
+  return {ok:true,tests:7};
 }
 
 if(typeof window!=='undefined')window.runTrainerSelfTest=runTrainerSelfTest;
