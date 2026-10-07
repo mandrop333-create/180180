@@ -60,7 +60,7 @@ export class Trainer {
     const success=tryRotate(this.piece,delta,this.board,this.W,this.H,this.cellsFor,old=>{halfTurnOld=old;});
     if(!success)return false;
     this.resetLockAfterAction();this.turns++;this.stats.rotations++;if(Math.abs(delta)===2)this.stats.halfTurns++;
-    this.options.onTurn(this.turns);this.lastAction='rotate';this.lastRotation=true;this.dasCutRemaining=this.rules.dcd||0;
+    this.options.onTurn(this.turns);this.lastAction='rotate';this.lastRotation=true;this.dasCutRemaining=this.rules.dcd||0; // Rotation preserves the active horizontal DAS clock; DCD is the only intentional cut.
     recordTrainingRotation(this.training,delta,before,this.piece);this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
     if(halfTurnOld)this.startHalfTurn(halfTurnOld,{...this.piece});this.markRender();return true;
   }
