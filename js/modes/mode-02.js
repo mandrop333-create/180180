@@ -20,28 +20,43 @@ const training = {
 };
 
 function createSession() {
+  const now = performance.now();
   return {
     placements: [],
     attempts: 0,
     completedChunks: 0,
-    startedAt: performance.now(),
-    chunkStartedAt: performance.now(),
+    startedAt: now,
+    chunkStartedAt: now,
     elapsedMs: 0,
     lastChunkMs: 0,
     bestChunkMs: null,
-    lastResult: null
+    lastResult: null,
+    pendingBoardReset: false
   };
 }
 
 const hooks = {
   init(trainer) {
-    trainer.session.startedAt = performance.now();
-    trainer.session.chunkStartedAt = trainer.session.startedAt;
+    const now = performance.now();
+    trainer.session.startedAt = now;
+    trainer.session.chunkStartedAt = now;
+  },
+
+  beforeSpawn(trainer) {
+    if (trainer.session.pendingBoardReset) {
+      trainer.emptyBoard();
+      trainer.session.pendingBoardReset = false;
+    }
   },
 
   tick(trainer) {
-    const now = performance.now();
-    trainer.session.elapsedMs = Math.max(0, now - trainer.session.startedAt);
+    trainer.session.elapsedMs = Math.max(0, performance.now() - trainer.session.startedAt);
+  },
+
+  hardInput() {
+    // In JOL CHUNKS, Space means “place here”, not “drop to the floor”.
+    // Vertical position is chosen with the existing soft-drop control.
+    return true;
   },
 
   place(trainer, piece) {
@@ -71,16 +86,15 @@ const hooks = {
       trainer.say(result.reason);
     }
 
-    // A chunk is one three-piece unit. Keep the board focused on the current
-    // unit so the next J → O → L begins cleanly without changing the engine.
     session.placements = [];
     session.chunkStartedAt = performance.now();
-    trainer.emptyBoard();
+    session.pendingBoardReset = true;
   },
 
   reset(trainer) {
-    trainer.session.startedAt = performance.now();
-    trainer.session.chunkStartedAt = trainer.session.startedAt;
+    const now = performance.now();
+    trainer.session.startedAt = now;
+    trainer.session.chunkStartedAt = now;
   }
 };
 
@@ -90,8 +104,6 @@ export default createMode({
   name: 'JOL CHUNKS',
   description: 'Build J, O, and L together into a perfect 3×4 or 4×3 spatial chunk.',
   color: '#818cf8',
-  // The chunk is deliberately player-placed rather than gravity-driven. The
-  // existing soft-drop control lets the player choose vertical position.
   rules: {
     gravity: Infinity,
     lockDelay: 500,
