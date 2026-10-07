@@ -125,6 +125,7 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
     let gy = piece.y;
     while (!collides(piece.x, gy + 1, piece.o, piece.type)) gy++;
     for (const [cx, cy] of cellsFor(piece.type, piece.o)) {
+      // Ghost cells use the same board-space coordinates as the active piece.
       const x = piece.x + cx;
       const y = gy + cy;
       if (y >= 0 && y < H && x >= 0 && x < W && !all[y * W + x]) {
