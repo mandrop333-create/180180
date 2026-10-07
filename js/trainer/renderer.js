@@ -114,8 +114,26 @@ export function startHalfTurn(animation, boardEl, cellsFor, NS, onRender) {
   };
   scene.append(makeFace('turn-front', oldShape, TURN_FRONT_GRADIENT, 'translateZ(1px)'), makeFace('turn-back', nextShape, TURN_BACK_GRADIENT, 'rotateX(180deg) translateZ(1px)'));
   layer.append(scene); boardEl.appendChild(layer); animation.layer = layer; animation.started = performance.now();
+
+  // The gameplay rotation is already committed before this visual starts.
+  // Never let the visual lifecycle strand the engine in an animated state:
+  // animationend is the normal path, while animationcancel/reduced-motion and
+  // a timeout are safety paths. This is especially important because the
+  // reduced-motion stylesheet intentionally disables the CSS animation.
+  let finished = false;
+  let fallbackTimer = null;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    if (fallbackTimer !== null) clearTimeout(fallbackTimer);
+    if (layer.isConnected) layer.remove();
+    if (animation.layer === layer) animation.layer = null;
+    if (onRender) onRender();
+  };
   scene.addEventListener('animationend', event => {
-    if (event.animationName !== 'halfFlip') return;
-    if (layer.isConnected) layer.remove(); if (animation.layer === layer) animation.layer = null; if (onRender) onRender();
+    if (event.animationName === 'halfFlip') finish();
   }, { once: true });
+  scene.addEventListener('animationcancel', finish, { once: true });
+  fallbackTimer = window.setTimeout(finish, Math.max(0, Number(animation.duration) || 0) + 80);
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) window.requestAnimationFrame(finish);
 }
