@@ -16,6 +16,34 @@ import { getSettings } from './settings.js';
   if (titleEl) titleEl.textContent = mode.name;
   if (taglineEl) taglineEl.textContent = mode.description;
 
+  // Mode-specific presentation. Mode 01 retains its existing trainer presentation.
+  if (mode.id === 'mode-02') {
+    document.title = '180180 — JOL CHUNKS';
+    const concept = document.getElementById('concept');
+    const conceptImage = document.getElementById('conceptImage');
+    const conceptText = document.getElementById('conceptText');
+    const guideTitle = document.getElementById('guideTitle');
+    const guideSubtitle = document.getElementById('guideSubtitle');
+    const guideKicker = document.getElementById('guideKicker');
+    const guideHeading = document.getElementById('guideHeading');
+    const guideIntro = document.getElementById('guideIntro');
+    const guideExerciseKicker = document.getElementById('guideExerciseKicker');
+    const guideExercise = document.getElementById('guideExercise');
+    if (concept) concept.setAttribute('aria-label', 'JOL chunks training concept');
+    if (conceptImage) {
+      conceptImage.src = 'assets/jol-chunks.svg';
+      conceptImage.alt = 'J, O, and L tetrominoes in the repeating JOL chunk sequence';
+    }
+    if (conceptText) conceptText.textContent = 'Build automatic recognition of the ordered J → O → L chunk.';
+    if (guideTitle) guideTitle.textContent = 'JOL';
+    if (guideSubtitle) guideSubtitle.textContent = 'CHUNKS';
+    if (guideKicker) guideKicker.textContent = 'JOL practice';
+    if (guideHeading) guideHeading.textContent = 'JOL CHUNKS';
+    if (guideIntro) guideIntro.textContent = 'A JOL chunk is one ordered three-piece unit: J → O → L. The sequence repeats continuously.';
+    if (guideExerciseKicker) guideExerciseKicker.textContent = 'the exercise';
+    if (guideExercise) guideExercise.textContent = 'Do not wait for a normal 7-bag. Learn the three-piece rhythm itself: J, then O, then L, then immediately back to J.';
+  }
+
   const trainer = new Trainer(boardEl, {
     mode,
     depth: settings.depth,
