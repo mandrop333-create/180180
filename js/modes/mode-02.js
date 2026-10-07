@@ -7,7 +7,16 @@ const training = {
   pageTitle: '180180 — JOL CHUNKS',
   tagline: 'Build J, O, and L into spatial chunks.',
   training: { kind: 'spatial-pattern', label: 'JOL CHUNKS' },
-  guide: { title: 'JOL CHUNKS', pages: [] }
+  guide: {
+    title: 'JOL CHUNKS',
+    pages: [
+      { kicker: 'the pieces', heading: 'J + O + L', text: 'A JOL is one J, one O, and one L working as one relationship.' },
+      { kicker: 'the chunk', heading: 'ONE UNIT', text: 'A JOL Chunk is the completed spatial relationship of one J, one O, and one L. The pieces are free to move and rotate while you search for the relationship.' },
+      { kicker: 'the rule', heading: '3×4 / 4×3', text: 'The three pieces are complete when their combined occupied cells form a perfect rectangle: three columns by four rows, or four columns by three rows.' },
+      { kicker: 'the loop', heading: 'OBSERVE → BUILD', text: 'Observe the rhythm. Predict. Move and rotate. Place the piece. Verify the rectangle. Then the next JOL begins. Speed matters only after the relationship is understood.' },
+      { kicker: 'timing', heading: 'PROCESSING', text: 'The timer measures real elapsed training time. Rhythm timing records whether each J, O, and L response arrives near its expected beat.' }
+    ]
+  }
 };
 
 function createSession() {
@@ -50,7 +59,6 @@ const hooks = {
       if (!rhythmResult.typeCorrect) trainer.say(`Rhythm miss — expected ${rhythmResult.expected}`);
       else trainer.say(`Timing miss — ${Math.round(rhythmResult.timingErrorMs)}ms`);
     }
-
     if (session.placements.length < 3) {
       trainer.say(`${session.placements.length}/3 — build the JOL`);
       return;
