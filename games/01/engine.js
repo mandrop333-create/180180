@@ -145,6 +145,7 @@ export class Trainer {
       const k2=key(c.landing)+':'+c.actions.map(a=>(a.mode||'tap')+a.action).join(',');
       if(seen.has(k2))return false;seen.add(k2);return true;
     });
+    if(!unique.length){this.finesseActions=[{action:'hard',mode:'tap'}];return;}
     const min=Math.min(...unique.map(c=>c.actions.length));
     const shortest=unique.filter(c=>c.actions.length===min);
     if(!shortest.length){this.finesseActions=[{action:'hard',mode:'tap'}];return;}
