@@ -165,7 +165,7 @@ export class Trainer {
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
     if(this.hook('input',{event:e,action})===true)return;
-    if(action==='left'||action==='right'){if(this.downKeys.has(this.binds.soft)&&this.rules.preferSoftDrop)return;this.pieceInputCount++;const nextDir=action==='left'?-1:1;this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);}
+    if(action==='left'||action==='right'){this.pieceInputCount++;const nextDir=action==='left'?-1:1;this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);}
     else if(action==='soft'){this.applySoftDrop();}
     else if(action==='hard'){this.hardDrop();}
     else if(action==='cw'){this.pieceInputCount++;this.rotate(1);}
