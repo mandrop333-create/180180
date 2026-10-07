@@ -44,7 +44,7 @@ export class Trainer {
     const type=forcedType||this.queue.shift();
     this.ensureQueue();
     this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
-    this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.render();return;}
+    this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.render();queueMicrotask(()=>{if(this.gameOver)this.reset();});return;}
     this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.markRender();
   }
   collides(px,py,o,type=this.piece?.type){return collides(px,py,o,this.board,this.W,this.H,this.cellsFor,type);}
@@ -89,7 +89,7 @@ export class Trainer {
   lockPiece(automatic=false){
     if(this.gameOver||!this.piece)return;
         const lockedPiece={...this.piece},lockedCells=this.cellsFor(lockedPiece.type,lockedPiece.o);
-    if(lockedCells.some(([cx,cy])=>lockedPiece.y+cy<0)){this.gameOver=true;this.hook('gameOver',{...lockedPiece});this.render();return;}
+    if(lockedCells.some(([cx,cy])=>lockedPiece.y+cy<0)){this.gameOver=true;this.hook('gameOver',{...lockedPiece});this.render();queueMicrotask(()=>{if(this.gameOver)this.reset();});return;}
     const before=this.board.map(r=>[...r]);
     for(const[cx,cy]of lockedCells){const x=lockedPiece.x+cx,y=lockedPiece.y+cy;if(y>=0&&y<this.H&&x>=0&&x<this.W)this.board[y][x]=lockedPiece.type;}
     const afterLock=this.board.map(r=>[...r]);let cleared=0;let shouldClear=this.rules.clearLines!==false;
