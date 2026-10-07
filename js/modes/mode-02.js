@@ -1,5 +1,5 @@
 import { createMode } from './mode-base.js';
-import { JolBagGenerator } from '../trainer/generator.js';
+import { JolChunkGenerator } from '../trainer/generator.js';
 import { validateJolChunk } from './jol-chunks.js';
 
 function createSession() {
@@ -21,8 +21,8 @@ const training = {
     pages: [
       {
         kicker: 'the pieces',
-        heading: 'J + O + L',
-        text: 'Build with one J, one O, and one L. The pieces keep their normal Tetris shapes.'
+        heading: 'J → O → L',
+        text: 'The pieces always arrive in the same order: J, then O, then L. They keep their normal Tetris shapes.'
       },
       {
         kicker: 'the chunk',
@@ -39,7 +39,7 @@ const training = {
 };
 
 const hooks = {
-  beforeClear(trainer, lockedPiece, afterLock) {
+  beforeClear(trainer, lockedPiece) {
     const session = trainer.session;
     session.pieces.push({ ...lockedPiece });
 
@@ -50,9 +50,6 @@ const hooks = {
 
     session.attempts++;
     session.lastResult = validateJolChunk(session.pieces, trainer.cellsFor);
-
-    // A successful chunk must stay intact. Prevent universal Tetris line
-    // clearing only for this successful JOL attempt.
     return !session.lastResult.valid;
   },
 
@@ -76,9 +73,6 @@ const hooks = {
   },
 
   render(trainer) {
-    // The board already uses the normal J/O/L piece colors. The only extra
-    // visual is a quiet outline on completed chunks, so the player can see
-    // exactly which rectangles have been successfully built.
     const completed = new Set(
       trainer.session.completedCells.flat().map(([x, y]) => `${x},${y}`)
     );
@@ -86,6 +80,7 @@ const hooks = {
       const x = index % trainer.W;
       const y = Math.floor(index / trainer.W);
       if (completed.has(`${x},${y}`)) cell.classList.add('jol-chunk');
+      else cell.classList.remove('jol-chunk');
     });
   },
 
@@ -106,6 +101,6 @@ export default createMode({
   color: '#818cf8',
   training,
   createSession,
-  createGenerator: ({ seed } = {}) => new JolBagGenerator({ seed }),
+  createGenerator: () => new JolChunkGenerator(['J', 'O', 'L']),
   hooks
 });
