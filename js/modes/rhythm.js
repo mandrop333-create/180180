@@ -59,14 +59,13 @@ export function evaluateBeat(state, pieceType, now = performance.now()) {
     valid
   };
 
-  if (valid) {
-    state.completed++;
-    state.beatIndex = (state.beatIndex + 1) % state.sequence.length;
-    state.lastBeatAt = now;
-    state.beatStartedAt = now;
-  } else {
-    state.misses++;
-  }
+  // Every attempted beat advances with the piece sequence. A mistimed response
+  // is recorded as a miss rather than leaving rhythm state behind the generator.
+  if (valid) state.completed++;
+  else state.misses++;
+  state.beatIndex = (state.beatIndex + 1) % state.sequence.length;
+  state.lastBeatAt = now;
+  state.beatStartedAt = now;
 
   return state.lastResult;
 }
