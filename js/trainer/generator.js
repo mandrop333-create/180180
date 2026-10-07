@@ -28,6 +28,41 @@ function shuffle(values, rng) {
   return result;
 }
 
+export class JolBagGenerator {
+  constructor(options = {}) {
+    this.seed = options.seed ?? null;
+    this.rng = createRng(this.seed);
+    this.queue = [];
+    this.bagCount = 0;
+  }
+
+  reset() {
+    this.queue = [];
+    this.bagCount = 0;
+    this.rng = createRng(this.seed);
+  }
+
+  next() {
+    if (!this.queue.length) {
+      this.queue.push(...shuffle(['J', 'O', 'L'], this.rng));
+      this.bagCount++;
+    }
+    return this.queue.shift();
+  }
+
+  peek(count = 1) {
+    while (this.queue.length < count) {
+      this.queue.push(...shuffle(['J', 'O', 'L'], this.rng));
+      this.bagCount++;
+    }
+    return this.queue.slice(0, count);
+  }
+
+  get remainingInBag() {
+    return this.queue.length;
+  }
+}
+
 export class JolChunkGenerator {
   constructor(sequence = ['J', 'O', 'L']) {
     if (!Array.isArray(sequence) || sequence.length !== 3 || sequence.some(type => !PIECE_TYPES.includes(type))) {
