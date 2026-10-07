@@ -31,7 +31,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.finesseActions=[];
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -77,10 +77,11 @@ export class Trainer {
     else{this.holdType=current;this.ensureQueue();this.spawn();}
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
+  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseProgress=0;this.finesseMistakes=0;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
+  finesseInput(action){if(!this.finesseEnabled||!this.finesseActions.length)return;if(action===this.finesseActions[this.finesseProgress]){this.finesseProgress++;if(this.finesseProgress>=this.finesseActions.length){this.finesseProgress=this.finesseActions.length;this.say('Finesse complete');}}else{this.finesseMistakes++;this.finesseProgress=0;this.say('Retry finesse');}this.emitState();}
   finesseLabel(action){const code=this.binds?.[action];return keyNames[code]||String(code||action).replace(/^Key/,'').replace(/^Digit/,'');}
   generateFinessePrompt(){
-    this.finesseActions=[];if(!this.finesseEnabled||this.gameOver||!this.piece)return;
+    this.finesseActions=[];this.finesseProgress=0;if(!this.finesseEnabled||this.gameOver||!this.piece)return;
     const start={...this.piece},queue=[{piece:start,actions:[]}],seen=new Set([start.x+','+start.y+','+start.o]),candidates=[];
     const transitions=[['left',-1],['right',1]];
     while(queue.length&&seen.size<220){
@@ -139,7 +140,7 @@ export class Trainer {
   markRender(){this.renderDirty=true;}
   flushRender(){if(!this.renderDirty)return;this.renderDirty=false;renderBoard(this.board,this.piece,this.anim,this.cells,this.W,this.H,this.cellsFor,this.collides.bind(this),this.depth,this.shadowOpacity,this.shadowBrightness,this.rules.showGhost,this.renderCache);drawActivePiece(this.piece,this.pieceSvg,this.anim,this.W,this.H,this.depth,this.cellsFor,NS,this.renderCache);this.hook('render');this.emitState();}
   render(){this.markRender();this.flushRender();}
-  emitState(){this.options.onState({finesse:this.finesseEnabled?this.finesseActions.map(action=>({action,label:this.finesseLabel(action)})):[],piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
+  emitState(){this.options.onState({finesse:this.finesseEnabled?this.finesseActions.map((action,i)=>({action,label:this.finesseLabel(action),state:i<this.finesseProgress?'done':i===this.finesseProgress?'next':'pending'})):[],piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
     if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
@@ -182,6 +183,7 @@ export class Trainer {
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
     if(this.hook('input',{event:e,action})===true)return;
+    this.finesseInput(action);
     if(action==='left'||action==='right'){this.pieceInputCount++;const nextDir=action==='left'?-1:1;this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);}
     else if(action==='soft'){this.applySoftDrop();}
     else if(action==='hard'){this.hardDrop();}
