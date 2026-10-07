@@ -2,6 +2,7 @@
 import { W,H,NS,defaultBinds,softFactors as defaultSoftFactors } from './state.js';
 import { cellsFor as defaultCellsFor,spawnFor } from './pieces.js';
 import { SevenBagGenerator } from './generator.js';
+import { keyNames } from './state.js';
 import { collides,move } from './collision.js';
 import { tryRotate } from './rotation.js';
 import { drawActivePiece,renderBoard,startHalfTurn } from './renderer.js';
@@ -30,7 +31,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.finesseActions=[];
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -45,7 +46,7 @@ export class Trainer {
     this.ensureQueue();
     this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.render();queueMicrotask(()=>{if(this.gameOver)this.reset();});return;}
-    this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.markRender();
+    this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.generateFinessePrompt();this.markRender();
   }
   collides(px,py,o,type=this.piece?.type){return collides(px,py,o,this.board,this.W,this.H,this.cellsFor,type);}
   movePiece(dx,dy,{countSoftDrop=false}={}){
@@ -75,6 +76,22 @@ export class Trainer {
     if(this.holdType){const incoming=this.holdType;this.holdType=current;this.spawn(incoming);}
     else{this.holdType=current;this.ensureQueue();this.spawn();}
     this.hook('hold',current,this.holdType);this.emitState();return true;
+  }
+  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
+  finesseLabel(action){const code=this.binds?.[action];return keyNames[code]||String(code||action).replace(/^Key/,'').replace(/^Digit/,'');}
+  generateFinessePrompt(){
+    this.finesseActions=[];if(!this.finesseEnabled||this.gameOver||!this.piece)return;
+    const start={...this.piece},queue=[{piece:start,actions:[]}],seen=new Set([start.x+','+start.y+','+start.o]),candidates=[];
+    const transitions=[['left',-1],['right',1]];
+    while(queue.length&&seen.size<220){
+      const node=queue.shift();
+      let landing=node.piece.y;while(!this.collides(node.piece.x,landing+1,node.piece.o,node.piece.type))landing++;
+      if(!this.collides(node.piece.x,node.piece.y,node.piece.o,node.piece.type))candidates.push({actions:node.actions});
+      if(node.actions.length>=8)continue;
+      for(const [action,dx] of transitions){const n={...node.piece};if(!move(n,dx,0,this.board,this.W,this.H,this.cellsFor))continue;const k=n.x+','+n.y+','+n.o;if(!seen.has(k)){seen.add(k);queue.push({piece:n,actions:[...node.actions,action]});}}
+      for(const [action,delta] of [['cw',1],['ccw',-1],['half',2]]){const n={...node.piece};if(!tryRotate(n,delta,this.board,this.W,this.H,this.cellsFor))continue;const k=n.x+','+n.y+','+n.o;if(!seen.has(k)){seen.add(k);queue.push({piece:n,actions:[...node.actions,action]});}}
+    }
+    if(candidates.length){const chosen=candidates[(this.placed*7+this.piece.type.charCodeAt(0))%candidates.length];this.finesseActions=[...chosen.actions,'hard'];}
   }
   reapplyHeldHorizontalInput(){if(this.gameOver||!this.piece)return;const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);if(left===right)return;const dir=left?-1:1;const now=performance.now();this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();this.movePiece(dir,0);}
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
@@ -122,7 +139,7 @@ export class Trainer {
   markRender(){this.renderDirty=true;}
   flushRender(){if(!this.renderDirty)return;this.renderDirty=false;renderBoard(this.board,this.piece,this.anim,this.cells,this.W,this.H,this.cellsFor,this.collides.bind(this),this.depth,this.shadowOpacity,this.shadowBrightness,this.rules.showGhost,this.renderCache);drawActivePiece(this.piece,this.pieceSvg,this.anim,this.W,this.H,this.depth,this.cellsFor,NS,this.renderCache);this.hook('render');this.emitState();}
   render(){this.markRender();this.flushRender();}
-  emitState(){this.options.onState({piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
+  emitState(){this.options.onState({finesse:this.finesseEnabled?this.finesseActions.map(action=>({action,label:this.finesseLabel(action)})):[],piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
     if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
