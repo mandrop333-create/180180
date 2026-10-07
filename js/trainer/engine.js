@@ -8,7 +8,7 @@ import { drawActivePiece,renderBoard,startHalfTurn } from './renderer.js';
 import { createTrainingState,recordTrainingAction,recordTrainingRotation,tickTrainingState } from './training-state.js';
 
 const defaultMode={id:null,rules:{},hooks:{}};
-const SCORE={single:100,double:300,triple:500,tetris:800,tspin:400,tspinSingle:800,tspinDouble:1200,tspinTriple:1600,mini:100,hardDropPerRow:2,softDropPerRow:1};
+const SCORE={single:100,double:300,triple:500,tetris:800,tspin:400,tspinSingle:800,tspinDouble:1200,tspinTriple:1600,mini:100,miniSingle:200,miniDouble:400,miniTriple:800,hardDropPerRow:2,softDropPerRow:1};
 
 function cloneBoard(board){return board.map(row=>[...row]);}
 function countFilled(board){let n=0;for(const row of board)for(const cell of row)if(cell)n++;return n;}
@@ -112,7 +112,7 @@ export class Trainer {
   spinOrLineScore(cleared,spin){
     const s=this.rules.scoring||SCORE;
     if(spin==='full')return ({0:s.tspin,1:s.tspinSingle,2:s.tspinDouble,3:s.tspinTriple}[cleared]??s.tspin);
-    if(spin==='mini')return cleared?Math.round((({1:s.tspinSingle,2:s.tspinDouble}[cleared]??s.mini)*.5)):s.mini;
+    if(spin==='mini')return ({0:s.mini,1:s.miniSingle,2:s.miniDouble,3:s.miniTriple}[cleared]??s.mini);
     return ({1:s.single,2:s.double,3:s.triple,4:s.tetris}[cleared]??0);
   }
   render(){renderBoard(this.board,this.piece,this.anim,this.cells,this.W,this.H,this.cellsFor,this.collides.bind(this),this.depth,this.shadowOpacity,this.shadowBrightness,this.rules.showGhost);drawActivePiece(this.piece,this.pieceSvg,this.anim,this.W,this.H,this.depth,this.cellsFor,NS);this.hook('render');this.emitState();}
