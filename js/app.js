@@ -1,4 +1,4 @@
-// Application entry point. The trainer owns gameplay; the trainer page mounts its own settings controller.
+// Application entry point. The trainer owns gameplay; mode metadata owns mode presentation.
 import { Trainer } from './trainer/core-engine.js';
 import { getModeById } from './modes/modes.js';
 import { getSettings } from './settings.js';
@@ -11,25 +11,39 @@ import { getSettings } from './settings.js';
   if (!mode) { window.location.href = 'index.html'; return; }
 
   const settings = getSettings();
+  const training = mode.training || {};
   const titleEl = document.querySelector('.brand-title');
   const taglineEl = document.querySelector('.tagline');
   if (titleEl) titleEl.textContent = mode.name;
   if (taglineEl) taglineEl.textContent = mode.description;
 
-  // Mode-specific presentation. Mode 01 retains its existing trainer presentation.
-  if (mode.id === 'mode-02') {
-    const jolTitle = '180180 — JOL CHUNKS';
-    const jolDescription = 'Practice the J → O → L Tetris chunk repeatedly as an ordered three-piece sequence.';
-    document.title = jolTitle;
-    document.getElementById('pageTitle')?.replaceChildren(jolTitle);
-    document.getElementById('pageDescription')?.setAttribute('content', jolDescription);
-    document.getElementById('ogTitle')?.setAttribute('content', jolTitle);
-    document.getElementById('ogDescription')?.setAttribute('content', jolDescription);
-    document.getElementById('twitterTitle')?.setAttribute('content', jolTitle);
-    document.getElementById('twitterDescription')?.setAttribute('content', jolDescription);
-    const concept = document.getElementById('concept');
-    const conceptImage = document.getElementById('conceptImage');
-    const conceptText = document.getElementById('conceptText');
+  // Mode metadata is the single source of truth for educational/presentation copy.
+  if (training.pageTitle) {
+    document.title = training.pageTitle;
+    document.getElementById('pageTitle')?.replaceChildren(training.pageTitle);
+  }
+  if (training.description) {
+    document.getElementById('pageDescription')?.setAttribute('content', training.description);
+    document.getElementById('ogDescription')?.setAttribute('content', training.description);
+    document.getElementById('twitterDescription')?.setAttribute('content', training.description);
+  }
+  if (training.pageTitle) {
+    document.getElementById('ogTitle')?.setAttribute('content', training.pageTitle);
+    document.getElementById('twitterTitle')?.setAttribute('content', training.pageTitle);
+  }
+
+  const concept = document.getElementById('concept');
+  const conceptImage = document.getElementById('conceptImage');
+  const conceptText = document.getElementById('conceptText');
+  if (training.conceptText) conceptText && (conceptText.textContent = training.conceptText);
+  if (training.conceptImage && conceptImage) {
+    conceptImage.src = training.conceptImage;
+    conceptImage.alt = training.conceptAlt || '';
+    concept?.setAttribute('aria-label', `${mode.name} training concept`);
+  }
+
+  const guide = training.guide;
+  if (guide) {
     const guideTitle = document.getElementById('guideTitle');
     const guideSubtitle = document.getElementById('guideSubtitle');
     const guideKicker = document.getElementById('guideKicker');
@@ -37,19 +51,15 @@ import { getSettings } from './settings.js';
     const guideIntro = document.getElementById('guideIntro');
     const guideExerciseKicker = document.getElementById('guideExerciseKicker');
     const guideExercise = document.getElementById('guideExercise');
-    if (concept) concept.setAttribute('aria-label', 'JOL chunks training concept');
-    if (conceptImage) {
-      conceptImage.src = 'assets/jol-chunks.svg';
-      conceptImage.alt = 'J, O, and L tetrominoes in the repeating JOL chunk sequence';
-    }
-    if (conceptText) conceptText.textContent = 'Build automatic recognition of the ordered J → O → L chunk.';
-    if (guideTitle) guideTitle.textContent = 'JOL';
-    if (guideSubtitle) guideSubtitle.textContent = 'CHUNKS';
-    if (guideKicker) guideKicker.textContent = 'JOL practice';
-    if (guideHeading) guideHeading.textContent = 'JOL CHUNKS';
-    if (guideIntro) guideIntro.textContent = 'A JOL chunk is one ordered three-piece unit: J → O → L. The sequence repeats continuously.';
-    if (guideExerciseKicker) guideExerciseKicker.textContent = 'the exercise';
-    if (guideExercise) guideExercise.textContent = 'Do not wait for a normal 7-bag. Learn the three-piece rhythm itself: J, then O, then L, then immediately back to J.';
+    const guideCover = document.querySelector('[data-guide-cover]');
+    if (guideTitle) guideTitle.textContent = guide.title || mode.name;
+    if (guideSubtitle) guideSubtitle.textContent = guide.subtitle || '';
+    if (guideKicker) guideKicker.textContent = guide.kicker || '';
+    if (guideHeading) guideHeading.textContent = guide.heading || mode.name;
+    if (guideIntro) guideIntro.textContent = guide.intro || '';
+    if (guideExerciseKicker) guideExerciseKicker.textContent = guide.exerciseKicker || '';
+    if (guideExercise) guideExercise.textContent = guide.exercise || '';
+    if (guideCover && guide.coverLabel) guideCover.setAttribute('aria-label', guide.coverLabel);
   }
 
   const trainer = new Trainer(boardEl, {
@@ -103,6 +113,23 @@ import { getSettings } from './settings.js';
     if(token!==lastBonusBreakToken){lastBonusBreakToken=token;meter.classList.remove('breaking');void meter.offsetWidth;meter.classList.add('breaking');setTimeout(()=>meter.classList.remove('breaking'),340);}
   }
 
+  function updateTrainingHud(){
+    const hud=document.getElementById('jolHud');
+    if(!hud)return;
+    const active=mode.id==='mode-02';
+    hud.hidden=!active;
+    if(!active)return;
+    const session=trainer.session || {};
+    const timer=document.getElementById('jolTimer');
+    const progress=document.getElementById('jolProgress');
+    const chunks=document.getElementById('jolChunks');
+    const best=document.getElementById('jolBest');
+    if(timer)timer.textContent=(Math.max(0,Number(session.elapsedMs||0))/1000).toFixed(1)+'s';
+    if(progress)progress.textContent=`${session.placements?.length||0}/3`;
+    if(chunks)chunks.textContent=String(session.completedChunks||0);
+    if(best)best.textContent=session.bestChunkMs==null?'—':(session.bestChunkMs/1000).toFixed(1)+'s';
+  }
+
   function updateOrientation(){
     const el=document.getElementById('orient'); const name=document.getElementById('orientName');
     if(!el||!name)return;
@@ -111,7 +138,7 @@ import { getSettings } from './settings.js';
   }
 
   const originalRender=trainer.render.bind(trainer);
-  trainer.render=function(){originalRender();updateOrientation();updateBonus();};
+  trainer.render=function(){originalRender();updateOrientation();updateBonus();updateTrainingHud();};
 
   const settingsOpen=()=>document.body.classList.contains('settings-open');
   window.addEventListener('keydown',e=>{
