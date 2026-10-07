@@ -17,7 +17,7 @@ body{min-height:100vh}
 .homepage-game-first .trainer-layout{display:grid;grid-template-columns:220px minmax(300px,1fr) 220px;gap:28px;align-items:start;justify-content:center}.homepage-game-first .board-column{justify-self:center}
 .homepage-game-first .trainer-side{display:grid;gap:12px;padding-top:54px}
 .trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
-.trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}
+.trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}.rules-list{display:grid;gap:10px}.rule-control{display:grid;gap:7px}.rule-control-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.rule-control-head label{color:#cfc6dc;font:700 11px/1 ui-monospace,monospace}.rule-control-head output{color:#eee8fb;font:800 10px/1 ui-monospace,monospace}.rules-card .settings-range{width:100%;margin:0}
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .hud-item{padding:9px 6px;border:1px solid #292432;border-radius:8px;text-align:center}
 .hud-item span{display:block;color:#777083;font:700 8px/1 ui-monospace,monospace;letter-spacing:.1em}
@@ -79,6 +79,15 @@ body{min-height:100vh}
             <h2>Next</h2>
             <div class="next-preview" id="nextPreview" aria-label="Next pieces"></div>
           </section>
+          <section class="trainer-card rules-card" aria-label="Rules">
+            <h2>Rules</h2>
+            <div class="rules-list">
+              <div class="rule-control">
+                <div class="rule-control-head"><label for="mainRuleDepth">3D depth</label><output id="mainRuleDepthOut">55%</output></div>
+                <input class="settings-range" id="mainRuleDepth" type="range" min="0" max="100" value="55" aria-label="3D depth">
+              </div>
+            </div>
+          </section>
           <section class="trainer-card">
             <h2>Training signal</h2>
             <p style="margin:0;color:#91879e;font-size:11px;line-height:1.5">#1 keeps the normal stacker rules, while the training layer measures clean 180° execution and placement quality.</p>
@@ -108,6 +117,10 @@ body{min-height:100vh}
   </section>
 </div>
 <div id="toast" hidden style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;padding:9px 14px;border:1px solid #5d4c7b;border-radius:999px;background:#17131e;color:#eee8fa;font:800 11px ui-monospace,monospace">Ready</div>
+
+<script>
+(()=>{const input=document.getElementById('mainRuleDepth'),out=document.getElementById('mainRuleDepthOut');if(!input||!out)return;const sync=()=>{const v=Number(input.value);out.textContent=v+'%';if(window.trainer){window.trainer.depth=v/100;window.trainer.render?.();}};input.addEventListener('input',sync);window.addEventListener('trainerready',()=>{input.value=Math.round((window.trainer.depth??.55)*100);sync();});})();
+</script>
 
 <script type="module" src="games/01/game.js"></script>
 
