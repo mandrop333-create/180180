@@ -47,6 +47,7 @@ function renderState(state){
   if(next)next.innerHTML=state.queue.slice(0,5).map(miniPiece).join('');
 }
 trainer.options.onState=renderState;
+trainer.emitState();
 trainer.setToastCallback(message=>{const toast=document.getElementById('toast');if(toast){toast.textContent=message;toast.hidden=false;clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>toast.hidden=true,1400);}});
 window.addEventListener('keydown',e=>trainer.handleKeydown(e),true);
 window.addEventListener('keyup',e=>trainer.handleKeyup(e),true);
