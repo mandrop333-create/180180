@@ -13,8 +13,8 @@ body{min-height:100vh}
 .trainer-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:22px clamp(18px,5vw,56px)}
 .trainer-brand{margin:0;text-align:center;font:900 clamp(20px,4vw,32px)/1 ui-monospace,monospace;letter-spacing:.08em;color:#eee8fb}
 .trainer-main{flex:1;padding:0 18px 40px}
-.trainer-shell{width:min(1080px,100%);margin:0 auto}
-.homepage-game-first .trainer-layout{display:grid;grid-template-columns:minmax(170px,1fr) auto minmax(170px,1fr);gap:24px;align-items:start}
+.trainer-shell{width:min(1060px,100%);margin:0 auto}
+.homepage-game-first .trainer-layout{display:grid;grid-template-columns:220px minmax(300px,1fr) 220px;gap:28px;align-items:start;justify-content:center}.homepage-game-first .board-column{justify-self:center}
 .homepage-game-first .trainer-side{display:grid;gap:12px;padding-top:54px}
 .trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
 .trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}
@@ -34,7 +34,7 @@ body{min-height:100vh}
 .trainer-controls{max-width:300px}
 .settings-checks{display:grid;gap:7px}.settings-checks label{display:flex;align-items:center;gap:8px;color:#cfc6dc;font-size:11px}.settings-checks input{accent-color:#a78bfa}.action-button{border:1px solid #51446e;border-radius:7px;background:#17151d;color:#eee8fa;padding:7px 12px;font:800 11px ui-monospace,monospace;cursor:pointer}
 .action-button:hover{border-color:#a78bfa;background:#201b29}
-@media(max-width:900px){.trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
+@media(max-width:900px){.homepage-game-first .trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
 @media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}}
 </style>
 
@@ -47,7 +47,8 @@ body{min-height:100vh}
   </div>
   <main class="trainer-main homepage-game-first">
     <div class="trainer-shell">
-      <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
+      <div class="mini-home">
+        <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
         <p class="mini-home-description" id="miniHomeDescription">Train the 180° rotation as one deliberate movement</p>
       </div>
       <div class="trainer-layout">
