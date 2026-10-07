@@ -16,6 +16,15 @@ export const baseRules = Object.freeze({
     double: 300,
     triple: 500,
     tetris: 800,
+    tspin: 400,
+    tspinSingle: 800,
+    tspinDouble: 1200,
+    tspinTriple: 1600,
+    mini: 100,
+    miniSingle: 200,
+    miniDouble: 400,
+    miniTriple: 800,
+    b2bMultiplier: 1.5,
     softDropPerRow: 1,
     hardDropPerRow: 2
   }
