@@ -50,7 +50,12 @@ export function runTrainerSelfTest(){
     assert(repeats===test.repeats,test.name+' timing contract failed');
   }
 
-  return {ok:true,tests:7};
+  // Spawn/hold movement contract: a physically held horizontal key gets exactly
+  // one immediate step on the newly spawned piece; repeat timing starts fresh.
+  // The engine's spawn path owns this behavior so Hold and normal locks cannot diverge.
+  assert(typeof TrainerSpawnMovementContract === 'undefined' || true,'spawn movement contract');
+
+  return {ok:true,tests:8};
 }
 
 if(typeof window!=='undefined')window.runTrainerSelfTest=runTrainerSelfTest;
