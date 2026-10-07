@@ -16,7 +16,7 @@ function countFilled(board){let n=0;for(const row of board)for(const cell of row
 export class Trainer {
   constructor(boardEl,options={}){
     this.boardEl=boardEl; this.mode=options.mode||defaultMode;
-    this.rules={width:W,height:H,gravity:800,lockDelay:500,softFactors:defaultSoftFactors,das:127,arr:0,dcd:0,maxLockResets:15,safeLock:true,cancelDas:false,preferSoftDrop:false,clearBoardAfterPlace:false,clearLines:true,showGhost:true,queueSize:5,hold:true, ...this.mode.rules};
+    this.rules={width:W,height:H,gravity:800,lockDelay:500,softFactors:[...defaultSoftFactors],das:127,arr:0,dcd:0,maxLockResets:15,safeLock:true,cancelDas:false,preferSoftDrop:false,clearBoardAfterPlace:false,clearLines:true,showGhost:true,queueSize:5,hold:true, ...this.mode.rules, softFactors:[...(this.mode.rules.softFactors || defaultSoftFactors)], scoring:{...(this.mode.rules.scoring || {})}};
     if(Number.isFinite(options.das))this.rules.das=options.das;
     if(Number.isFinite(options.arr))this.rules.arr=options.arr;
     if(Number.isFinite(options.dcd))this.rules.dcd=options.dcd;
