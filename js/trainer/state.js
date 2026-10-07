@@ -46,4 +46,4 @@ export const labels = {
   hold: 'Hold piece'
 };
 
-export const softFactors = [1, 2, 5, 10, Infinity];
+export const softFactors = [1, 2, 5, 10, 20, 40, Infinity];
