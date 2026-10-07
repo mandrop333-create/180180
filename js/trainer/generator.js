@@ -28,6 +28,34 @@ function shuffle(values, rng) {
   return result;
 }
 
+export class JolChunkGenerator {
+  constructor(sequence = ['J', 'O', 'L']) {
+    if (!Array.isArray(sequence) || sequence.length !== 3 || sequence.some(type => !PIECE_TYPES.includes(type))) {
+      throw new Error('JOL chunk sequence must contain exactly three valid tetromino types');
+    }
+    this.sequence = [...sequence];
+    this.index = 0;
+  }
+
+  reset() {
+    this.index = 0;
+  }
+
+  next() {
+    const type = this.sequence[this.index];
+    this.index = (this.index + 1) % this.sequence.length;
+    return type;
+  }
+
+  peek(count = 1) {
+    const result = [];
+    for (let i = 0; i < count; i++) {
+      result.push(this.sequence[(this.index + i) % this.sequence.length]);
+    }
+    return result;
+  }
+}
+
 export class SevenBagGenerator {
   constructor(options = {}) {
     this.seed = options.seed ?? null;
