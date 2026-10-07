@@ -15,7 +15,11 @@ const trainer=new Trainer(board,{
   shadowBrightness:settings.shadowBrightness,
   das:settings.das,
   arr:settings.arr,
-  dcd:settings.dcd
+  dcd:settings.dcd,
+  lockDelay:settings.lockDelay,
+  safeLock:settings.safeLock,
+  cancelDas:settings.cancelDas,
+  preferSoftDrop:settings.preferSoftDrop
 });
 
 window.trainer=trainer;
@@ -48,7 +52,7 @@ function renderState(state){
   if(combo)combo.textContent=state.combo<0?'—':String(state.combo);
   if(b2b)b2b.textContent=state.b2b?'ON':'—';
   if(pieces)pieces.textContent=String(state.stats.piecesPlaced);
-  if(finesse)finesse.textContent=state.stats.rotations+'R / '+state.stats.halfTurns+' 180';
+  if(finesse)finesse.textContent=state.stats.finesseFaults+' faults · '+state.stats.finessePerfect+' clean';
   if(hold)hold.innerHTML=miniPiece(state.hold);
   if(next)next.innerHTML=state.queue.slice(0,5).map(miniPiece).join('');
 }
