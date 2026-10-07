@@ -55,7 +55,7 @@ function renderState(state){
   if(pieces)pieces.textContent=String(state.stats.piecesPlaced);
   if(finesse)finesse.textContent=state.stats.finesseFaults+' faults · '+state.stats.finessePerfect+' clean';
   if(hold)hold.innerHTML=miniPiece(state.hold);
-  if(next)next.innerHTML=state.queue.slice(0,5).map(miniPiece).join('');
+  if(next){const count=Math.max(1,Math.min(15,Number(trainer.nextQueueSize)||5));next.innerHTML=state.queue.slice(0,count).map(miniPiece).join('');}
 }
 trainer.options.onState=renderState;
 trainer.emitState();
