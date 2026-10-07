@@ -1,4 +1,4 @@
-import { defaultBinds, labels, keyNames } from './trainer/state.js';
+import { defaultBinds, labels, keyNames } from './state.js';
 
 const STORAGE_KEY='180180.settings.v1';
 const defaults={depth:.55,softScale:0,shadowOpacity:.6,shadowBrightness:1,das:127,arr:0,dcd:0,lockDelay:500,safeLock:true,cancelDas:false,preferSoftDrop:false,binds:{...defaultBinds}};
