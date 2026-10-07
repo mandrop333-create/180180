@@ -117,7 +117,6 @@ import { getSettings } from './settings.js';
     if(token!==lastBonusBreakToken){lastBonusBreakToken=token;meter.classList.remove('breaking');void meter.offsetWidth;meter.classList.add('breaking');setTimeout(()=>meter.classList.remove('breaking'),340);}
   }
 
-  let lastRhythmBeat = null;
   function updateRhythmHud(now=performance.now()){
     const panel=document.getElementById('rhythmPanel'); if(!panel)return;
     const active=mode.id==='mode-02'; panel.hidden=!active; if(!active)return;
@@ -128,37 +127,19 @@ import { getSettings } from './settings.js';
     const countdown=document.getElementById('rhythmCountdown');
     const meter=document.getElementById('rhythmMeter');
     const help=document.getElementById('rhythmHelp');
-    const current=rhythm.expectedPiece;
-    const interval=rhythm.intervals[rhythm.beatIndex % rhythm.intervals.length] ?? 700;
-    const elapsed=Math.max(0,now-rhythm.beatStartedAt);
-    const expectedAt=interval;
-    const remaining=Math.max(0,expectedAt-elapsed);
-    const progress=Math.min(100,Math.max(0,(elapsed/interval)*100));
+    const duration=rhythm.phase==='input' ? rhythm.inputDurationMs : rhythm.revealDurationMs;
+    const elapsed=Math.max(0,now-rhythm.phaseStartedAt);
+    const remaining=Math.max(0,duration-elapsed);
+    const progress=Math.min(100,Math.max(0,(elapsed/duration)*100));
 
-    if(status)status.textContent=current ? `NEXT ${current}` : 'READY';
+    if(status)status.textContent=rhythm.phase==='input' ? 'INPUT' : 'REVEAL';
     if(countdown)countdown.textContent=(remaining/1000).toFixed(2);
     if(meter)meter.style.width=`${progress}%`;
 
-    document.querySelectorAll('[data-rhythm-piece]').forEach(el=>{
-      const type=el.getAttribute('data-rhythm-piece');
-      el.dataset.current=String(type===current);
-      el.dataset.active=String(type===current);
-      el.dataset.hit='false';
-    });
-
-    const last=rhythm.lastResult;
-    if(last && rhythm.lastBeatAt!=null && now-rhythm.lastBeatAt<360){
-      panel.classList.toggle('hit',!!last.valid);
-      panel.classList.toggle('miss',!last.valid);
-      const hitEl=document.querySelector(`[data-rhythm-piece="${last.expected}"]`);
-      if(hitEl)hitEl.dataset.hit='true';
-      if(help)help.textContent=last.valid ? `Good beat · ${Math.round(last.timingErrorMs)}ms` : last.reason==='timeout' ? 'Missed beat · follow the next pulse' : 'Miss · watch the next pulse';
-    } else {
-      panel.classList.remove('hit','miss');
-      if(help)help.textContent='Watch the pulse. Place the expected piece near the beat.';
-    }
-
-    lastRhythmBeat=current;
+    panel.classList.toggle('reveal',rhythm.phase==='reveal');
+    if(help)help.textContent=rhythm.phase==='input'
+      ? 'Play normally. Your real inputs are happening while the board stays hidden.'
+      : 'See the result, adjust your feel, then go again.';
   }
 
   function updateTrainingHud(now=performance.now()){
