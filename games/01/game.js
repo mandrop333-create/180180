@@ -2,6 +2,7 @@ import { Trainer } from './engine.js';
 import mode from './mode.js';
 import { getSettings, mountSettings } from './settings.js';
 import { runTrainerSelfTest } from './self-test.js';
+import { cellsFor } from './pieces.js';
 
 const settings=getSettings();
 const board=document.getElementById('board');
@@ -35,7 +36,15 @@ const pieces=document.getElementById('hudPieces');
 const finesse=document.getElementById('hudFinesse');
 const hold=document.getElementById('holdPreview');
 const next=document.getElementById('nextPreview');
-function miniPiece(type){return type?'<span class="mini-piece mini-'+type.toLowerCase()+'" aria-label="'+type+'">'+type+'</span>':'';}
+function miniPiece(type){
+  if(!type)return '';
+  const cells=cellsFor(type,0);
+  const minX=Math.min(...cells.map(([x])=>x)), maxX=Math.max(...cells.map(([x])=>x));
+  const minY=Math.min(...cells.map(([,y])=>y)), maxY=Math.max(...cells.map(([,y])=>y));
+  const w=maxX-minX+1,h=maxY-minY+1;
+  const blocks=cells.map(([x,y])=>'<span class="mini-block mini-'+type.toLowerCase()+'" style="grid-column:'+(x-minX+1)+';grid-row:'+(y-minY+1)+'"></span>').join('');
+  return '<span class="mini-piece" aria-label="Next '+type+' piece"><span class="mini-grid mini-grid-'+w+'x'+h+'">'+blocks+'</span></span>';
+}
 function renderState(state){
   if(score)score.textContent=String(state.stats.score);
   if(lines)lines.textContent=String(state.lines);
