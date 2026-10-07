@@ -1,4 +1,4 @@
-// Shared mode contract. Modes describe rules; Trainer owns the universal runtime.
+// Shared mode contract. Modes describe rules and training capabilities; Trainer owns the universal runtime.
 
 import { W, H, GRAVITY_MS_PER_ROW, LOCK_DELAY_MS, softFactors } from '../trainer/state.js';
 
@@ -21,6 +21,15 @@ export const baseRules = Object.freeze({
   }
 });
 
+export const baseCapabilities = Object.freeze({
+  input: true,
+  timing: true,
+  rhythm: false,
+  spatial: false,
+  progression: true,
+  feedback: true
+});
+
 export function createMode({
   id,
   number,
@@ -31,7 +40,8 @@ export function createMode({
   hooks = {},
   createSession,
   createGenerator,
-  training = {}
+  training = {},
+  capabilities = {}
 }) {
   return {
     id,
@@ -42,6 +52,7 @@ export function createMode({
     rules: { ...baseRules, ...rules },
     hooks,
     training,
+    capabilities: { ...baseCapabilities, ...capabilities },
     ...(createSession ? { createSession } : {}),
     ...(createGenerator ? { createGenerator } : {})
   };
