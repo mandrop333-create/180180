@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-labelledby="title desc">
+<title id="title">JOL chunk pieces</title>
+<desc id="desc">The J, O, and L tetrominoes shown in order J, O, L.</desc>
+<rect width="720" height="300" rx="20" fill="#e8e2d9"/>
+<g transform="translate(55 48)"><g fill="#8172ff" stroke="#4d437e" stroke-width="5"><rect x="20" y="0" width="58" height="58"/><rect x="20" y="58" width="58" height="58"/><rect x="78" y="58" width="58" height="58"/><rect x="136" y="58" width="58" height="58"/></g><text x="107" y="158" text-anchor="middle" font-family="monospace" font-size="34" font-weight="900" fill="#332d3b">J</text></g>
+<g transform="translate(270 48)"><g fill="#a899ff" stroke="#4d437e" stroke-width="5"><rect x="20" y="0" width="58" height="58"/><rect x="78" y="0" width="58" height="58"/><rect x="20" y="58" width="58" height="58"/><rect x="78" y="58" width="58" height="58"/></g><text x="78" y="158" text-anchor="middle" font-family="monospace" font-size="34" font-weight="900" fill="#332d3b">O</text></g>
+<g transform="translate(485 48)"><g fill="#8d7fff" stroke="#4d437e" stroke-width="5"><rect x="136" y="0" width="58" height="58"/><rect x="20" y="58" width="58" height="58"/><rect x="78" y="58" width="58" height="58"/><rect x="136" y="58" width="58" height="58"/></g><text x="107" y="158" text-anchor="middle" font-family="monospace" font-size="34" font-weight="900" fill="#332d3b">L</text></g>
+<text x="360" y="266" text-anchor="middle" font-family="monospace" font-size="20" font-weight="800" letter-spacing="6" fill="#6d6475">J → O → L → J → O → L</text>
+</svg>
