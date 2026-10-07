@@ -1,9 +1,7 @@
-// JOL CHUNKS spatial rules.
-// A JOL is one J + O + L relationship. A chunk is valid when the
-// combined OUTER SILHOUETTE of those three standard tetrominoes has a
-// 3x4 or 4x3 rectangular envelope. The pieces remain independent
-// Tetris pieces; the rectangle describes their shared spatial boundary,
-// not a requirement that their occupied cells tile every cell internally.
+// JOL CHUNKS spatial rule.
+// One J, one O, and one L form a valid chunk when their occupied cells
+// exactly fill a 3x4 or 4x3 rectangle. The pieces remain normal Tetris
+// tetrominoes; their positions and orientations create the larger shape.
 
 export const JOL_SEQUENCE = Object.freeze(['J', 'O', 'L']);
 export const JOL_CHUNK_DIMENSIONS = Object.freeze([[3, 4], [4, 3]]);
@@ -26,6 +24,17 @@ function bounds(cells) {
   };
 }
 
+export function getJolEnvelope(placements, cellsFor) {
+  const cells = placements.flatMap(piece => absoluteCells(piece, cellsFor));
+  if (!cells.length) return null;
+  const box = bounds(cells);
+  return {
+    ...box,
+    width: box.maxX - box.minX + 1,
+    height: box.maxY - box.minY + 1
+  };
+}
+
 export function validateJolChunk(placements, cellsFor) {
   if (!Array.isArray(placements) || placements.length !== 3) {
     return { valid: false, reason: 'A JOL chunk needs exactly three pieces.' };
@@ -37,34 +46,32 @@ export function validateJolChunk(placements, cellsFor) {
   }
 
   const cells = placements.flatMap(piece => absoluteCells(piece, cellsFor));
-  if (!cells.length) {
-    return { valid: false, reason: 'The chunk has no spatial footprint.' };
+  const unique = new Set(cells.map(([x, y]) => `${x},${y}`));
+  if (unique.size !== 12) {
+    return { valid: false, reason: 'The three pieces cannot overlap.' };
   }
 
-  // The user's chunk rule is about the combined outside boundary. Do not
-  // require the three tetrominoes to tile all 12 cells: standard J/O/L
-  // geometry cannot do that while preserving their normal identities.
-  const box = bounds(cells);
-  const width = box.maxX - box.minX + 1;
-  const height = box.maxY - box.minY + 1;
-  const validDimensions = JOL_CHUNK_DIMENSIONS.some(([w, h]) => w === width && h === height);
-
-  if (!validDimensions) {
+  const envelope = getJolEnvelope(placements, cellsFor);
+  const is3x4 = envelope.width === 3 && envelope.height === 4;
+  const is4x3 = envelope.width === 4 && envelope.height === 3;
+  if (!is3x4 && !is4x3) {
     return {
       valid: false,
-      reason: 'The combined outside boundary must be a 3×4 or 4×3 rectangle.',
-      width,
-      height,
-      bounds: box
+      reason: 'The JOL must form a 3×4 or 4×3 rectangle.',
+      width: envelope.width,
+      height: envelope.height,
+      bounds: envelope
     };
   }
 
+  // Three tetrominoes contain exactly 12 cells, so a 3x4 or 4x3 envelope
+  // with 12 unique cells is completely filled: there are no holes.
   return {
     valid: true,
-    width,
-    height,
+    width: envelope.width,
+    height: envelope.height,
     cells,
-    bounds: box,
-    orientation: width === 3 ? '3×4' : '4×3'
+    bounds: envelope,
+    orientation: is3x4 ? '3×4' : '4×3'
   };
 }
