@@ -31,17 +31,17 @@ function pieceGradient(type) {
 
 function appendPieceGeometry(root, shape, depthPx, NS, { frontGradient = ACTIVE_FRONT_GRADIENT } = {}) {
   const occupied = new Set(shape.map(([x, y]) => x + ',' + y));
-  const X = x => x * CELL_PITCH + 1, Y = y => y * CELL_PITCH + 1;
+  const X = x => x * CELL_PITCH, Y = y => y * CELL_PITCH;
   const poly = (pts, cls, attrs = {}) => root.append(svgEl('polygon', { points: pts.map(([x, y]) => x + ',' + y).join(' '), ...attrs }, cls, NS));
   for (const [x, y] of shape) {
-    const x0 = X(x), y0 = Y(y), x1 = x0 + CELL - 2, y1 = y0 + CELL - 2;
+    const x0 = X(x), y0 = Y(y), x1 = x0 + CELL_PITCH, y1 = y0 + CELL_PITCH;
     if (depthPx > 0) {
       if (!occupied.has((x + 1) + ',' + y)) poly([[x1, y0], [x1, y1], [x1 + depthPx, y1 + depthPx], [x1 + depthPx, y0 + depthPx]], 'side-face');
       if (!occupied.has(x + ',' + (y + 1))) poly([[x0, y1], [x1, y1], [x1 + depthPx, y1 + depthPx], [x0 + depthPx, y1 + depthPx]], 'side-face');
     }
   }
   for (const [x, y] of shape) {
-    const x0 = X(x), y0 = Y(y), x1 = x0 + CELL - 2, y1 = y0 + CELL - 2;
+    const x0 = X(x), y0 = Y(y), x1 = x0 + CELL_PITCH, y1 = y0 + CELL_PITCH;
     poly([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], 'front-face', { fill: 'url(#' + frontGradient + ')' });
   }
   for (const [x, y] of shape) {
