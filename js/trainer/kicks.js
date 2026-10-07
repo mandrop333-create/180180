@@ -33,13 +33,15 @@ const HALF_JLSTZ = {
   3: [[0,0],[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
 };
 
-// The I piece uses a different rotation center. These candidates are kept
-// separate so the geometry-specific handling cannot leak into JLSTZ pieces.
+// The I piece uses a different rotation center. The first candidate must
+// be the neutral transition: in open space a 180° turn changes orientation
+// without changing the piece's x position. Any corrective kick is only a
+// fallback when the neutral placement collides.
 const HALF_I = {
-  0: [[1,0],[1,-1]],
-  1: [[-1,1],[0,1]],
-  2: [[-1,0],[-1,1]],
-  3: [[1,-1],[0,-1]]
+  0: [[0,0],[1,0],[1,-1]],
+  1: [[0,0],[-1,1],[0,1]],
+  2: [[0,0],[-1,0],[-1,1]],
+  3: [[0,0],[1,-1],[0,-1]]
 };
 
 export function getSrsKicks(type, from, to) {
