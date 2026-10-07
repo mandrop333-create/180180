@@ -3,73 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title id="pageTitle">180180 — Tetris 180° Rotation Trainer</title>
-<link rel="canonical" href="https://mandrop333-create.github.io/180180/trainer.html">
-<meta id="pageDescription" name="description" content="Practice 180° Tetris rotation with 180180, a dedicated visual rotation and piece orientation trainer.">
-<meta name="application-name" content="180180">
-<meta name="theme-color" content="#101014">
-<meta property="og:type" content="website">
-<meta id="ogTitle" property="og:title" content="180180 — Tetris 180° Rotation Trainer">
-<meta id="ogDescription" property="og:description" content="Practice 180° Tetris rotation with a dedicated visual rotation and piece orientation trainer.">
-<meta property="og:site_name" content="180180">
-<meta name="twitter:card" content="summary">
-<meta id="twitterTitle" name="twitter:title" content="180180 — Tetris 180° Rotation Trainer">
-<meta id="twitterDescription" name="twitter:description" content="Interactive Tetris training modes for visual rotation and spatial pattern practice.">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","@id":"#application","name":"180180","description":"A free web-based Tetris training application focused on 180° rotation, visual rotation, and spatial pattern practice.","applicationCategory":"EducationalApplication","applicationSubCategory":"Tetris training","featureList":["180° rotation practice","JOL spatial chunk practice","Rhythm and timing practice","Visual piece training","Configurable training settings"],"operatingSystem":"Any","browserRequirements":"Requires a modern web browser"},{"@type":"WebPage","@id":"#trainer-page","name":"180180 trainer","description":"Interactive Tetris training modes for visual rotation and spatial pattern practice.","mainEntity":{"@id":"#application"}}]}</script>
+<title>180180 — 180 Flip</title>
 <link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/trainer.css">
-<link rel="stylesheet" href="css/trainer-guide-book.css">
-<link rel="stylesheet" href="css/settings.css">
 <style>
-.mini-home{width:100%;display:flex;justify-content:center;align-items:center;min-height:65vh;padding:32px 18px}
-.mini-home-card{width:min(760px,100%);padding:42px;border:1px solid rgba(255,255,255,.12);border-radius:28px;background:rgba(16,16,20,.82);box-shadow:0 24px 80px rgba(0,0,0,.28);text-align:center}
-.mini-home-number{display:inline-grid;place-items:center;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.2);font-size:24px}
-.mini-home-kicker{margin:22px 0 8px;letter-spacing:.18em;font-size:12px;opacity:.65}
-.mini-home-title{margin:0;font-size:clamp(34px,7vw,64px)}
-.mini-home-description{max-width:560px;margin:14px auto 28px;opacity:.72;line-height:1.6}
-.mini-home-preview{min-height:220px;border:1px dashed rgba(255,255,255,.2);border-radius:22px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;letter-spacing:.12em}
-.mini-home-preview small{letter-spacing:normal;opacity:.5}
-.mini-home-actions{margin-top:26px}
-</style></head>
+  :root{--grid-cols:10;--grid-rows:20}
+  body{min-height:100vh}
+  .grid-page{min-height:100vh;display:flex;flex-direction:column}
+  .grid-header{display:flex;align-items:center;justify-content:space-between;padding:24px clamp(18px,5vw,56px)}
+  .grid-header h1{margin:0;font-size:clamp(22px,4vw,34px);letter-spacing:.04em}
+  .grid-main{flex:1;display:flex;justify-content:center;align-items:center;padding:20px}
+  .grid-frame{padding:14px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(10,10,14,.72);box-shadow:0 24px 70px rgba(0,0,0,.35)}
+  .grid{display:grid;grid-template-columns:repeat(10, minmax(22px, 42px));grid-template-rows:repeat(20, minmax(22px, 42px));gap:2px;width:min(430px,82vw);aspect-ratio:1/2;background:rgba(255,255,255,.08);padding:2px}
+  .cell{border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}
+  .grid-label{margin:12px 0 0;text-align:center;font-size:10px;letter-spacing:.18em;opacity:.45}
+</style>
+</head>
 <body>
-<div class="shell">
-  <div class="flawless-graffiti trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg" preserveAspectRatio="xMaxYMin meet"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
-  <div class="trainer-settings-control"><button class="settings-gear trainer-settings-gear" data-settings-open type="button" aria-label="Open settings" aria-expanded="false"><span class="power-orb" aria-hidden="true"><span class="power-orbit"><span class="power-star">✦</span></span></span></button><span class="trainer-settings-label" aria-hidden="true">SETTINGS</span></div>
-  <header>
-    <a href="index.html" class="back-link">← Back</a>
-    <h1 class="brand-title">180180</h1>
-    <div class="trainer-actions"><button id="reset" class="trainer-restart" type="button">Restart</button></div>
+<div class="grid-page">
+  <header class="grid-header">
+    <a class="back-link" href="index.html">← Back</a>
+    <h1>180 FLIP</h1>
+    <span aria-hidden="true" style="width:56px"></span>
   </header>
-  <main class="layout">
-    <section class="mini-home" aria-label="Mini-game home">
-      <div class="mini-home-card">
-        <span class="mini-home-number" id="miniHomeNumber">1</span>
-        <p class="mini-home-kicker">MINI-GAME HOME</p>
-        <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
-        <p class="mini-home-description" id="miniHomeDescription">This mini-game is ready for its own separate game logic.</p>
-        <div class="mini-home-preview" aria-label="Game area reserved for this mini-game">
-          <span>GAME UI READY</span>
-          <small>Game logic will be added separately.</small>
-        </div>
-        <div class="mini-home-actions">
-          <a class="back-link" href="index.html">← Back to six games</a>
-        </div>
+  <main class="grid-main">
+    <section aria-label="180 Flip empty game grid">
+      <div class="grid-frame">
+        <div class="grid" id="grid" aria-label="10 columns by 20 rows"></div>
       </div>
+      <p class="grid-label">10 × 20 GRID</p>
     </section>
   </main>
-  <div class="hidden-settings" aria-hidden="true"><span id="turns">0</span><span id="placed">0</span><span id="orient">↑</span><span id="orientName">Spawn</span><span id="moveKeys"></span><span id="dropKeys"></span><span id="quarterKeys"></span><span id="halfKey"></span></div>
 </div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-
-
-<script type="module">
-const modes = [{"id":"mode-01","number":1,"name":"180 Flip","description":"Train the 180° rotation as one deliberate movement"},{"id":"mode-02","number":2,"name":"JOL","description":"Normal Tetris using a JOL-only bag."},{"id":"mode-03","number":3,"name":"Flow","description":"Develop smooth transitions between rotations"},{"id":"mode-04","number":4,"name":"Speed","description":"Push your rotation timing under pressure"},{"id":"mode-05","number":5,"name":"Pattern","description":"Recognize and execute complex rotation sequences"},{"id":"mode-06","number":6,"name":"Mastery","description":"Combine all skills into flawless execution"}];
-const id=new URLSearchParams(location.search).get('mode')||'mode-01';
-const mode=modes.find(item=>item.id===id)||modes[0];
-document.getElementById('miniHomeNumber').textContent=mode.number;
-document.getElementById('miniHomeTitle').textContent=mode.name;
-document.getElementById('miniHomeDescription').textContent=mode.description;
-document.title='180180 — '+mode.name+' Mini-Game';
-</script></body>
+<script>
+  const grid=document.getElementById('grid');
+  for(let i=0;i<200;i++){
+    const cell=document.createElement('div');
+    cell.className='cell';
+    cell.setAttribute('aria-hidden','true');
+    grid.appendChild(cell);
+  }
+</script>
+</body>
 </html>
