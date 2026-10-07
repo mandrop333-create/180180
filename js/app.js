@@ -18,7 +18,15 @@ import { getSettings } from './settings.js';
 
   // Mode-specific presentation. Mode 01 retains its existing trainer presentation.
   if (mode.id === 'mode-02') {
-    document.title = '180180 — JOL CHUNKS';
+    const jolTitle = '180180 — JOL CHUNKS';
+    const jolDescription = 'Practice the J → O → L Tetris chunk repeatedly as an ordered three-piece sequence.';
+    document.title = jolTitle;
+    document.getElementById('pageTitle')?.replaceChildren(jolTitle);
+    document.getElementById('pageDescription')?.setAttribute('content', jolDescription);
+    document.getElementById('ogTitle')?.setAttribute('content', jolTitle);
+    document.getElementById('ogDescription')?.setAttribute('content', jolDescription);
+    document.getElementById('twitterTitle')?.setAttribute('content', jolTitle);
+    document.getElementById('twitterDescription')?.setAttribute('content', jolDescription);
     const concept = document.getElementById('concept');
     const conceptImage = document.getElementById('conceptImage');
     const conceptText = document.getElementById('conceptText');
