@@ -104,7 +104,7 @@ export class Trainer {
     if(countFilled(this.board)===0&&cleared>0){this.stats.perfectClears++;this.stats.score+=3500;}
     this.placed++;this.stats.piecesPlaced++;
     this.holdUsed=false;
-    this.stats.pieceInputs=this.pieceInputCount;this.stats.finessePerfect=this.pieceInputCount<=2;this.stats.finesseFaults+=this.pieceInputCount>2?1:0;
+    this.stats.pieceInputs=this.pieceInputCount;if(this.pieceInputCount<=2)this.stats.finessePerfect++;else this.stats.finesseFaults++;
     this.hook('place',lockedPiece,cleared,{beforeLock:before,afterLock,afterClear,spin});
     this.options.onPlace(this.placed);if(this.rules.clearBoardAfterPlace)this.emptyBoard();
     this.spawn();this.emitState();
