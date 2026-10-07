@@ -126,20 +126,20 @@ import { getSettings } from './settings.js';
     const status=document.getElementById('rhythmStatus');
     const countdown=document.getElementById('rhythmCountdown');
     const meter=document.getElementById('rhythmMeter');
+    const windowLabel=document.getElementById('rhythmWindowLabel');
     const help=document.getElementById('rhythmHelp');
     const duration=rhythm.phase==='input' ? rhythm.inputDurationMs : rhythm.revealDurationMs;
     const elapsed=Math.max(0,now-rhythm.phaseStartedAt);
     const remaining=Math.max(0,duration-elapsed);
     const progress=Math.min(100,Math.max(0,(elapsed/duration)*100));
 
-    if(status)status.textContent=rhythm.phase==='input' ? 'INPUT' : 'REVEAL';
+    if(status)status.textContent=rhythm.phase==='input' ? 'PLAY' : 'REVEAL';
     if(countdown)countdown.textContent=(remaining/1000).toFixed(2);
+    if(windowLabel)windowLabel.textContent=rhythm.phase==='input' ? 'PLAY NOW' : 'LOOK + REMEMBER';
     if(meter)meter.style.width=`${progress}%`;
 
     panel.classList.toggle('reveal',rhythm.phase==='reveal');
-    if(help)help.textContent=rhythm.phase==='input'
-      ? 'Play normally. Your real inputs are happening while the board stays hidden.'
-      : 'See the result, adjust your feel, then go again.';
+    if(help)help.textContent=rhythm.phase==='input' ? 'Move, rotate and drop normally.' : 'Catch what you just built.';
   }
 
   function updateTrainingHud(now=performance.now()){
@@ -148,7 +148,7 @@ import { getSettings } from './settings.js';
     const session=trainer.session || {};
     const timer=document.getElementById('jolTimer'), progress=document.getElementById('jolProgress'), chunks=document.getElementById('jolChunks'), best=document.getElementById('jolBest');
     if(timer)timer.textContent=(Math.max(0,Number(session.elapsedMs||0))/1000).toFixed(1)+'s';
-    if(progress)progress.textContent=`${session.placements?.length||0}/3`;
+    if(progress)progress.textContent=`${session.pieces?.length||0}/3`;
     if(chunks)chunks.textContent=String(session.completedChunks||0);
     if(best)best.textContent=session.bestChunkMs==null?'—':(session.bestChunkMs/1000).toFixed(1)+'s';
     updateRhythmHud(now);
