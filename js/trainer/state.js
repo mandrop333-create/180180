@@ -29,7 +29,8 @@ export const defaultBinds = {
   hard: 'Space',
   cw: 'ArrowUp',
   ccw: 'KeyZ',
-  half: 'KeyC'
+  half: 'KeyC',
+  hold: 'ShiftLeft'
 };
 
 export const labels = {
@@ -39,7 +40,8 @@ export const labels = {
   hard: 'Hard drop',
   cw: 'Rotate CW',
   ccw: 'Rotate CCW',
-  half: 'Rotate 180°'
+  half: 'Rotate 180°',
+  hold: 'Hold piece'
 };
 
 export const softFactors = [1, 2, 5, 10, Infinity];
