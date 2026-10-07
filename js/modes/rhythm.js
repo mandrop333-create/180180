@@ -1,112 +1,52 @@
 // Shared temporal-pattern primitives for training modes.
-// Rhythm owns temporal data only. Modes decide how the pattern is presented
-// and how a player's response is interpreted.
+// Rhythm owns the timing window only. The Trainer continues to process
+// real input normally; the mode decides how the resulting state is revealed.
 
 export const JOL_RHYTHM = Object.freeze({
-  id: 'jol-steady-01',
-  sequence: Object.freeze(['J', 'O', 'L']),
-  intervals: Object.freeze([700, 700, 700]),
-  durationMs: 2100,
-  timingWindowMs: 220
+  id: 'jol-input-window-01',
+  inputDurationMs: 2000,
+  revealDurationMs: 500
 });
 
 export function createRhythmState(pattern = JOL_RHYTHM, now = performance.now()) {
   return {
     patternId: pattern.id,
-    sequence: [...pattern.sequence],
-    intervals: [...pattern.intervals],
-    durationMs: pattern.durationMs,
-    timingWindowMs: pattern.timingWindowMs,
-    beatIndex: 0,
-    beatStartedAt: now,
-    lastBeatAt: null,
+    inputDurationMs: pattern.inputDurationMs,
+    revealDurationMs: pattern.revealDurationMs,
+    phase: 'input',
+    phaseStartedAt: now,
+    cycle: 0,
     active: true,
-    completed: 0,
-    misses: 0,
-    lastTimingErrorMs: null,
-    lastResult: null,
-    expectedPiece: pattern.sequence[0] ?? null
+    visible: false,
+    remainingMs: pattern.inputDurationMs,
+    progress: 0
   };
-}
-
-export function currentBeat(state) {
-  if (!state?.sequence?.length) return null;
-  return state.sequence[state.beatIndex % state.sequence.length];
-}
-
-export function beginBeat(state, now = performance.now()) {
-  if (!state) return null;
-  state.beatStartedAt = now;
-  state.expectedPiece = currentBeat(state);
-  return state.expectedPiece;
 }
 
 export function advanceRhythm(state, now = performance.now()) {
-  if (!state?.active || !state.sequence.length || !state.intervals.length) return 0;
+  if (!state?.active) return false;
 
-  let advanced = 0;
-  const maxAdvance = state.sequence.length;
-  while (advanced < maxAdvance) {
-    const interval = state.intervals[state.beatIndex % state.intervals.length] ?? 700;
-    const deadline = state.beatStartedAt + interval + state.timingWindowMs;
-    if (now <= deadline) break;
+  let changed = false;
+  let guard = 0;
+  while (guard++ < 4) {
+    const duration = state.phase === 'input' ? state.inputDurationMs : state.revealDurationMs;
+    const elapsed = Math.max(0, now - state.phaseStartedAt);
+    if (elapsed < duration) {
+      state.remainingMs = Math.max(0, duration - elapsed);
+      state.progress = Math.min(1, elapsed / duration);
+      state.visible = state.phase === 'reveal';
+      break;
+    }
 
-    const expected = currentBeat(state);
-    const expectedAt = state.beatStartedAt + interval;
-    state.misses += 1;
-    state.lastTimingErrorMs = now - expectedAt;
-    state.lastResult = {
-      expected,
-      actual: null,
-      timingErrorMs: now - expectedAt,
-      typeCorrect: false,
-      timingCorrect: false,
-      valid: false,
-      reason: 'timeout'
-    };
-    state.lastBeatAt = expectedAt;
-    state.beatIndex = (state.beatIndex + 1) % state.sequence.length;
-    state.beatStartedAt = expectedAt;
-    state.expectedPiece = currentBeat(state);
-    advanced += 1;
+    const overflow = elapsed - duration;
+    state.phase = state.phase === 'input' ? 'reveal' : 'input';
+    if (state.phase === 'input') state.cycle += 1;
+    state.phaseStartedAt = now - overflow;
+    state.visible = state.phase === 'reveal';
+    changed = true;
   }
 
-  return advanced;
-}
-
-export function evaluateBeat(state, pieceType, now = performance.now()) {
-  if (!state?.active || !state.sequence.length) {
-    return { valid: false, reason: 'No active rhythm.' };
-  }
-
-  advanceRhythm(state, now);
-  const expected = currentBeat(state);
-  const interval = state.intervals[state.beatIndex % state.intervals.length] ?? 700;
-  const expectedAt = state.beatStartedAt + interval;
-  const timingErrorMs = now - expectedAt;
-  const typeCorrect = pieceType === expected;
-  const timingCorrect = Math.abs(timingErrorMs) <= state.timingWindowMs;
-  const valid = typeCorrect && timingCorrect;
-
-  state.lastTimingErrorMs = timingErrorMs;
-  state.lastResult = {
-    expected,
-    actual: pieceType,
-    timingErrorMs,
-    typeCorrect,
-    timingCorrect,
-    valid
-  };
-
-  if (valid) state.completed += 1;
-  else state.misses += 1;
-
-  state.beatIndex = (state.beatIndex + 1) % state.sequence.length;
-  state.lastBeatAt = now;
-  state.beatStartedAt = now;
-  state.expectedPiece = currentBeat(state);
-
-  return state.lastResult;
+  return changed;
 }
 
 export function resetRhythmState(state, pattern = JOL_RHYTHM, now = performance.now()) {
