@@ -81,18 +81,38 @@ export class Trainer {
   finesseInput(action){if(!this.finesseEnabled||!this.finesseActions.length)return;if(action===this.finesseActions[this.finesseProgress]){this.finesseProgress++;if(this.finesseProgress>=this.finesseActions.length){this.finesseProgress=this.finesseActions.length;this.say('Finesse complete');}}else{this.finesseMistakes++;this.finesseProgress=0;this.say('Retry finesse');}this.emitState();}
   finesseLabel(action){const code=this.binds?.[action];return keyNames[code]||String(code||action).replace(/^Key/,'').replace(/^Digit/,'');}
   generateFinessePrompt(){
-    this.finesseActions=[];this.finesseProgress=0;if(!this.finesseEnabled||this.gameOver||!this.piece)return;
-    const start={...this.piece},queue=[{piece:start,actions:[]}],seen=new Set([start.x+','+start.y+','+start.o]),candidates=[];
-    const transitions=[['left',-1],['right',1]];
-    while(queue.length&&seen.size<220){
+    this.finesseActions=[];this.finesseProgress=0;
+    if(!this.finesseEnabled||this.gameOver||!this.piece)return;
+    // Finesse is about minimizing movement/rotation inputs, not finding the
+    // "best" stack placement. Use a short legal SRS route from the actual spawn.
+    const start={...this.piece};
+    const queue=[{piece:start,actions:[]}];
+    const seen=new Set([start.x+','+start.y+','+start.o]);
+    const candidates=[];
+    const transitions=[
+      ['left',p=>{const n={...p};return move(n,-1,0,this.board,this.W,this.H,this.cellsFor)?n:null;}],
+      ['right',p=>{const n={...p};return move(n,1,0,this.board,this.W,this.H,this.cellsFor)?n:null;}],
+      ['cw',p=>{const n={...p};return tryRotate(n,1,this.board,this.W,this.H,this.cellsFor)?n:null;}],
+      ['ccw',p=>{const n={...p};return tryRotate(n,-1,this.board,this.W,this.H,this.cellsFor)?n:null;}],
+      ['half',p=>{const n={...p};return tryRotate(n,2,this.board,this.W,this.H,this.cellsFor)?n:null;}]
+    ];
+    while(queue.length){
       const node=queue.shift();
-      let landing=node.piece.y;while(!this.collides(node.piece.x,landing+1,node.piece.o,node.piece.type))landing++;
-      if(!this.collides(node.piece.x,node.piece.y,node.piece.o,node.piece.type))candidates.push({actions:node.actions});
-      if(node.actions.length>=8)continue;
-      for(const [action,dx] of transitions){const n={...node.piece};if(!move(n,dx,0,this.board,this.W,this.H,this.cellsFor))continue;const k=n.x+','+n.y+','+n.o;if(!seen.has(k)){seen.add(k);queue.push({piece:n,actions:[...node.actions,action]});}}
-      for(const [action,delta] of [['cw',1],['ccw',-1],['half',2]]){const n={...node.piece};if(!tryRotate(n,delta,this.board,this.W,this.H,this.cellsFor))continue;const k=n.x+','+n.y+','+n.o;if(!seen.has(k)){seen.add(k);queue.push({piece:n,actions:[...node.actions,action]});}}
+      if(node.actions.length>0&&node.actions.length<=2)candidates.push(node.actions);
+      if(node.actions.length>=2)continue;
+      for(const [action,apply] of transitions){
+        const next=apply(node.piece);if(!next)continue;
+        const k=next.x+','+next.y+','+next.o;
+        if(seen.has(k))continue;
+        seen.add(k);queue.push({piece:next,actions:[...node.actions,action]});
+      }
     }
-    if(candidates.length){const chosen=candidates[(this.placed*7+this.piece.type.charCodeAt(0))%candidates.length];this.finesseActions=[...chosen.actions,'hard'];}
+    if(!candidates.length){this.finesseActions=['hard'];return;}
+    // Prefer the shortest legal route; among equal routes vary the target so
+    // the trainer does not always teach the same placement.
+    const shortest=candidates.filter(x=>x.length===Math.min(...candidates.map(y=>y.length)));
+    const chosen=shortest[(this.placed*7+this.piece.type.charCodeAt(0))%shortest.length];
+    this.finesseActions=[...chosen,'hard'];
   }
   reapplyHeldHorizontalInput(){if(this.gameOver||!this.piece)return;const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);if(left===right)return;const dir=left?-1:1;const now=performance.now();this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();this.movePiece(dir,0);}
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
@@ -183,7 +203,7 @@ export class Trainer {
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
     if(this.hook('input',{event:e,action})===true)return;
-    this.finesseInput(action);
+    if(action==='left'||action==='right'||action==='cw'||action==='ccw'||action==='half'||action==='hard')this.finesseInput(action);
     if(action==='left'||action==='right'){this.pieceInputCount++;const nextDir=action==='left'?-1:1;this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);}
     else if(action==='soft'){this.applySoftDrop();}
     else if(action==='hard'){this.hardDrop();}
