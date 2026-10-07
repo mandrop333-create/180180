@@ -17,7 +17,7 @@ body{min-height:100vh}
 .homepage-game-first .trainer-layout{display:grid;grid-template-columns:220px minmax(300px,1fr) 220px;gap:28px;align-items:start;justify-content:center}.homepage-game-first .board-column{justify-self:center}
 .homepage-game-first .trainer-side{display:grid;gap:12px;padding-top:54px}
 .trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
-.trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}.rules-list{display:grid;gap:10px}.rule-control{display:grid;gap:7px}.rule-control-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.rule-control-head label{color:#cfc6dc;font:700 11px/1 ui-monospace,monospace}.rule-control-head output{color:#eee8fb;font:800 10px/1 ui-monospace,monospace}.rules-card .settings-range{width:100%;margin:0}
+.trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}.rules-list{display:grid;gap:10px}.rule-control{display:grid;gap:7px}.rule-control-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.rule-control-head label{color:#cfc6dc;font:700 11px/1 ui-monospace,monospace}.rule-control-head output{color:#eee8fb;font:800 10px/1 ui-monospace,monospace}.rules-card .settings-range{width:100%;margin:0}.next-preview{transform:scale(var(--next-preview-scale,1));transform-origin:top center}
 .hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .hud-item{padding:9px 6px;border:1px solid #292432;border-radius:8px;text-align:center}
 .hud-item span{display:block;color:#777083;font:700 8px/1 ui-monospace,monospace;letter-spacing:.1em}
@@ -86,6 +86,10 @@ body{min-height:100vh}
                 <div class="rule-control-head"><label for="mainRuleDepth">3D depth</label><output id="mainRuleDepthOut">55%</output></div>
                 <input class="settings-range" id="mainRuleDepth" type="range" min="0" max="100" value="55" aria-label="3D depth">
               </div>
+              <div class="rule-control">
+                <div class="rule-control-head"><label for="mainRuleNextSize">Next queue size</label><output id="mainRuleNextSizeOut">100%</output></div>
+                <input class="settings-range" id="mainRuleNextSize" type="range" min="0" max="300" value="100" aria-label="Next queue size">
+              </div>
             </div>
           </section>
           <section class="trainer-card">
@@ -119,7 +123,7 @@ body{min-height:100vh}
 <div id="toast" hidden style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;padding:9px 14px;border:1px solid #5d4c7b;border-radius:999px;background:#17131e;color:#eee8fa;font:800 11px ui-monospace,monospace">Ready</div>
 
 <script>
-(()=>{const input=document.getElementById('mainRuleDepth'),out=document.getElementById('mainRuleDepthOut');if(!input||!out)return;const sync=()=>{const v=Number(input.value);out.textContent=v+'%';if(window.trainer){window.trainer.depth=v/100;window.trainer.render?.();}};input.addEventListener('input',sync);window.addEventListener('trainerready',()=>{input.value=Math.round((window.trainer.depth??.55)*100);sync();});})();
+(()=>{const depth=document.getElementById('mainRuleDepth'),depthOut=document.getElementById('mainRuleDepthOut'),nextSize=document.getElementById('mainRuleNextSize'),nextSizeOut=document.getElementById('mainRuleNextSizeOut');if(!depth||!depthOut||!nextSize||!nextSizeOut)return;const syncDepth=()=>{const v=Number(depth.value);depthOut.textContent=v+'%';if(window.trainer){window.trainer.depth=v/100;window.trainer.render?.();}};const syncNextSize=()=>{const v=Number(nextSize.value);nextSizeOut.textContent=v+'%';document.documentElement.style.setProperty('--next-preview-scale',String(v/100));if(window.trainer)window.trainer.nextQueueSize=Math.max(1,Math.round(5*v/100));};depth.addEventListener('input',syncDepth);nextSize.addEventListener('input',syncNextSize);window.addEventListener('trainerready',()=>{depth.value=Math.round((window.trainer.depth??.55)*100);nextSize.value=Number(localStorage.getItem('180180.nextQueueSize')||100);syncDepth();syncNextSize();});nextSize.addEventListener('change',()=>{try{localStorage.setItem('180180.nextQueueSize',nextSize.value);}catch{}});})();
 </script>
 
 <script type="module" src="games/01/game.js"></script>
