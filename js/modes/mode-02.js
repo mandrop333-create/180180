@@ -105,8 +105,6 @@ const hooks = {
 
     session.attempts++;
     session.lastResult = validateJolChunk(session.pieces, trainer.cellsFor);
-
-    // Mode 2 verifies spatial chunks itself; ordinary line clearing is not part of the rule.
     return true;
   },
 
@@ -161,6 +159,7 @@ export default createMode({
   description: 'Recognize the rhythm, then build J → O → L into a complete 3×4 or 4×3 spatial chunk.',
   color: '#818cf8',
   rules: {
+    clearLines: false,
     clearBoardAfterPlace: false,
     showGhost: true
   },
