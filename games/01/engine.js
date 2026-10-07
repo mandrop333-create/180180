@@ -126,6 +126,8 @@ export class Trainer {
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
     if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
+    const softHeld=this.downKeys.has(this.binds.soft);if(softHeld){const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;}else{const interval=Math.max(8,this.rules.gravity/factor);this.softAcc+=dt;while(this.softAcc>=interval){this.softAcc-=interval;if(!this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;break;}}}this.gravityAcc=0;}
+    else if(this.rules.gravity!==Infinity){this.softAcc=0;this.gravityAcc+=dt;while(this.gravityAcc>=this.rules.gravity){this.gravityAcc-=this.rules.gravity;if(!this.movePiece(0,1))break;}}
     // Soft drop never suppresses horizontal handling. TETR.IO keeps
     // left/right DAS/ARR active while soft drop is held, including during
     // lock delay after the piece reaches the floor.
@@ -154,8 +156,6 @@ export class Trainer {
         this.moveState.elapsed=Math.max(0,t-this.moveState.startedAt);
       }
     }
-    const softHeld=this.downKeys.has(this.binds.soft);if(softHeld){const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;}else{const interval=Math.max(8,this.rules.gravity/factor);this.softAcc+=dt;while(this.softAcc>=interval){this.softAcc-=interval;if(!this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;break;}}}this.gravityAcc=0;}
-    else if(this.rules.gravity!==Infinity){this.softAcc=0;this.gravityAcc+=dt;while(this.gravityAcc>=this.rules.gravity){this.gravityAcc-=this.rules.gravity;if(!this.movePiece(0,1))break;}}
     if(!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type))this.lockAcc=0;else this.lockAcc+=dt;
     if(this.lockAcc>=this.rules.lockDelay)this.lockPiece(true);this.hook('tick',dt,t);this.flushRender();
   }
