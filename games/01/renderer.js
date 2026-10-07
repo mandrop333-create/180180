@@ -75,7 +75,8 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
     }
   }
 
-  if (showGhost && piece && !anim?.layer) {
+  const ghostHidden = cells.some(el => el.classList.contains('ghost-hide-marker'));
+  if (showGhost && !ghostHidden && piece && !anim?.layer) {
     let gy = piece.y;
     while (!collides(piece.x, gy + 1, piece.o, piece.type)) gy++;
     for (const [cx, cy] of cellsFor(piece.type, piece.o)) {
