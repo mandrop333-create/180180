@@ -29,8 +29,8 @@ export class Trainer {
     this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
-    this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.hardDropBlockedUntil=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0};this.lastAction=null;this.lastRotation=false;
+    this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0};this.lastAction=null;this.lastRotation=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -83,8 +83,7 @@ export class Trainer {
   }
   lockPiece(automatic=false){
     if(this.gameOver||!this.piece)return;
-    if(automatic&&this.rules.safeLock)this.hardDropBlockedUntil=performance.now()+50;
-    const lockedPiece={...this.piece},lockedCells=this.cellsFor(lockedPiece.type,lockedPiece.o);
+        const lockedPiece={...this.piece},lockedCells=this.cellsFor(lockedPiece.type,lockedPiece.o);
     if(lockedCells.some(([cx,cy])=>lockedPiece.y+cy<0)){this.gameOver=true;this.hook('gameOver',{...lockedPiece});this.render();return;}
     const before=this.board.map(r=>[...r]);
     for(const[cx,cy]of lockedCells){const x=lockedPiece.x+cx,y=lockedPiece.y+cy;if(y>=0&&y<this.H&&x>=0&&x<this.W)this.board[y][x]=lockedPiece.type;}
@@ -134,7 +133,7 @@ export class Trainer {
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
     if(this.hook('input',{event:e,action})===true)return;
-    if(action==='left'||action==='right'){if(this.downKeys.has(this.binds.soft)&&this.rules.preferSoftDrop)return;this.pieceInputCount++;this.moveState.dir=action==='left'?-1:1;this.moveState.elapsed=this.rules.cancelDas?0:this.moveState.elapsed;this.moveState.repeatElapsed=0;this.movePiece(this.moveState.dir,0);}
+    if(action==='left'||action==='right'){if(this.downKeys.has(this.binds.soft)&&this.rules.preferSoftDrop)return;this.pieceInputCount++;const nextDir=action==='left'?-1:1;this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.movePiece(nextDir,0);}
     else if(action==='soft'){this.applySoftDrop();}
     else if(action==='hard'){this.hardDrop();}
     else if(action==='cw'){this.pieceInputCount++;this.rotate(1);}
@@ -142,12 +141,12 @@ export class Trainer {
     else if(action==='half'){this.pieceInputCount++;this.rotate(2);}
     else if(action==='hold'){this.hold();}
   }
-  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action==='left'||action==='right')if(this.moveState.dir===(action==='left'?-1:1)){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;}}
-  handleBlur(){this.downKeys.clear();this.moveState.dir=0;}
+  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;if(this.moveState.dir!==released)return;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){const nextDir=-released;this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();}else{this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;}}
+  handleBlur(){this.downKeys.clear();this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;}
   say(s){if(this.toastCallback)this.toastCallback(s);}setToastCallback(cb){this.toastCallback=cb;}
   reset(){
     this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
-    this.softAcc=0;this.gravityAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=0;this.lastTime=0;this.gameOver=false;this.downKeys.clear();this.moveState={dir:0,elapsed:0,repeatElapsed:0};this.training=createTrainingState();
+    this.softAcc=0;this.gravityAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=0;this.lastTime=0;this.gameOver=false;this.downKeys.clear();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0};this.training=createTrainingState();
     this.holdUsed=false;
     this.session=this.mode.createSession?this.mode.createSession():{};if(this.generator.reset)this.generator.reset();this.queue=[];this.holdType=null;this.holdUsed=false;this.emptyBoard();this.piece=null;this.anim=null;this.ensureQueue();this.spawn();this.hook('reset');this.options.onReset();this.markRender();
   }
