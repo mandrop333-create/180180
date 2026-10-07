@@ -45,7 +45,7 @@ export class Trainer {
     this.ensureQueue();
     this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.render();return;}
-    this.hook('spawn',{...this.piece});this.markRender();
+    this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.markRender();
   }
   collides(px,py,o,type=this.piece?.type){return collides(px,py,o,this.board,this.W,this.H,this.cellsFor,type);}
   movePiece(dx,dy,{countSoftDrop=false}={}){
@@ -70,7 +70,6 @@ export class Trainer {
     const current=this.piece.type;this.holdUsed=true;
     if(this.holdType){const incoming=this.holdType;this.holdType=current;this.spawn(incoming);}
     else{this.holdType=current;this.ensureQueue();this.spawn();}
-    this.reapplyHeldHorizontalInput();
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
   reapplyHeldHorizontalInput(){if(this.gameOver||!this.piece)return;const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);if(left===right)return;const dir=left?-1:1;const now=performance.now();this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();this.movePiece(dir,0);}
@@ -108,7 +107,7 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;if(this.pieceInputCount<=2)this.stats.finessePerfect++;else this.stats.finesseFaults++;
     this.hook('place',{lockedPiece,cleared,spin,beforeLock:before,afterLock,afterClear});
     this.options.onPlace(this.placed);if(this.rules.clearBoardAfterPlace)this.emptyBoard();
-    this.spawn();this.reapplyHeldHorizontalInput();this.emitState();
+    this.spawn();this.emitState();
   }
   spinOrLineScore(cleared,spin){
     const s=this.rules.scoring||SCORE;
