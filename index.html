@@ -14,7 +14,7 @@ body{min-height:100vh}
 .trainer-brand{margin:0;text-align:center;font:900 clamp(20px,4vw,32px)/1 ui-monospace,monospace;letter-spacing:.08em;color:#eee8fb}
 .trainer-main{flex:1;padding:0 18px 40px}
 .trainer-shell{width:min(1060px,100%);margin:0 auto}
-.homepage-game-first .trainer-layout{display:grid;grid-template-columns:220px minmax(300px,1fr) 220px;gap:28px;align-items:start;justify-content:center}.homepage-game-first .board-column{justify-self:center}
+.homepage-game-first .trainer-layout{display:grid;grid-template-columns:220px 300px 220px 220px;gap:28px;align-items:start;justify-content:center}.homepage-game-first .board-column{justify-self:center}.homepage-game-first .rules-column{display:grid;gap:12px;padding-top:54px}
 .homepage-game-first .trainer-side{display:grid;gap:12px;padding-top:54px}
 .trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
 .trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}.rules-card{position:relative;z-index:20;pointer-events:auto}.rules-list{display:grid;gap:10px;pointer-events:auto}.rule-control{display:grid;gap:7px}.rule-control-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.rule-control-head label{color:#cfc6dc;font:700 11px/1 ui-monospace,monospace}.rule-control-head output{color:#eee8fb;font:800 10px/1 ui-monospace,monospace}.rules-card .settings-range{width:100%;margin:0;display:block;position:relative;z-index:2;pointer-events:auto;cursor:pointer}.rules-toggle{position:relative;z-index:2;pointer-events:auto}.rules-toggle{display:flex;align-items:center;gap:8px;color:#cfc6dc;font:700 11px/1.25 ui-monospace,monospace;cursor:pointer}.rules-toggle input{accent-color:#a78bfa}.next-preview{transform:scale(var(--next-preview-scale,1));transform-origin:top center}.invisible-focal-piece .active-piece-svg,.invisible-focal-piece .turn-layer{visibility:hidden}
@@ -34,7 +34,8 @@ body{min-height:100vh}
 .trainer-controls{max-width:300px}
 .settings-checks{display:grid;gap:7px}.settings-checks label{display:flex;align-items:center;gap:8px;color:#cfc6dc;font-size:11px}.settings-checks input{accent-color:#a78bfa}.action-button{border:1px solid #51446e;border-radius:7px;background:#17151d;color:#eee8fa;padding:7px 12px;font:800 11px ui-monospace,monospace;cursor:pointer}
 .action-button:hover{border-color:#a78bfa;background:#201b29}
-@media(max-width:900px){.homepage-game-first .trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
+@media(max-width:1100px){.homepage-game-first .trainer-layout{grid-template-columns:220px 300px 220px;}.rules-column{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:0}.rules-column .trainer-card{width:100%}}
+@media(max-width:900px){.homepage-game-first .trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side,.rules-column{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
 @media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}}
 </style>
 
@@ -79,6 +80,8 @@ body{min-height:100vh}
             <h2>Next</h2>
             <div class="next-preview" id="nextPreview" aria-label="Next pieces"></div>
           </section>
+        </aside>
+        <aside class="rules-column">
           <section class="trainer-card rules-card" aria-label="Rules">
             <h2>Rules</h2>
             <div class="rules-list">
