@@ -1,36 +1,121 @@
 <!doctype html>
 <html lang="en">
-<head>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>180 Practice — Tetris 180° Rotation Training</title>
-<link rel="canonical" href="https://mandrop333-create.github.io/180180/">
-<meta name="description" content="180180 is a free Tetris training web app focused on 180° rotation, visual rotation, and piece orientation practice.">
-<meta name="application-name" content="180180">
-<meta name="theme-color" content="#101014">
-<meta property="og:type" content="website">
-<meta property="og:title" content="180 Practice — Tetris 180° Rotation Training">
-<meta property="og:description" content="A dedicated 180° rotation training tool for Tetris players.">
-<meta property="og:site_name" content="180180">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="180 Practice — Tetris 180° Rotation Training">
-<meta name="twitter:description" content="A dedicated 180° rotation training tool for Tetris players.">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"#website","name":"180180","description":"A dedicated 180° rotation training site for Tetris players."},{"@type":"WebApplication","@id":"#application","name":"180180","description":"A free web-based training application focused on 180° rotation, visual rotation, and piece orientation practice.","applicationCategory":"EducationalApplication","applicationSubCategory":"Tetris rotation training","featureList":["180° rotation practice","Visual rotation training","Piece orientation practice","Configurable training settings"],"operatingSystem":"Any","browserRequirements":"Requires a modern web browser"}]}</script>
+<title>180180 — Tetris</title>
 <link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/home.css?v=guide-books">
+<link rel="stylesheet" href="css/trainer.css">
 <link rel="stylesheet" href="css/settings.css">
-</head>
-<body>
-<div class="home-container">
-  <div class="flawless-graffiti"><svg viewBox="0 0 300 60" class="graffiti-svg" preserveAspectRatio="xMaxYMin meet"><defs><filter id="spray"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="drip"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="8" yChannelSelector="R"/></filter></defs><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" filter="url(#spray)" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" filter="url(#drip)" class="graffiti-text-2">FLAWLESS</text><ellipse cx="45" cy="55" rx="3" ry="8" class="drip"/><ellipse cx="105" cy="58" rx="2" ry="6" class="drip"/><ellipse cx="165" cy="56" rx="2.5" ry="7" class="drip"/><ellipse cx="225" cy="54" rx="3" ry="5" class="drip"/></svg></div>
-  <button class="settings-gear" data-settings-open type="button" aria-label="Open settings" aria-expanded="false"><span class="power-orb" aria-hidden="true"><span class="power-orbit"><span class="power-star">✦</span></span></span></button>
-  <header class="home-header"><h1 class="home-title">180 practice</h1><p class="home-tagline">Bridge the gap from 2D rotation to 3D understanding</p></header>
-  <div class="decoration decoration-1"><svg viewBox="0 0 100 100" class="deco-svg"><path d="M10,10 Q30,5 50,15 T90,20" class="deco-line"/><circle cx="25" cy="30" r="8" class="deco-circle"/><path d="M70,60 L85,75 L75,85 L60,70 Z" class="deco-shape"/></svg></div>
-  <div class="decoration decoration-2"><svg viewBox="0 0 80 80" class="deco-svg"><rect x="15" y="15" width="20" height="20" transform="rotate(15 25 25)" class="deco-rect"/><path d="M50,10 L60,30 L40,30 Z" class="deco-triangle"/></svg></div>
-  <div class="decoration decoration-3"><svg viewBox="0 0 60 60" class="deco-svg"><path d="M10,30 Q30,10 50,30 T90,30" class="deco-wave"/><circle cx="30" cy="45" r="5" class="deco-dot"/></svg></div>
-  <main class="home-layout"><aside class="home-bio"><div class="bio-content"><h2 class="bio-title">practice makes perfect</h2><p class="bio-text">This is a free, independently made training game inspired by classic falling-block puzzle gameplay. It is not the official Tetris game and is not affiliated with, endorsed by, sponsored by, or authorized by The Tetris Company. Tetris and related trademarks belong to their respective owners.</p><p class="bio-text">This site is built specifically as a 180° rotation training tool. It is an unofficial practice experience and does not claim to be an official Tetris product.</p><div class="bio-divider"></div><p class="bio-small">Free to play. Built for practice. Play flawlessly.</p></div></aside><section class="home-game-entry" aria-label="Tetris game"><a class="home-play-card" href="trainer.html"><span class="home-play-kicker">180180</span><strong>PLAY TETRIS</strong><span>Standard Tetris feel · 180° training · 3D piece depth</span></a></section></main>
+<style>
+body{min-height:100vh}
+.trainer-page{min-height:100vh;display:flex;flex-direction:column}
+.trainer-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:22px clamp(18px,5vw,56px)}
+.trainer-brand{margin:0;text-align:center;font:900 clamp(20px,4vw,32px)/1 ui-monospace,monospace;letter-spacing:.08em;color:#eee8fb}
+.trainer-main{flex:1;padding:8px 18px 40px}
+.trainer-shell{width:min(1080px,100%);margin:0 auto}
+.trainer-layout{display:grid;grid-template-columns:minmax(170px,1fr) auto minmax(170px,1fr);gap:24px;align-items:start}
+.trainer-side{display:grid;gap:12px;padding-top:54px}
+.trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
+.trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}
+.hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hud-item{padding:9px 6px;border:1px solid #292432;border-radius:8px;text-align:center}
+.hud-item span{display:block;color:#777083;font:700 8px/1 ui-monospace,monospace;letter-spacing:.1em}
+.hud-item strong{display:block;margin-top:5px;color:#eee8fb;font:900 14px/1 ui-monospace,monospace}
+.hold-preview{height:58px;display:grid;place-items:center;border:1px solid #30283d;border-radius:8px;background:#0d0c11}
+.next-preview{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;min-height:38px}
+.mini-piece{display:grid;place-items:center;width:30px;height:30px;border-radius:5px;font:900 10px ui-monospace,monospace;border:1px solid #62547a}
+.mini-i{color:#8bd5ff}.mini-o{color:#ffe68a}.mini-t{color:#d7a1ff}.mini-s{color:#8be7a7}.mini-z{color:#ff8d9c}.mini-j{color:#73a9ff}.mini-l{color:#ffb05f}
+.mini-home{text-align:center;margin-bottom:12px}.mini-home-number{color:#8e7fa6;font:800 10px ui-monospace,monospace;letter-spacing:.18em}.mini-home-title{margin:5px 0 4px;color:#e8ddfa;font:900 20px/1 ui-monospace,monospace}.mini-home-description{margin:0;color:#81778b;font-size:11px}
+.board-column{display:flex;flex-direction:column;align-items:center}
+.board-wrap{box-shadow:0 24px 60px #0008}
+.board{--cell:28px;width:300px;height:600px}
+.trainer-actions{margin-top:12px}
+.trainer-controls{max-width:300px}
+.settings-checks{display:grid;gap:7px}.settings-checks label{display:flex;align-items:center;gap:8px;color:#cfc6dc;font-size:11px}.settings-checks input{accent-color:#a78bfa}.action-button{border:1px solid #51446e;border-radius:7px;background:#17151d;color:#eee8fa;padding:7px 12px;font:800 11px ui-monospace,monospace;cursor:pointer}
+.action-button:hover{border-color:#a78bfa;background:#201b29}
+@media(max-width:900px){.trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
+@media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}}
+</style>
+
+
+<div class="trainer-page">
+  <div class="trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
+  <div class="trainer-settings-control">
+    <button class="settings-gear trainer-settings-gear" data-settings-open type="button" aria-label="Open settings" aria-expanded="false"><span class="power-orb" aria-hidden="true"><span class="power-orbit"><span class="power-star">✦</span></span></span></button>
+    <span class="trainer-settings-label">SETTINGS</span>
+  </div>
+  <header class="trainer-top">
+    <div class="back-link" aria-hidden="true">180 practice</div>
+    <h1 class="trainer-brand">180180</h1>
+    <button class="action-button" id="restartButton" type="button">RESTART</button>
+  </header>
+  <main class="trainer-main">
+    <div class="trainer-shell">
+      <div class="mini-home">
+        <div class="mini-home-number">MINI-GAME <span id="miniHomeNumber">1</span></div>
+        <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
+        <p class="mini-home-description" id="miniHomeDescription">Train the 180° rotation as one deliberate movement</p>
+      </div>
+      <div class="trainer-layout">
+        <aside class="trainer-side">
+          <section class="trainer-card">
+            <h2>Stats</h2>
+            <div class="hud-grid">
+              <div class="hud-item"><span>SCORE</span><strong id="hudScore">0</strong></div>
+              <div class="hud-item"><span>LINES</span><strong id="hudLines">0</strong></div>
+              <div class="hud-item"><span>COMBO</span><strong id="hudCombo">—</strong></div>
+              <div class="hud-item"><span>B2B</span><strong id="hudB2B">—</strong></div>
+              <div class="hud-item"><span>PIECES</span><strong id="hudPieces">0</strong></div>
+              <div class="hud-item"><span>FINESSE</span><strong id="hudFinesse">0 faults · 0 clean</strong></div>
+            </div>
+          </section>
+          <section class="trainer-card">
+            <h2>Hold</h2>
+            <div class="hold-preview" id="holdPreview" aria-label="Held piece">—</div>
+            <button class="action-button" id="holdButton" type="button" style="width:100%;margin-top:8px">HOLD</button>
+          </section>
+        </aside>
+        <section class="board-column" aria-label="Tetris trainer board">
+          <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris board"></div></div>
+          <div class="trainer-actions"><div class="trainer-controls">← → move · ↓ soft drop · Space hard drop · X / Z rotate · A 180 · Shift hold</div></div>
+        </section>
+        <aside class="trainer-side">
+          <section class="trainer-card">
+            <h2>Next</h2>
+            <div class="next-preview" id="nextPreview" aria-label="Next pieces"></div>
+          </section>
+          <section class="trainer-card">
+            <h2>Training signal</h2>
+            <p style="margin:0;color:#91879e;font-size:11px;line-height:1.5">#1 keeps the normal stacker rules, while the training layer measures clean 180° execution and placement quality.</p>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
 </div>
-<div class="settings-panel" data-settings-root hidden><div class="settings-backdrop" data-settings-backdrop></div><section class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="settings-heading"><h2 class="settings-title" id="settingsTitle">settings</h2><button class="settings-close" data-settings-close type="button" aria-label="Close settings">×</button></div><div class="settings-section"><h3 class="settings-section-title">feel</h3><div class="settings-control"><div class="settings-control-head"><label for="settingDepth">3D depth</label><output data-setting-depth-out>55%</output></div><input class="settings-range" id="settingDepth" data-setting-depth type="range" min="0" max="100" value="55"></div><div class="settings-control"><div class="settings-control-head"><label for="settingSoft">Soft drop</label><output data-setting-soft-out>1×</output></div><input class="settings-range" id="settingSoft" data-setting-soft type="range" min="0" max="4" step="1" value="0"><p class="settings-hint">1× · 2× · 5× · 10× · ∞</p></div><div class="settings-control"><div class="settings-control-head"><label for="settingDas">DAS</label><output data-setting-das-out>127 ms</output></div><input class="settings-range" id="settingDas" data-setting-das type="range" min="0" max="300" value="127"></div><div class="settings-control"><div class="settings-control-head"><label for="settingArr">ARR</label><output data-setting-arr-out>0 ms</output></div><input class="settings-range" id="settingArr" data-setting-arr type="range" min="0" max="100" value="0"></div></div><div class="settings-section"><h3 class="settings-section-title">key binds</h3><div class="settings-bind-list" data-setting-binds></div><p class="settings-hint">Tap a key, then press the key you want. Escape closes the panel.</p></div><div class="settings-footer"><button class="settings-reset" data-settings-reset type="button">reset settings</button></div></section></div>
-<script type="module" src="js/home.js?v=guide-books"></script><script type="module">import { mountSettings } from './js/settings.js'; mountSettings();</script>
-</body>
+
+<div class="settings-panel" data-settings-root hidden>
+  <div class="settings-backdrop" data-settings-backdrop></div>
+  <section class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-heading"><h2 class="settings-title" id="settingsTitle">settings</h2><button class="settings-close" data-settings-close type="button" aria-label="Close settings">×</button></div>
+    <div class="settings-section">
+      <h3 class="settings-section-title">feel</h3>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingDepth">3D depth</label><output data-setting-depth-out>55%</output></div><input class="settings-range" id="settingDepth" data-setting-depth type="range" min="0" max="100" value="55"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingSoft">Soft drop</label><output data-setting-soft-out>1×</output></div><input class="settings-range" id="settingSoft" data-setting-soft type="range" min="0" max="6" step="1" value="0"><p class="settings-hint">1× · 2× · 5× · 10× · 20× · 40× · ∞</p></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingDas">DAS</label><output data-setting-das-out>127 ms</output></div><input class="settings-range" id="settingDas" data-setting-das type="range" min="0" max="300" value="127"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingArr">ARR</label><output data-setting-arr-out>0 ms</output></div><input class="settings-range" id="settingArr" data-setting-arr type="range" min="0" max="100" value="0"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingDcd">DAS cut delay</label><output data-setting-dcd-out>0 ms</output></div><input class="settings-range" id="settingDcd" data-setting-dcd type="range" min="0" max="100" step="1" value="0"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingLock">Lock delay</label><output data-setting-lock-out>500 ms</output></div><input class="settings-range" id="settingLock" data-setting-lock type="range" min="50" max="1000" step="10" value="500"></div>
+      <div class="settings-control settings-checks"><label><input type="checkbox" data-setting-safe-lock checked> prevent accidental hard drops</label><label><input type="checkbox" data-setting-cancel-das> cancel DAS when changing directions</label><label><input type="checkbox" data-setting-prefer-soft-drop> prefer soft drop over movement</label></div><div class="settings-control"><div class="settings-control-head"><label for="settingShadow">Ghost opacity</label><output data-setting-shadow-opacity-out>60%</output></div><input class="settings-range" id="settingShadow" data-setting-shadow-opacity type="range" min="0" max="100" value="60"></div><div class="settings-control"><div class="settings-control-head"><label for="settingBrightness">Ghost brightness</label><output data-setting-shadow-brightness-out>100%</output></div><input class="settings-range" id="settingBrightness" data-setting-shadow-brightness type="range" min="0" max="200" value="100"></div>
+    </div>
+    <div class="settings-section"><h3 class="settings-section-title">key binds</h3><div class="settings-bind-list" data-setting-binds></div><p class="settings-hint">Tap a key, then press the key you want. Escape closes the panel.</p></div>
+    <div class="settings-footer"><button class="settings-reset" data-settings-reset type="button">reset settings</button></div>
+  </section>
+</div>
+<div id="toast" hidden style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;padding:9px 14px;border:1px solid #5d4c7b;border-radius:999px;background:#17131e;color:#eee8fa;font:800 11px ui-monospace,monospace">Ready</div>
+
+<script type="module" src="games/01/game.js"></script>
+
+
 </html>
