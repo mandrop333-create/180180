@@ -1,5 +1,5 @@
 import { createMode } from './mode-base.js';
-import { SevenBagGenerator, AfterBagGenerator } from '../trainer/generator.js';
+import { SevenBagGenerator } from '../trainer/generator.js';
 import {
   BONUS_MAX,
   BONUS_PER_180,
@@ -31,10 +31,7 @@ export default createMode({
   createSession,
   // Explicit mode customization, but the trainer remains the sole owner and
   // propagates the run seed into every generator in the chain.
-  createGenerator: ({ seed } = {}) => new AfterBagGenerator(
-    new SevenBagGenerator({ seed }),
-    ['T', 'T']
-  ),
+  createGenerator: ({ seed } = {}) => new SevenBagGenerator({ seed }),
   training: { bonusMax: BONUS_MAX, bonusPer180: BONUS_PER_180, substitutionWindowMs: SUBSTITUTION_WINDOW_MS },
   hooks
 });
