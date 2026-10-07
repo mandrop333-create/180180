@@ -5,43 +5,117 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>180180 — 180 Flip</title>
 <link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/trainer.css">
+<link rel="stylesheet" href="css/settings.css">
 <style>
-  :root{--grid-cols:10;--grid-rows:20}
-  body{min-height:100vh}
-  .grid-page{min-height:100vh;display:flex;flex-direction:column}
-  .grid-header{display:flex;align-items:center;justify-content:space-between;padding:24px clamp(18px,5vw,56px)}
-  .grid-header h1{margin:0;font-size:clamp(22px,4vw,34px);letter-spacing:.04em}
-  .grid-main{flex:1;display:flex;justify-content:center;align-items:center;padding:20px}
-  .grid-frame{padding:14px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(10,10,14,.72);box-shadow:0 24px 70px rgba(0,0,0,.35)}
-  .grid{display:grid;grid-template-columns:repeat(10, minmax(22px, 42px));grid-template-rows:repeat(20, minmax(22px, 42px));gap:2px;width:min(430px,82vw);aspect-ratio:1/2;background:rgba(255,255,255,.08);padding:2px}
-  .cell{border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}
-  .grid-label{margin:12px 0 0;text-align:center;font-size:10px;letter-spacing:.18em;opacity:.45}
+body{min-height:100vh}
+.trainer-page{min-height:100vh;display:flex;flex-direction:column}
+.trainer-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:22px clamp(18px,5vw,56px)}
+.trainer-brand{margin:0;text-align:center;font:900 clamp(20px,4vw,32px)/1 ui-monospace,monospace;letter-spacing:.08em;color:#eee8fb}
+.trainer-main{flex:1;padding:8px 18px 40px}
+.trainer-shell{width:min(1080px,100%);margin:0 auto}
+.trainer-layout{display:grid;grid-template-columns:minmax(170px,1fr) auto minmax(170px,1fr);gap:24px;align-items:start}
+.trainer-side{display:grid;gap:12px;padding-top:54px}
+.trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
+.trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}
+.hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hud-item{padding:9px 6px;border:1px solid #292432;border-radius:8px;text-align:center}
+.hud-item span{display:block;color:#777083;font:700 8px/1 ui-monospace,monospace;letter-spacing:.1em}
+.hud-item strong{display:block;margin-top:5px;color:#eee8fb;font:900 14px/1 ui-monospace,monospace}
+.hold-preview{height:58px;display:grid;place-items:center;border:1px solid #30283d;border-radius:8px;background:#0d0c11}
+.next-preview{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;min-height:38px}
+.mini-piece{display:grid;place-items:center;width:30px;height:30px;border-radius:5px;font:900 10px ui-monospace,monospace;border:1px solid #62547a}
+.mini-i{color:#8bd5ff}.mini-o{color:#ffe68a}.mini-t{color:#d7a1ff}.mini-s{color:#8be7a7}.mini-z{color:#ff8d9c}.mini-j{color:#73a9ff}.mini-l{color:#ffb05f}
+.mini-home{text-align:center;margin-bottom:12px}.mini-home-number{color:#8e7fa6;font:800 10px ui-monospace,monospace;letter-spacing:.18em}.mini-home-title{margin:5px 0 4px;color:#e8ddfa;font:900 20px/1 ui-monospace,monospace}.mini-home-description{margin:0;color:#81778b;font-size:11px}
+.board-column{display:flex;flex-direction:column;align-items:center}
+.board-wrap{box-shadow:0 24px 60px #0008}
+.board{--cell:28px;width:300px;height:600px}
+.trainer-actions{margin-top:12px}
+.trainer-controls{max-width:300px}
+.action-button{border:1px solid #51446e;border-radius:7px;background:#17151d;color:#eee8fa;padding:7px 12px;font:800 11px ui-monospace,monospace;cursor:pointer}
+.action-button:hover{border-color:#a78bfa;background:#201b29}
+@media(max-width:900px){.trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
+@media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}}
 </style>
 </head>
 <body>
-<div class="grid-page">
-  <header class="grid-header">
+<div class="trainer-page">
+  <div class="trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
+  <div class="trainer-settings-control">
+    <button class="settings-gear trainer-settings-gear" data-settings-open type="button" aria-label="Open settings" aria-expanded="false"><span class="power-orb" aria-hidden="true"><span class="power-orbit"><span class="power-star">✦</span></span></span></button>
+    <span class="trainer-settings-label">SETTINGS</span>
+  </div>
+  <header class="trainer-top">
     <a class="back-link" href="index.html">← Back</a>
-    <h1>180 FLIP</h1>
-    <span aria-hidden="true" style="width:56px"></span>
+    <h1 class="trainer-brand">180180</h1>
+    <button class="action-button" id="restartButton" type="button">RESTART</button>
   </header>
-  <main class="grid-main">
-    <section aria-label="180 Flip empty game grid">
-      <div class="grid-frame">
-        <div class="grid" id="grid" aria-label="10 columns by 20 rows"></div>
+  <main class="trainer-main">
+    <div class="trainer-shell">
+      <div class="mini-home">
+        <div class="mini-home-number">MINI-GAME <span id="miniHomeNumber">1</span></div>
+        <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
+        <p class="mini-home-description" id="miniHomeDescription">Train the 180° rotation as one deliberate movement</p>
       </div>
-      <p class="grid-label">10 × 20 GRID</p>
-    </section>
+      <div class="trainer-layout">
+        <aside class="trainer-side">
+          <section class="trainer-card">
+            <h2>Stats</h2>
+            <div class="hud-grid">
+              <div class="hud-item"><span>SCORE</span><strong id="hudScore">0</strong></div>
+              <div class="hud-item"><span>LINES</span><strong id="hudLines">0</strong></div>
+              <div class="hud-item"><span>COMBO</span><strong id="hudCombo">—</strong></div>
+              <div class="hud-item"><span>B2B</span><strong id="hudB2B">—</strong></div>
+              <div class="hud-item"><span>PIECES</span><strong id="hudPieces">0</strong></div>
+              <div class="hud-item"><span>ROTATIONS</span><strong id="hudFinesse">0R / 0 180</strong></div>
+            </div>
+          </section>
+          <section class="trainer-card">
+            <h2>Hold</h2>
+            <div class="hold-preview" id="holdPreview" aria-label="Held piece">—</div>
+            <button class="action-button" id="holdButton" type="button" style="width:100%;margin-top:8px">HOLD</button>
+          </section>
+        </aside>
+        <section class="board-column" aria-label="Tetris trainer board">
+          <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris board"></div></div>
+          <div class="trainer-actions"><div class="trainer-controls">← → move · ↓ soft drop · Space hard drop · ↑ / Z rotate · C 180 · Shift hold</div></div>
+        </section>
+        <aside class="trainer-side">
+          <section class="trainer-card">
+            <h2>Next</h2>
+            <div class="next-preview" id="nextPreview" aria-label="Next pieces"></div>
+          </section>
+          <section class="trainer-card">
+            <h2>Training signal</h2>
+            <p style="margin:0;color:#91879e;font-size:11px;line-height:1.5">#1 keeps the normal stacker rules, while the training layer measures clean 180° execution and placement quality.</p>
+          </section>
+        </aside>
+      </div>
+    </div>
   </main>
 </div>
-<script>
-  const grid=document.getElementById('grid');
-  for(let i=0;i<200;i++){
-    const cell=document.createElement('div');
-    cell.className='cell';
-    cell.setAttribute('aria-hidden','true');
-    grid.appendChild(cell);
-  }
-</script>
+
+<div class="settings-panel" data-settings-root hidden>
+  <div class="settings-backdrop" data-settings-backdrop></div>
+  <section class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-heading"><h2 class="settings-title" id="settingsTitle">settings</h2><button class="settings-close" data-settings-close type="button" aria-label="Close settings">×</button></div>
+    <div class="settings-section">
+      <h3 class="settings-section-title">feel</h3>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingDepth">3D depth</label><output data-setting-depth-out>55%</output></div><input class="settings-range" id="settingDepth" data-setting-depth type="range" min="0" max="100" value="55"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingSoft">Soft drop</label><output data-setting-soft-out>1×</output></div><input class="settings-range" id="settingSoft" data-setting-soft type="range" min="0" max="4" step="1" value="0"><p class="settings-hint">1× · 2× · 5× · 10× · ∞</p></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingDas">DAS</label><output data-setting-das-out>127 ms</output></div><input class="settings-range" id="settingDas" data-setting-das type="range" min="0" max="300" value="127"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingArr">ARR</label><output data-setting-arr-out>0 ms</output></div><input class="settings-range" id="settingArr" data-setting-arr type="range" min="0" max="100" value="0"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingDcd">DAS cut delay</label><output data-setting-dcd-out>0 ms</output></div><input class="settings-range" id="settingDcd" data-setting-dcd type="range" min="0" max="20" step="1" value="0"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingLock">Lock delay</label><output data-setting-lock-out>500 ms</output></div><input class="settings-range" id="settingLock" data-setting-lock type="range" min="50" max="1000" step="10" value="500"></div>
+      <div class="settings-control"><div class="settings-control-head"><label for="settingShadow">Ghost opacity</label><output data-setting-shadow-out>60%</output></div><input class="settings-range" id="settingShadow" data-setting-shadow type="range" min="0" max="100" value="60"></div>
+    </div>
+    <div class="settings-section"><h3 class="settings-section-title">key binds</h3><div class="settings-bind-list" data-setting-binds></div><p class="settings-hint">Tap a key, then press the key you want. Escape closes the panel.</p></div>
+    <div class="settings-footer"><button class="settings-reset" data-settings-reset type="button">reset settings</button></div>
+  </section>
+</div>
+<div id="toast" hidden style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;padding:9px 14px;border:1px solid #5d4c7b;border-radius:999px;background:#17131e;color:#eee8fa;font:800 11px ui-monospace,monospace">Ready</div>
+
+<script type="module" src="js/trainer-page.js"></script>
+<script type="module" src="js/trainer-settings.js"></script>
 </body>
 </html>
