@@ -7,6 +7,7 @@ function createSession() {
     pieces: [],
     lastResult: null,
     completedChunks: 0,
+    completedCells: [],
     attempts: 0
   };
 }
@@ -25,13 +26,13 @@ const training = {
       },
       {
         kicker: 'the chunk',
-        heading: 'ONE SHAPE',
-        text: 'Place the three pieces so their combined cells make one complete 3×4 or 4×3 rectangle.'
+        heading: 'ONE RECTANGLE',
+        text: 'Place and rotate the three pieces so their combined cells completely fill a 3×4 or 4×3 rectangle.'
       },
       {
         kicker: 'the loop',
-        heading: 'BUILD → REPEAT',
-        text: 'A correct JOL stays on the board. A failed three-piece attempt resets the board so you can try again.'
+        heading: 'BUILD → KEEP',
+        text: 'A correct JOL stays on the board. If the three-piece attempt is wrong, the board resets and you try again.'
       }
     ]
   }
@@ -50,9 +51,8 @@ const hooks = {
     session.attempts++;
     session.lastResult = validateJolChunk(session.pieces, trainer.cellsFor);
 
-    // A valid chunk must remain visible. Prevent normal Tetris line clearing
-    // only for this successful JOL; the universal engine remains unchanged
-    // for every other mode.
+    // A successful chunk must stay intact. Prevent universal Tetris line
+    // clearing only for this successful JOL attempt.
     return !session.lastResult.valid;
   },
 
@@ -62,9 +62,12 @@ const hooks = {
 
     if (session.lastResult?.valid) {
       session.completedChunks++;
+      session.completedCells.push(session.lastResult.cells.map(([x, y]) => [x, y]));
       trainer.say(`JOL CHUNK COMPLETE — ${session.lastResult.orientation}`);
     } else {
       trainer.emptyBoard();
+      session.completedChunks = 0;
+      session.completedCells = [];
       trainer.say('JOL CHUNK MISSED — TRY AGAIN');
     }
 
@@ -72,10 +75,25 @@ const hooks = {
     session.lastResult = null;
   },
 
+  render(trainer) {
+    // The board already uses the normal J/O/L piece colors. The only extra
+    // visual is a quiet outline on completed chunks, so the player can see
+    // exactly which rectangles have been successfully built.
+    const completed = new Set(
+      trainer.session.completedCells.flat().map(([x, y]) => `${x},${y}`)
+    );
+    trainer.cells.forEach((cell, index) => {
+      const x = index % trainer.W;
+      const y = Math.floor(index / trainer.W);
+      if (completed.has(`${x},${y}`)) cell.classList.add('jol-chunk');
+    });
+  },
+
   reset(trainer) {
     trainer.session.pieces = [];
     trainer.session.lastResult = null;
     trainer.session.completedChunks = 0;
+    trainer.session.completedCells = [];
     trainer.session.attempts = 0;
   }
 };
