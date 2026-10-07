@@ -80,7 +80,7 @@ export function renderBoard(board, piece, anim, cells, W, H, cellsFor, collides,
     while (!collides(piece.x, gy + 1, piece.o, piece.type)) gy++;
     for (const [cx, cy] of cellsFor(piece.type, piece.o)) {
       const x = piece.x + cx, y = gy + cy;
-      if (y >= 0 && y < H && x >= 0 && x < W && !all[y * W + x]) all[y * W + x] = 'ghost';
+      if (y >= 0 && y < H && x >= 0 && x < W && !all[y * W + x]) all[y * W + x] = 'ghost ghost-' + piece.type.toLowerCase();
     }
   }
 
