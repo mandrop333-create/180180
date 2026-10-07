@@ -108,7 +108,7 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;if(this.pieceInputCount<=2)this.stats.finessePerfect++;else this.stats.finesseFaults++;
     this.hook('place',{lockedPiece,cleared,spin,beforeLock:before,afterLock,afterClear});
     this.options.onPlace(this.placed);if(this.rules.clearBoardAfterPlace)this.emptyBoard();
-    this.spawn();this.emitState();
+    this.spawn();this.reapplyHeldHorizontalInput();this.emitState();
   }
   spinOrLineScore(cleared,spin){
     const s=this.rules.scoring||SCORE;
