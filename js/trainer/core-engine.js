@@ -26,6 +26,7 @@ export class Trainer extends BaseTrainer {
     if(this.anim?.layer)this.anim.layer.remove();
     const type=this.nextPieceType();
     this.piece=spawnFor(type);this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.anim=null;this.phase='active';
+    this.hook('beforeSpawn',{...this.piece});
     if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.phase='gameover';this.hook('gameOver',{...this.piece});this.render();return;}
     this.hook('spawn',{...this.piece});this.render();
   }
