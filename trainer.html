@@ -20,7 +20,17 @@
 <link rel="stylesheet" href="css/trainer.css">
 <link rel="stylesheet" href="css/trainer-guide-book.css">
 <link rel="stylesheet" href="css/settings.css">
-</head>
+<style>
+.mini-home{width:100%;display:flex;justify-content:center;align-items:center;min-height:65vh;padding:32px 18px}
+.mini-home-card{width:min(760px,100%);padding:42px;border:1px solid rgba(255,255,255,.12);border-radius:28px;background:rgba(16,16,20,.82);box-shadow:0 24px 80px rgba(0,0,0,.28);text-align:center}
+.mini-home-number{display:inline-grid;place-items:center;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.2);font-size:24px}
+.mini-home-kicker{margin:22px 0 8px;letter-spacing:.18em;font-size:12px;opacity:.65}
+.mini-home-title{margin:0;font-size:clamp(34px,7vw,64px)}
+.mini-home-description{max-width:560px;margin:14px auto 28px;opacity:.72;line-height:1.6}
+.mini-home-preview{min-height:220px;border:1px dashed rgba(255,255,255,.2);border-radius:22px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;letter-spacing:.12em}
+.mini-home-preview small{letter-spacing:normal;opacity:.5}
+.mini-home-actions{margin-top:26px}
+</style></head>
 <body>
 <div class="shell">
   <div class="flawless-graffiti trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg" preserveAspectRatio="xMaxYMin meet"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
@@ -31,60 +41,35 @@
     <div class="trainer-actions"><button id="reset" class="trainer-restart" type="button">Restart</button></div>
   </header>
   <main class="layout">
-    <aside class="concept" id="concept" aria-label="180° rotation training concept"><div class="bonus-meter" id="bonusMeter" aria-label="180 Flip bonus"><div class="bonus-topline"><span class="bonus-label">180 BOOST</span></div><div class="bonus-vessel"><div class="bonus-liquid" id="bonusLiquid"></div><div class="bonus-glint"></div><div class="bonus-number" id="bonusNumber">0</div></div></div><img id="conceptImage" src="assets/180180_finesse_sketch.jpg" alt="Hand-drawn sketch comparing a 2D rotation with a 3D flip"><p id="conceptText">finesse requires the brain to remap its visual process</p></aside>
-    <div class="trainer-main">
-      <section class="play-panel" aria-label="Tetris training practice">
-        <div class="playfield-stage">
-          <div class="board-wrap">
-            <section class="jol-hud" id="jolHud" hidden aria-label="JOL chunk progress">
-              <div><span class="jol-hud-label">TIME</span><strong id="jolTimer">0.0s</strong></div><div><span class="jol-hud-label">JOL</span><strong id="jolProgress">0/3</strong></div><div><span class="jol-hud-label">CHUNKS</span><strong id="jolChunks">0</strong></div><div><span class="jol-hud-label">BEST</span><strong id="jolBest">—</strong></div>
-            </section>
-            <div class="board" id="board" aria-label="Tetris training board"></div>
-          </div>
-          <section class="rhythm-panel" id="rhythmPanel" hidden aria-label="JOL rhythm timer">
-            <div class="rhythm-kicker">JOL RHYTHM</div>
-            <div class="rhythm-status" id="rhythmStatus">PLAY</div>
-            <div class="rhythm-countdown" id="rhythmCountdown">2.00</div>
-            <div class="rhythm-unit">SECONDS</div>
-            <div class="rhythm-window-label" id="rhythmWindowLabel">PLAY</div>
-            <div class="rhythm-meter" aria-hidden="true"><span id="rhythmMeter"></span></div>
-            <p class="rhythm-help" id="rhythmHelp">Play normally.</p>
-          </section>
-          <div class="trainer-guide-book" data-trainer-guide-book aria-expanded="false">
-            <button class="trainer-guide-cover" type="button" data-guide-cover aria-label="Open training guide"><span class="trainer-guide-cover-small">guide</span><span class="trainer-guide-cover-title" id="guideTitle">180</span><span class="trainer-guide-cover-subtitle" id="guideSubtitle">FLIP</span><span class="trainer-guide-cover-sigil" aria-hidden="true"></span></button>
-            <div class="trainer-guide-spread" data-guide-spread hidden>
-              <button class="trainer-guide-close" type="button" data-guide-close aria-label="Close guide">×</button>
-              <div class="trainer-guide-pages" data-guide-pages>
-                <article class="trainer-guide-page" data-guide-page><p class="trainer-guide-kicker" id="guideKicker">180 practice</p><h2 class="trainer-guide-heading" id="guideHeading">180 FLIP</h2><p class="trainer-guide-text" id="guideIntro">180 flip is designed to process the illusion of visual rotation on a different axis.</p></article>
-                <article class="trainer-guide-page" data-guide-page><p class="trainer-guide-kicker" id="guideExerciseKicker">the exercise</p><p class="trainer-guide-text" id="guideExercise">You will naturally use a 2d axis to rotate around instead of 3d for a flip. Start with the scaler at max 3d and slowly decrease it, play the mode until the piece feels like it is flipping not rotating twice.</p></article>
-              </div>
-              <div class="trainer-guide-controls" aria-label="Guide pages"><button type="button" data-guide-prev aria-label="Previous pages">‹</button><span data-guide-page-count>1–2</span><button type="button" data-guide-next aria-label="Next pages">›</button></div>
-            </div>
-          </div>
-          <div class="settings-panel trainer-settings-panel" data-settings-root hidden>
-            <section class="settings-card" role="dialog" aria-modal="false" aria-labelledby="settingsTitle">
-              <div class="settings-heading"><h2 class="settings-title" id="settingsTitle">settings</h2><button class="settings-close" data-settings-close type="button" aria-label="Close settings">×</button></div>
-              <div class="settings-section"><h3 class="settings-section-title">feel</h3>
-                <div class="settings-control"><div class="settings-control-head"><label for="settingDepth">3D depth</label><output data-setting-depth-out>55%</output></div><input class="settings-range" id="settingDepth" data-setting-depth type="range" min="0" max="100" value="55"></div>
-                <div class="settings-control"><div class="settings-control-head"><label for="settingShadowOpacity">Shadow opacity</label><output data-setting-shadow-opacity-out>60%</output></div><input class="settings-range" id="settingShadowOpacity" data-setting-shadow-opacity type="range" min="0" max="100" value="60"></div>
-                <div class="settings-control"><div class="settings-control-head"><label for="settingShadowBrightness">Shadow brightness</label><output data-setting-shadow-brightness-out>100%</output></div><input class="settings-range" id="settingShadowBrightness" data-setting-shadow-brightness type="range" min="50" max="200" value="100"></div>
-                <div class="settings-control"><div class="settings-control-head"><label for="settingSoft">Soft drop</label><output data-setting-soft-out>1×</output></div><input class="settings-range" id="settingSoft" data-setting-soft type="range" min="0" max="4" step="1" value="0"><p class="settings-hint">1× · 2× · 5× · 10× · ∞</p></div>
-                <div class="settings-control"><div class="settings-control-head"><label for="settingDas">DAS</label><output data-setting-das-out>127 ms</output></div><input class="settings-range" id="settingDas" data-setting-das type="range" min="0" max="300" value="127"></div>
-                <div class="settings-control"><div class="settings-control-head"><label for="settingArr">ARR</label><output data-setting-arr-out>0 ms</output></div><input class="settings-range" id="settingArr" data-setting-arr type="range" min="0" max="100" value="0"></div>
-              </div>
-              <div class="settings-section"><h3 class="settings-section-title">key binds</h3><div class="settings-bind-list" data-setting-binds></div><p class="settings-hint">Tap a key, then press the key you want.</p></div>
-              <div class="settings-footer"><button class="settings-reset" data-settings-reset type="button">reset settings</button></div>
-            </section>
-          </div>
+    <section class="mini-home" aria-label="Mini-game home">
+      <div class="mini-home-card">
+        <span class="mini-home-number" id="miniHomeNumber">1</span>
+        <p class="mini-home-kicker">MINI-GAME HOME</p>
+        <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
+        <p class="mini-home-description" id="miniHomeDescription">This mini-game is ready for its own separate game logic.</p>
+        <div class="mini-home-preview" aria-label="Game area reserved for this mini-game">
+          <span>GAME UI READY</span>
+          <small>Game logic will be added separately.</small>
         </div>
-      </section>
-    </div>
+        <div class="mini-home-actions">
+          <a class="back-link" href="index.html">← Back to six games</a>
+        </div>
+      </div>
+    </section>
   </main>
   <div class="hidden-settings" aria-hidden="true"><span id="turns">0</span><span id="placed">0</span><span id="orient">↑</span><span id="orientName">Spawn</span><span id="moveKeys"></span><span id="dropKeys"></span><span id="quarterKeys"></span><span id="halfKey"></span></div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script type="module" src="js/app.js?v=jol-hidden-rhythm-2"></script>
-<script type="module" src="js/trainer/guide-book.js?v=jol-hidden-rhythm-2"></script>
-<script type="module" src="js/trainer-settings.js?v=jol-hidden-rhythm-2"></script>
-</body>
+
+
+
+<script type="module">
+const modes = [{"id":"mode-01","number":1,"name":"180 Flip","description":"Train the 180° rotation as one deliberate movement"},{"id":"mode-02","number":2,"name":"JOL","description":"Normal Tetris using a JOL-only bag."},{"id":"mode-03","number":3,"name":"Flow","description":"Develop smooth transitions between rotations"},{"id":"mode-04","number":4,"name":"Speed","description":"Push your rotation timing under pressure"},{"id":"mode-05","number":5,"name":"Pattern","description":"Recognize and execute complex rotation sequences"},{"id":"mode-06","number":6,"name":"Mastery","description":"Combine all skills into flawless execution"}];
+const id=new URLSearchParams(location.search).get('mode')||'mode-01';
+const mode=modes.find(item=>item.id===id)||modes[0];
+document.getElementById('miniHomeNumber').textContent=mode.number;
+document.getElementById('miniHomeTitle').textContent=mode.name;
+document.getElementById('miniHomeDescription').textContent=mode.description;
+document.title='180180 — '+mode.name+' Mini-Game';
+</script></body>
 </html>
