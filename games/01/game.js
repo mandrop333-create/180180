@@ -42,7 +42,9 @@ function miniPiece(type){
   const minX=Math.min(...cells.map(([x])=>x)), maxX=Math.max(...cells.map(([x])=>x));
   const minY=Math.min(...cells.map(([,y])=>y)), maxY=Math.max(...cells.map(([,y])=>y));
   const w=maxX-minX+1,h=maxY-minY+1;
-  const blocks=cells.map(([x,y])=>'<span class="mini-block mini-'+type.toLowerCase()+'" style="grid-column:'+(x-minX+1)+';grid-row:'+(y-minY+1)+'"></span>').join('');
+  const colors={I:'#8bd5ff',O:'#ffe68a',T:'#d7a1ff',S:'#8be7a7',Z:'#ff8d9c',J:'#73a9ff',L:'#ffb05f'};
+  const color=colors[type]||'#eee8fb';
+  const blocks=cells.map(([x,y])=>'<span class="mini-block" style="grid-column:'+(x-minX+1)+';grid-row:'+(y-minY+1)+';display:block;width:8px;height:8px;background:'+color+';border:1px solid '+color+';box-sizing:border-box;border-radius:1px"></span>').join('');
   return '<span class="mini-piece" aria-label="'+type+' piece"><span class="mini-grid mini-grid-'+w+'x'+h+'">'+blocks+'</span></span>';
 }
 function renderState(state){
