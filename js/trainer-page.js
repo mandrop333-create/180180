@@ -1,6 +1,7 @@
 import { Trainer } from './trainer/engine.js';
 import { getModeById } from './modes/modes.js';
 import { getSettings } from './settings.js';
+import { runTrainerSelfTest } from './trainer/self-test.js';
 
 const modeId=new URLSearchParams(location.search).get('mode')||'mode-01';
 const mode=getModeById(modeId)||getModeById('mode-01');
@@ -65,4 +66,5 @@ window.addEventListener('blur',()=>trainer.handleBlur());
 document.getElementById('restartButton')?.addEventListener('click',()=>trainer.reset());
 document.getElementById('holdButton')?.addEventListener('click',()=>trainer.hold());
 
+runTrainerSelfTest();
 trainer.start();
