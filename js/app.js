@@ -119,7 +119,7 @@ import { getSettings } from './settings.js';
 
   function updateRhythmHud(now=performance.now()){
     const panel=document.getElementById('rhythmPanel'); if(!panel)return;
-    const active=mode.id==='mode-02'; panel.hidden=!active; if(!active)return;
+    const active=training.rhythmHud===true; panel.hidden=!active; if(!active)return;
     const rhythm=trainer.training?.rhythm;
     if(!rhythm) return;
 
@@ -144,7 +144,7 @@ import { getSettings } from './settings.js';
 
   function updateTrainingHud(now=performance.now()){
     const hud=document.getElementById('jolHud'); if(!hud)return;
-    const active=mode.id==='mode-02'; hud.hidden=!active; if(!active)return;
+    const active=training.jolHud===true; hud.hidden=!active; if(!active)return;
     const session=trainer.session || {};
     const timer=document.getElementById('jolTimer'), progress=document.getElementById('jolProgress'), chunks=document.getElementById('jolChunks'), best=document.getElementById('jolBest');
     if(timer)timer.textContent=(Math.max(0,Number(session.elapsedMs||0))/1000).toFixed(1)+'s';
