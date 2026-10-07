@@ -39,13 +39,11 @@
             <section class="jol-hud" id="jolHud" hidden aria-label="JOL chunk progress">
               <div><span class="jol-hud-label">TIME</span><strong id="jolTimer">0.0s</strong></div><div><span class="jol-hud-label">JOL</span><strong id="jolProgress">0/3</strong></div><div><span class="jol-hud-label">CHUNKS</span><strong id="jolChunks">0</strong></div><div><span class="jol-hud-label">BEST</span><strong id="jolBest">—</strong></div>
             </section>
-            <section class="rhythm-panel" id="rhythmPanel" hidden aria-label="JOL rhythm pattern">
-              <div class="rhythm-head"><span class="rhythm-label">RHYTHM</span><strong id="rhythmStatus">READY</strong><span id="rhythmCountdown">0.7</span></div>
-              <div class="rhythm-sequence" id="rhythmSequence" aria-label="J O L rhythm sequence">
-                <span data-rhythm-piece="J">J</span><span data-rhythm-piece="O">O</span><span data-rhythm-piece="L">L</span>
-              </div>
+            <section class="rhythm-panel" id="rhythmPanel" hidden aria-label="JOL hidden input rhythm">
+              <div class="rhythm-head"><span class="rhythm-label">RHYTHM</span><strong id="rhythmStatus">INPUT</strong><span id="rhythmCountdown">2.00</span></div>
+              <div class="rhythm-window-label" id="rhythmWindowLabel">PLAY NORMALLY — BOARD HIDDEN</div>
               <div class="rhythm-meter" aria-hidden="true"><span id="rhythmMeter"></span></div>
-              <p class="rhythm-help" id="rhythmHelp">Watch the beat. Place the expected piece near the pulse.</p>
+              <p class="rhythm-help" id="rhythmHelp">Your real inputs are happening while the board stays hidden.</p>
             </section>
             <div class="board" id="board" aria-label="Tetris training board"></div>
           </div>
@@ -84,8 +82,8 @@
   <div class="hidden-settings" aria-hidden="true"><span id="turns">0</span><span id="placed">0</span><span id="orient">↑</span><span id="orientName">Spawn</span><span id="moveKeys"></span><span id="dropKeys"></span><span id="quarterKeys"></span><span id="halfKey"></span></div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script type="module" src="js/app.js?v=jol-chunks-3"></script>
-<script type="module" src="js/trainer/guide-book.js?v=jol-chunks-3"></script>
-<script type="module" src="js/trainer-settings.js?v=jol-chunks-3"></script>
+<script type="module" src="js/app.js?v=jol-hidden-rhythm-1"></script>
+<script type="module" src="js/trainer/guide-book.js?v=jol-hidden-rhythm-1"></script>
+<script type="module" src="js/trainer-settings.js?v=jol-hidden-rhythm-1"></script>
 </body>
 </html>
