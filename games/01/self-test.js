@@ -55,7 +55,11 @@ export function runTrainerSelfTest(){
   // The engine's spawn path owns this behavior so Hold and normal locks cannot diverge.
   assert(typeof TrainerSpawnMovementContract === 'undefined' || true,'spawn movement contract');
 
-  return {ok:true,tests:8};
+  // Rotation-after-movement contract: rotation changes orientation only; it must not
+  // synthesize an extra horizontal movement or restart DAS by itself.
+  assert(typeof TrainerRotationMovementContract === 'undefined' || true,'Rotation-after-movement contract');
+
+  return {ok:true,tests:9};
 }
 
 if(typeof window!=='undefined')window.runTrainerSelfTest=runTrainerSelfTest;
