@@ -60,6 +60,11 @@ const hooks = {
       const y = Math.floor(index / trainer.W);
       cell.classList.toggle('jol-chunk', completed.has(`${x},${y}`));
     });
+
+    // Rhythm changes visibility only. The universal trainer still owns
+    // movement, rotation, drops, locking, the shadow, and rendering.
+    const hidden = trainer.training?.rhythm?.phase === 'input';
+    trainer.boardEl.classList.toggle('jol-rhythm-hidden', hidden);
   },
 
   hardInput() {
@@ -116,6 +121,7 @@ const hooks = {
     trainer.session.lastChunkMs = 0;
     trainer.session.bestChunkMs = null;
     trainer.training.rhythm = createRhythmState(JOL_RHYTHM, now);
+    trainer.boardEl.classList.add('jol-rhythm-hidden');
   }
 };
 
