@@ -276,9 +276,27 @@ this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed
       }
       this.hardDrop();
     }
-    else if(action==='cw'){this.pieceInputCount++;if(this.finesseEnabled){const expected=this.finesseActions[this.finesseProgress];if(expected&&(typeof expected==='string'?expected:expected.action)==='cw')this.finesseInput('cw','press');else this.finesseFault();}this.rotate(1);}
-    else if(action==='ccw'){this.pieceInputCount++;if(this.finesseEnabled){const expected=this.finesseActions[this.finesseProgress];if(expected&&(typeof expected==='string'?expected:expected.action)==='ccw')this.finesseInput('ccw','press');else this.finesseFault();}this.rotate(-1);}
-    else if(action==='half'){this.pieceInputCount++;if(this.finesseEnabled){const expected=this.finesseActions[this.finesseProgress];if(expected&&(typeof expected==='string'?expected:expected.action)==='half')this.finesseInput('half','press');else this.finesseFault();}this.rotate(2);}
+    else if(action==='cw'){
+      this.pieceInputCount++;
+      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
+      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='cw'))this.finesseFault();
+      const ok=this.rotate(1);
+      if(this.finesseEnabled&&ok)this.finesseInput('cw','press');
+    }
+    else if(action==='ccw'){
+      this.pieceInputCount++;
+      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
+      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='ccw'))this.finesseFault();
+      const ok=this.rotate(-1);
+      if(this.finesseEnabled&&ok)this.finesseInput('ccw','press');
+    }
+    else if(action==='half'){
+      this.pieceInputCount++;
+      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
+      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='half'))this.finesseFault();
+      const ok=this.rotate(2);
+      if(this.finesseEnabled&&ok)this.finesseInput('half','press');
+    }
     else if(action==='hold'){this.hold();}
   }
   handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
