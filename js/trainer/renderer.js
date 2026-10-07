@@ -98,11 +98,13 @@ export function startHalfTurn(animation, boardEl, cellsFor, NS, onRender) {
   layer.style.setProperty('--turn-shift-x', ((next.x - old.x) * CELL_PITCH) + 'px');
   layer.style.setProperty('--turn-shift-y', ((next.y - old.y) * CELL_PITCH) + 'px');
   layer.style.setProperty('--turn-duration', animation.duration + 'ms');
+  const pivotX = old.type === 'I' ? 1.5 : old.type === 'O' ? 0.5 : 1;
   const pivotY = old.type === 'I' ? 1.5 : old.type === 'O' ? 0.5 : 1;
-  const pivotPx = pivotY * CELL_PITCH + CELL_PITCH * .5;
+  const pivotPxX = pivotX * CELL_PITCH + CELL_PITCH * .5;
+  const pivotPxY = pivotY * CELL_PITCH + CELL_PITCH * .5;
   const scene = document.createElement('div');
   scene.className = 'turn-scene'; scene.style.width = BOX_SIZE + 'px'; scene.style.height = BOX_SIZE + 'px';
-  scene.style.transformOrigin = '50% ' + pivotPx + 'px'; scene.style.setProperty('--turn-perspective', '1000px');
+  scene.style.transformOrigin = pivotPxX + 'px ' + pivotPxY + 'px'; scene.style.setProperty('--turn-perspective', '1000px');
 
   const makeFace = (className, shape, gradient, transform) => {
     const face = document.createElement('div');
