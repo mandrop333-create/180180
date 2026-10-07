@@ -1,5 +1,6 @@
 // Shared temporal-pattern primitives for training modes.
-// This does not own rendering or gameplay; it describes rhythm data and evaluates timing.
+// Rhythm owns temporal data only. Modes decide how the pattern is presented
+// and how a player's response is interpreted.
 
 export const JOL_RHYTHM = Object.freeze({
   id: 'jol-steady-01',
@@ -23,7 +24,8 @@ export function createRhythmState(pattern = JOL_RHYTHM, now = performance.now())
     completed: 0,
     misses: 0,
     lastTimingErrorMs: null,
-    lastResult: null
+    lastResult: null,
+    expectedPiece: pattern.sequence[0] ?? null
   };
 }
 
@@ -35,37 +37,40 @@ export function currentBeat(state) {
 export function beginBeat(state, now = performance.now()) {
   if (!state) return null;
   state.beatStartedAt = now;
-  return currentBeat(state);
+  state.expectedPiece = currentBeat(state);
+  return state.expectedPiece;
 }
 
 export function evaluateBeat(state, pieceType, now = performance.now()) {
-  if (!state) return { valid: false, reason: 'No active rhythm.' };
+  if (!state?.active || !state.sequence.length) {
+    return { valid: false, reason: 'No active rhythm.' };
+  }
+
   const expected = currentBeat(state);
   const interval = state.intervals[state.beatIndex % state.intervals.length] ?? 700;
   const expectedAt = state.beatStartedAt + interval;
-  const errorMs = now - expectedAt;
-  const absErrorMs = Math.abs(errorMs);
+  const timingErrorMs = now - expectedAt;
   const typeCorrect = pieceType === expected;
-  const timingCorrect = absErrorMs <= state.timingWindowMs;
+  const timingCorrect = Math.abs(timingErrorMs) <= state.timingWindowMs;
   const valid = typeCorrect && timingCorrect;
 
-  state.lastTimingErrorMs = errorMs;
+  state.lastTimingErrorMs = timingErrorMs;
   state.lastResult = {
     expected,
     actual: pieceType,
-    timingErrorMs: errorMs,
+    timingErrorMs,
     typeCorrect,
     timingCorrect,
     valid
   };
 
-  // Every attempted beat advances with the piece sequence. A mistimed response
-  // is recorded as a miss rather than leaving rhythm state behind the generator.
-  if (valid) state.completed++;
-  else state.misses++;
+  if (valid) state.completed += 1;
+  else state.misses += 1;
+
   state.beatIndex = (state.beatIndex + 1) % state.sequence.length;
   state.lastBeatAt = now;
   state.beatStartedAt = now;
+  state.expectedPiece = currentBeat(state);
 
   return state.lastResult;
 }
