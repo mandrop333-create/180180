@@ -6,7 +6,8 @@
   --text: #f3f0ff;
   --muted: #a39bb8;
   --purple: #a78bfa;
-  --cell: 22.4px;
+  /* Keep CSS board cells synchronized with the renderer's 28px CELL constant. */
+  --cell: 28px;
   --depth: 8px;
 }
 
@@ -164,7 +165,7 @@ header {
 
 @media (max-width: 520px) {
   :root {
-    --cell: 25px;
+    --cell: 28px;
   }
   .shell {
     padding: 28px 10px 20px;
