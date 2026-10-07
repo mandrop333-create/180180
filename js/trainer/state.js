@@ -19,6 +19,8 @@ export const keyNames = {
   ShiftRight: 'Shift',
   ControlLeft: 'Ctrl',
   ControlRight: 'Ctrl',
+  KeyA: 'A',
+  KeyX: 'X',
   Escape: 'Esc'
 };
 
