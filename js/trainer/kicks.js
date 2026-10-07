@@ -1,7 +1,4 @@
-// TETR.IO-style SRS kick data.
-// Coordinates use +x right and +y down.
-// The default TETR.IO rotation system is SRS+; the custom 180 table
-// below follows the published SRS+ 180 patterns.
+// Standard SRS kick data. Coordinates use +x right, +y down.
 
 const JLSTZ = {
   '0>1': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
@@ -25,34 +22,12 @@ const I = {
   '0>3': [[0,0],[-1,0],[2,0],[-1,-2],[2,1]]
 };
 
-// These are the SRS+ 180 candidates expressed in this engine's y-down grid.
-const HALF_JLSTZ = {
-  0: [[0,0],[0,-1],[1,-1],[-1,-1],[1,0],[-1,0]],
-  1: [[0,0],[1,0],[1,-2],[1,-1],[0,-2],[0,-1]],
-  2: [[0,0],[0,1],[-1,1],[1,1],[-1,0],[1,0]],
-  3: [[0,0],[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
-};
-
-// The I piece uses a different rotation center. The first candidate must
-// be the neutral transition: in open space a 180° turn changes orientation
-// without changing the piece's x position. Any corrective kick is only a
-// fallback when the neutral placement collides.
-const HALF_I = {
-  0: [[0,0],[1,0],[1,-1]],
-  1: [[0,0],[-1,1],[0,1]],
-  2: [[0,0],[-1,0],[-1,1]],
-  3: [[0,0],[1,-1],[0,-1]]
-};
-
 export function getSrsKicks(type, from, to) {
-  if (type === 'O') return [];
+  if (type === 'O') return [[0,0]];
   const table = type === 'I' ? I : JLSTZ;
-  return table[from + '>' + to] || [];
+  return table[from + '>' + to] || [[0,0]];
 }
 
-export function getHalfTurnKicks(type, from) {
-  if (type === 'O') return [];
-  return (type === 'I' ? HALF_I : HALF_JLSTZ)[from] || [[0,0]];
-}
-
-export const DEFAULT_HALF_TURN_KICKS = HALF_JLSTZ[0];
+export const DEFAULT_HALF_TURN_KICKS = Object.freeze([
+  [0,0],[0,-1],[1,0],[-1,0],[0,1],[1,-1],[-1,-1],[2,0],[-2,0]
+]);
