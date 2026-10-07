@@ -26,6 +26,7 @@ export function renderModeCards(container, onModeSelect) {
       card.innerHTML = `
         <span class="mode-number">${mode.number}</span>
         <h3 class="mode-name">${mode.name}</h3>
+        ${mode.id === 'mode-02' ? '<div class="mode-jol-preview"><img src="assets/jol-chunks.svg" alt="J, O, and L Tetris pieces in order" loading="lazy"></div>' : ''}
         <p class="mode-description">${mode.description}</p>
       `;
     } else {
