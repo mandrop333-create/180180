@@ -31,7 +31,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -44,7 +44,7 @@ export class Trainer {
     this.ensureQueue();
     const type=forcedType||this.queue.shift();
     this.ensureQueue();
-    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
+    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.finesseDASPending=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.render();queueMicrotask(()=>{if(this.gameOver)this.reset();});return;}
     this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.generateFinessePrompt();this.markRender();
   }
@@ -77,7 +77,7 @@ export class Trainer {
     else{this.holdType=current;this.ensureQueue();this.spawn();}
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
+  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
   finesseInput(action,phase='press'){
     if(!this.finesseEnabled||!this.finesseActions.length||this.finesseFaulted)return false;
     const expected=this.finesseActions[this.finesseProgress];
@@ -85,16 +85,16 @@ export class Trainer {
     const expectedAction=typeof expected==='string'?expected:expected.action;
     const expectedMode=typeof expected==='string'?'tap':expected.mode;
     if(action!==expectedAction)return this.finesseFault();
-    if(expectedMode==='das'&&phase!=='dasComplete')return true;
+    if(expectedMode==='das'&&phase!=='dasComplete'){if(phase==='press'){this.finesseDASPending=true;this.emitState();}return true;}
     if(expectedMode==='tap'&&phase!=='press')return true;
-    this.finesseProgress++;
+    this.finesseProgress++;this.finesseDASPending=false;
     if(this.finesseProgress>=this.finesseActions.length)this.say('Finesse complete');
     this.emitState();
     return true;
   }
   finesseFault(){
     if(this.finesseFaulted)return;
-    this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;
+    this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;this.finesseDASPending=false;
     this.say('Finesse fault');this.emitState();
   }
   finesseLabel(step){
@@ -202,7 +202,7 @@ export class Trainer {
   markRender(){this.renderDirty=true;}
   flushRender(){if(!this.renderDirty)return;this.renderDirty=false;renderBoard(this.board,this.piece,this.anim,this.cells,this.W,this.H,this.cellsFor,this.collides.bind(this),this.depth,this.shadowOpacity,this.shadowBrightness,this.rules.showGhost,this.renderCache);drawActivePiece(this.piece,this.pieceSvg,this.anim,this.W,this.H,this.depth,this.cellsFor,NS,this.renderCache);this.hook('render');this.emitState();}
   render(){this.markRender();this.flushRender();}
-  emitState(){this.options.onState({finesse:this.finesseEnabled?this.finesseActions.map((action,i)=>({action,label:this.finesseLabel(action),state:i<this.finesseProgress?'done':i===this.finesseProgress?'next':'pending'})):[],piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
+  emitState(){this.options.onState({finesse:this.finesseEnabled?this.finesseActions.map((action,i)=>({action,label:this.finesseLabel(action),state:i<this.finesseProgress|| (i===this.finesseProgress&&this.finesseDASPending)?'done':i===this.finesseProgress?'next':'pending'})):[],piece:this.piece?{...this.piece}:null,queue:[...this.queue],hold:this.holdType,holdUsed:this.holdUsed,lines:this.lines,stats:{...this.stats},combo:this.combo,b2b:this.b2b,gameOver:this.gameOver,training:this.session&&typeof this.session==='object'?{...this.session}:null});}
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
     if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
@@ -302,7 +302,7 @@ this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed
     }
     else if(action==='hold'){this.hold();}
   }
-  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
+  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if((action==='left'||action==='right')&&this.finesseEnabled&&!this.finesseFaulted&&this.finesseDASPending){const expected=this.finesseActions[this.finesseProgress];if(expected&&typeof expected==='object'&&expected.mode==='das'&&expected.action===action)this.finesseFault();}if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
   handleBlur(){this.downKeys.clear();this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}
   say(s){if(this.toastCallback)this.toastCallback(s);}setToastCallback(cb){this.toastCallback=cb;}
   reset(){
