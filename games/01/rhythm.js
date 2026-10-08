@@ -50,8 +50,9 @@ export class RhythmTracker {
     const madValues=items.map(x=>Math.abs(x.intervalMs-median)).sort((a,b)=>a-b);
     const mad=madValues[Math.floor(madValues.length/2)]||0;
     const threshold=Math.max(120,mad*3);
-    const candidates=deviations.filter(x=>x.deviation>=threshold).sort((a,b)=>b.deviation-a.deviation);
-    const top=(candidates.length?candidates:deviations.sort((a,b)=>b.deviation-a.deviation)).slice(0,2);
+    const ranked=deviations.sort((a,b)=>b.deviation-a.deviation);
+    const significant=ranked.filter(x=>x.deviation>=threshold);
+    const top=(significant.length>=2?significant:ranked).slice(0,2);
     return {
       ready:true,
       averageMs:Math.round(items.reduce((s,x)=>s+x.intervalMs,0)/items.length),
