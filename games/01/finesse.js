@@ -5,9 +5,11 @@ import { placementIdentity,normalizeFinesseTarget,FINESSE_PROFILES } from './fin
 // to the real collision/rotation functions.
 function copyPiece(piece){return {...piece};}
 function routeKey(route){return route.map(step=>step.action+':'+(step.mode||'tap')).join('|');}
+function costLimit(maxCost,profile){return Number.isFinite(maxCost)?maxCost:(Number.isFinite(profile?.maxCost)?profile.maxCost:2);}
 
-export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost=2,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
+export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
   if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return [];
+  const limit=costLimit(maxCost,profile);
   const start=copyPiece(piece);
   const actions=[
     {action:'left',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
@@ -51,11 +53,11 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
         targets.set(key,candidate);
       }
     }
-    if(current.cost>=maxCost)continue;
+    if(current.cost>=limit)continue;
     for(const step of actions){
       const next=step.apply(current.piece);if(!next)continue;
       const stepCost=Number.isFinite(step.cost)?step.cost:Infinity;
-      if(!Number.isFinite(stepCost)||current.cost+stepCost>maxCost)continue;
+      if(!Number.isFinite(stepCost)||current.cost+stepCost>limit)continue;
       const cost=current.cost+stepCost,key=stateKey(next);
       if(best.has(key)&&best.get(key)<=cost)continue;
       best.set(key,cost);
@@ -66,9 +68,10 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   return [...targets.values()].sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.target.y-b.target.y||a.routeKey.localeCompare(b.routeKey));
 }
 
-export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost=2,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
+export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
   if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
-  const candidates=enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile});
+  const limit=costLimit(maxCost,profile);
+  const candidates=enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile});
   if(!candidates.length){
     const land=copyPiece(piece);
     while(move(land,0,1,board,W,H,cellsFor)){}
