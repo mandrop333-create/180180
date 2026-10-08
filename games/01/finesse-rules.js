@@ -78,6 +78,7 @@ export function finesseActionCost(action,mode='tap',profile=FINESSE_PROFILES.TET
     if(profile.supportsDirectHalfTurn!==true||!Number.isFinite(profile.halfTurnCost))return Infinity;
     return profile.halfTurnCost;
   }
+  if(normalizedAction==='hard')return Number.isFinite(profile.hardDropCost)?profile.hardDropCost:0;
   return finesseInputCost(normalizedAction);
 }
 
