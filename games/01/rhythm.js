@@ -11,23 +11,24 @@ export class RhythmTracker {
     this.finished=false;
   }
   now(value){return Number.isFinite(value)?value:performance.now();}
+  push(action,at){const t=this.now(at);const last=this.pending[this.pending.length-1];if(last&&last.action===action&&t-last.t<8)return;this.pending.push({action,t});}
   input(action,at){
     if(!this.enabled||this.finished)return;
     const t=this.now(at);
     if(action==='left'||action==='right'||action==='cw'||action==='ccw'||action==='half'||action==='hold'||action==='hard'||action==='soft'){
-      this.pending.push({action,t});
+      this.push(action,t);
     }
   }
   move(dx,dy,at){
     if(!this.enabled||this.finished)return;
-    if(dy===0&&dx!==0)this.pending.push({action:dx<0?'left':'right',t:this.now(at)});
+    if(dy===0&&dx!==0)this.push(dx<0?'left':'right',at);
   }
   rotate(delta,at){
     if(!this.enabled||this.finished)return;
-    this.pending.push({action:Math.abs(delta)===2?'180':delta>0?'rotate cw':'rotate ccw',t:this.now(at)});
+    this.push(Math.abs(delta)===2?'180':delta>0?'rotate cw':'rotate ccw',at);
   }
-  hold(at){if(this.enabled&&!this.finished)this.pending.push({action:'hold',t:this.now(at)});}
-  hardDrop(at){if(this.enabled&&!this.finished)this.pending.push({action:'hard drop',t:this.now(at)});}
+  hold(at){if(this.enabled&&!this.finished)this.push('hold',at);}
+  hardDrop(at){if(this.enabled&&!this.finished)this.push('hard drop',at);}
   place(piece,at){
     if(!this.enabled||this.finished)return;
     const t=this.now(at);
