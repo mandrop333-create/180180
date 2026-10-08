@@ -59,7 +59,12 @@ export class Trainer {
   resetLockAfterAction(){if(!this.piece||!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type)){this.lockAcc=0;return;}if(this.lockResets<(this.rules.maxLockResets??15)){this.lockAcc=0;this.lockResets++;this.stats.lockResets++;}}
   isLockDelayed(){return !!this.piece&&this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type)&&this.lockAcc>0;}
   rotate(delta){
-    if(this.gameOver||!this.piece)return false;const before={...this.piece};let halfTurnOld=null;
+    if(this.gameOver||!this.piece)return false;
+    const finesseAction=delta===2||delta===-2?'half':delta===1?'cw':delta===-1?'ccw':null;
+    const finesseExpected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
+    const finesseExpectedAction=finesseExpected&&(typeof finesseExpected==='string'?finesseExpected:finesseExpected.action);
+    if(this.finesseEnabled&&finesseAction&&finesseExpectedAction!==finesseAction)this.finesseFault();
+    const before={...this.piece};let halfTurnOld=null;
     const success=tryRotate(this.piece,delta,this.board,this.W,this.H,this.cellsFor,old=>{halfTurnOld=old;});
     if(!success)return false;
     this.resetLockAfterAction();this.turns++;this.stats.rotations++;if(Math.abs(delta)===2)this.stats.halfTurns++;
@@ -68,6 +73,7 @@ export class Trainer {
     // repeats without resetting the underlying hold schedule.
     this.dasCutRemaining=this.rules.dcd||0; // Rotation preserves the active horizontal DAS clock; DCD is the only intentional cut.
     recordTrainingRotation(this.training,delta,before,this.piece);this.rhythm?.rotate(delta,performance.now());this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
+    if(this.finesseEnabled&&finesseAction&&finesseExpectedAction===finesseAction)this.finesseInput(finesseAction,'press');
     if(halfTurnOld)this.startHalfTurn(halfTurnOld,{...this.piece});this.markRender();return true;
   }
   startHalfTurn(old,next){const animation={from:{...old},to:{...next},layer:null,started:0,duration:240};if(this.anim?.layer)this.anim.layer.remove();this.anim=animation;startHalfTurn(animation,this.boardEl,this.cellsFor,NS,()=>{if(this.anim!==animation)return;this.anim=null;this.render();});}
@@ -341,24 +347,15 @@ export class Trainer {
     }
     else if(action==='cw'){
       this.pieceInputCount++;
-      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='cw'))this.finesseFault();
-      const ok=this.rotate(1);
-      if(this.finesseEnabled&&ok)this.finesseInput('cw','press');
+      this.rotate(1);
     }
     else if(action==='ccw'){
       this.pieceInputCount++;
-      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='ccw'))this.finesseFault();
-      const ok=this.rotate(-1);
-      if(this.finesseEnabled&&ok)this.finesseInput('ccw','press');
+      this.rotate(-1);
     }
     else if(action==='half'){
       this.pieceInputCount++;
-      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='half'))this.finesseFault();
-      const ok=this.rotate(2);
-      if(this.finesseEnabled&&ok)this.finesseInput('half','press');
+      this.rotate(2);
     }
     else if(action==='hold'){this.hold();}
   }
