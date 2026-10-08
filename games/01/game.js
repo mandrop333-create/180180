@@ -21,7 +21,8 @@ const trainer=new Trainer(board,{
   safeLock:settings.safeLock,
   cancelDas:settings.cancelDas,
   preferSoftDrop:settings.preferSoftDrop,
-  colorOnlyFocalPiece
+  colorOnlyFocalPiece,
+  calculateRhythm
 });
 window.trainer=trainer;
 const title=document.getElementById('miniHomeTitle');
