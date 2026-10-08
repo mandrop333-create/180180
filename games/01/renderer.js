@@ -70,7 +70,7 @@ export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS
     const heightPx = (maxY - minY + 1) * pitch;
     const cx = (minX + maxX + 1) * pitch / 2;
     const cy = (minY + maxY + 1) * pitch / 2;
-    const radius = Math.hypot(widthPx, heightPx) / 2;
+    const radius = Math.hypot(widthPx, heightPx) / 2 + 1;
     const color = (PIECE_COLORS[piece.type] || PIECE_COLORS.T)[0];
     pieceSvg.append(svgEl('circle', { cx, cy, r: radius, fill: color }, 'color-only-focal-circle', NS));
     return;
