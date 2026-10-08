@@ -24,7 +24,7 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
     while(move(n,dir,0,board,W,H,cellsFor))moved=true;
     return moved?n:null;
   }});
-  actions.push(wallAction(-1,'left'),wallAction(1,'right'));
+  if(profile?.dasCountsAsOneInput===true)actions.push(wallAction(-1,'left'),wallAction(1,'right'));
 
   const landing=p=>{const n=copyPiece(p);while(move(n,0,1,board,W,H,cellsFor)){}return n;};
   const stateKey=p=>p.x+','+p.y+','+p.o;
