@@ -47,7 +47,6 @@ function miniPiece(type){
   return '<span class="mini-piece" aria-label="'+type+' piece"><span class="mini-grid mini-grid-'+w+'x'+h+'">'+blocks+'</span></span>';
 }
 function renderState(state){
-  if(finessePrompt&&finessePromptText){const steps=state.finesse||[];finessePromptText.innerHTML=steps.map(x=>'<span class="finesse-key '+x.state+'">'+x.label+'</span>').join('<b class="finesse-gap">›</b>');finessePrompt.hidden=!trainer.finesseEnabled||!steps.length;}
   if(score)score.textContent=String(state.stats.score);
   if(lines)lines.textContent=String(state.lines);
   if(combo)combo.textContent=state.combo<0?'—':String(state.combo);
