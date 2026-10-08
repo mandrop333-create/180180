@@ -85,7 +85,10 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
 }
 
 export function minimumRoutesForTargets(options={}){
-  const plan=planFinesse({...options,seed:0});
-  if(!plan)return [];
-  return [plan];
+  return enumerateFinesseTargets(options).map(candidate=>({
+    actions:candidate.route,
+    target:candidate.target,
+    cost:candidate.cost,
+    landingY:candidate.landingY
+  }));
 }
