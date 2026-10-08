@@ -115,5 +115,9 @@ document.getElementById('restartButton')?.addEventListener('click',()=>trainer.r
 document.getElementById('holdButton')?.addEventListener('click',()=>trainer.hold());
 mountSettings({trainer});
 window.dispatchEvent(new Event('trainerready'));
-runTrainerSelfTest();
+try{
+  runTrainerSelfTest();
+}catch(error){
+  console.error('180180 trainer self-test failed; continuing startup:',error);
+}
 trainer.start();
