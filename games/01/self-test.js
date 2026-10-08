@@ -158,6 +158,19 @@ export function runTrainerSelfTest(){
   assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
 
+  // O-piece regression: a square has no meaningful rotation. Even when the
+  // supplied rotation transition would mutate orientation metadata, the
+  // planner must never include rotation in its recommended route.
+  const squarePlan=planFinesse({
+    piece:{x:4,y:0,o:0,type:'O'},W:10,H:20,maxCost:2,seed:0,
+    move:(p,dx,dy)=>{if(dx&&(p.x+dx<0||p.x+dx>8))return false;p.x+=dx;p.y+=dy;return p.y<20;},
+    tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
+    cellsFor:()=>[]
+  });
+  assert(squarePlan&&squarePlan.actions.every(step=>!['cw','ccw','half'].includes(step.action)),'O-piece finesse must never recommend rotation');
+  assert(squarePlan.target&&squarePlan.target.o===0,'O-piece target orientation must be canonicalized');
+
+
   // Combined gravity bridge: every vertical/timing event remains neutral,
   // while each deliberate horizontal/rotation input remains exactly one cost.
   const gravityNeutralRoute=[
