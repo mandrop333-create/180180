@@ -267,7 +267,7 @@ export function runTrainerSelfTest(){
   const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
   let checkedPlans=0;
   for(const type of PIECE_TYPES){
-    for(let o=0;o<4;o++){
+    for(let o=0;o<(type==='O'?1:4);o++){
       for(let x=0;x<10;x++){
         const piece={type,x,y:0,o};
         if(collides(x,0,o,emptyBoard,10,20,cellsFor,type))continue;
