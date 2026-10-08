@@ -23,6 +23,13 @@ export const FINESSE_PROFILES = Object.freeze({
     dasCountsAsOneInput:true,
     description:'0G/60Hz SRS two-step movement finesse'
   }),
+  SRS_NORMAL: Object.freeze({
+    id:'srs-normal',
+    maxCost:2,
+    hardDropCost:0,
+    dasCountsAsOneInput:true,
+    description:'Normal finite-gravity SRS movement finesse'
+  }),
   SRS_20G: Object.freeze({
     id:'srs-20g',
     maxCost:2,
@@ -99,5 +106,7 @@ export function profileFor({gravity=800,rotationSystem='tetrio-srs-plus-180'}={}
   // execution profile is explicit rather than silently calling itself
   // vanilla SRS.
   if(rotationSystem==='tetrio-srs-plus-180')return FINESSE_PROFILES.TETRIO_SRS_PLUS_180;
-  return gravity===Infinity?FINESSE_PROFILES.SRS_20G:FINESSE_PROFILES.SRS_0G_60HZ;
+  if(gravity===Infinity)return FINESSE_PROFILES.SRS_20G;
+  if(gravity===0)return FINESSE_PROFILES.SRS_0G_60HZ;
+  return FINESSE_PROFILES.SRS_NORMAL;
 }
