@@ -154,7 +154,9 @@ export function runTrainerSelfTest(){
   const chosenAgain=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
   assert(chosenTraining.x===chosenAgain.x&&chosenTraining.o===chosenAgain.o,'training target policy must be deterministic');
   assert(chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T',maxCost:1}).cost===1,'training target policy must respect max cost');
-
+  const verticalITarget=chooseTrainingTarget([{x:-2,o:1,cost:2}],{pieceType:'I',maxCost:2});
+  assert(verticalITarget&&verticalITarget.x===-2&&verticalITarget.o===1,
+    'generic training-target selection must preserve legal negative-origin vertical I placements');
   // Minimum-cost target contract: each canonical target retains its least
   // deliberate-input cost even when multiple physical states reach it.
   const minimumTargets=minimumFinesseTargets({
