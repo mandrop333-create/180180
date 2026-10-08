@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>180436 — Falling-Block Training</title>
-<meta name="description" content="180436 is a focused falling-block training tool built for deliberate practice, visual-information reduction, rotation, placement, rhythm, and customizable training rules.">
+<meta name="description" content="180436 is a free browser-based falling-block training tool for deliberate practice, visual-information reduction, rotation, placement, rhythm, and customizable training rules.">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#101014">
 <link rel="canonical" href="https://180436.xyz/">
@@ -19,10 +19,31 @@
 <script type="application/ld+json">
 {
   "@context":"https://schema.org",
-  "@type":"WebSite",
-  "name":"180436",
-  "url":"https://180436.xyz/",
-  "description":"A focused falling-block training tool for deliberate practice and customizable training rules."
+  "@graph":[
+    {
+      "@type":"WebSite",
+      "@id":"https://180436.xyz/#website",
+      "name":"180436",
+      "url":"https://180436.xyz/",
+      "description":"A focused falling-block training tool for deliberate practice and customizable training rules."
+    },
+    {
+      "@type":["SoftwareApplication","WebApplication"],
+      "@id":"https://180436.xyz/#application",
+      "name":"180436",
+      "url":"https://180436.xyz/",
+      "description":"A free browser-based falling-block training tool for deliberate practice, rotation, placement, rhythm, and visual-information constraints.",
+      "applicationCategory":"GameApplication",
+      "operatingSystem":"Web browser",
+      "offers":{
+        "@type":"Offer",
+        "price":0,
+        "priceCurrency":"USD"
+      },
+      "isPartOf":{"@id":"https://180436.xyz/#website"},
+      "sameAs":"https://github.com/mandrop333-create/180180"
+    }
+  ]
 }
 </script>
 <link rel="stylesheet" href="css/base.css">
@@ -117,8 +138,8 @@ body{min-height:100vh}
           </section>
           <section class="trainer-card rhythm-card" id="rhythmCard" hidden aria-label="Calculate Rhythm results"><h2>Calculate Rhythm</h2><div id="rhythmReport" class="rhythm-report"></div></section>
         </aside>
-        <section class="board-column" aria-labelledby="trainerBoardTitle"><h2 class="sr-only" id="trainerBoardTitle">Training board</h2>
-          <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris board"></div></div>
+        <section class="board-column" aria-labelledby="trainerBoardTitle"><h2 class="sr-only" id="trainerBoardTitle">Tetris training board</h2>
+          <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris training board"></div></div>
           <div class="trainer-actions"><div class="trainer-controls" aria-label="Keyboard controls">← → move · ↓ soft drop · Space hard drop · X / Z rotate · A 180 · Shift hold</div></div>
         </section>
         <aside class="trainer-side">
