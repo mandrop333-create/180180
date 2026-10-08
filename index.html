@@ -38,7 +38,21 @@ body{min-height:100vh}
 @media(max-width:900px){.homepage-game-first .trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side,.rules-column{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
 @media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}}
 </style>
-
+<style>
+.mobile-controls{display:none;position:fixed;inset:0;z-index:400;pointer-events:none;touch-action:none}
+.mobile-controls.active{display:block}
+.mobile-control{position:absolute;width:42px;height:42px;margin:-21px 0 0 -21px;border:1px solid #71618e;border-radius:50%;background:#17131dcc;color:#eee8fa;box-shadow:0 5px 16px #0008,inset 0 1px 0 #ffffff18;display:grid;place-items:center;padding:0;font:900 12px/1 ui-monospace,monospace;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.mobile-control:active,.mobile-control.pressed{background:#302541;border-color:#b9a0ff;transform:translate(-50%,-50%) scale(.94)}
+.mobile-controls.editing{pointer-events:auto;background:#0002}
+.mobile-controls.editing .mobile-control{outline:1px dashed #b9a0ff88;cursor:grab}
+.mobile-controls.editing .mobile-control::after{content:'↕';position:absolute;inset:0;display:grid;place-items:center;color:#b9a0ff55;font-size:16px}
+.mobile-controls.editing .mobile-control{color:transparent}
+.mobile-controls-editbar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);display:none;gap:8px;padding:8px;border:1px solid #40364f;border-radius:12px;background:#121016ee;box-shadow:0 10px 30px #0009;pointer-events:auto}
+.mobile-controls.editing .mobile-controls-editbar{display:flex}
+.mobile-controls-editbar button{border:1px solid #51446e;border-radius:8px;background:#1b1722;color:#eee8fa;padding:7px 10px;font:800 10px ui-monospace,monospace}
+@media(min-width:901px){.mobile-controls.active{display:none}.mobile-controls.active.desktop-preview{display:block}}
+@media(max-width:520px){.mobile-control{width:40px;height:40px;margin:-20px 0 0 -20px;font-size:11px}}
+</style>
 
 <div class="trainer-page">
   <div class="trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
@@ -120,9 +134,20 @@ body{min-height:100vh}
       <div class="settings-control"><div class="settings-control-head"><label for="settingLock">Lock delay</label><output data-setting-lock-out>500 ms</output></div><input class="settings-range" id="settingLock" data-setting-lock type="range" min="50" max="1000" step="10" value="500"></div>
       <div class="settings-control settings-checks"><label><input type="checkbox" data-setting-safe-lock checked> prevent accidental hard drops</label><label><input type="checkbox" data-setting-cancel-das> cancel DAS when changing directions</label><label><input type="checkbox" data-setting-prefer-soft-drop> prefer soft drop over movement</label></div><div class="settings-control"><div class="settings-control-head"><label for="settingShadow">Ghost opacity</label><output data-setting-shadow-opacity-out>60%</output></div><input class="settings-range" id="settingShadow" data-setting-shadow-opacity type="range" min="0" max="100" value="60"></div><div class="settings-control"><div class="settings-control-head"><label for="settingBrightness">Ghost brightness</label><output data-setting-shadow-brightness-out>100%</output></div><input class="settings-range" id="settingBrightness" data-setting-shadow-brightness type="range" min="0" max="200" value="100"></div>
     </div>
-    <div class="settings-section"><h3 class="settings-section-title">key binds</h3><div class="settings-bind-list" data-setting-binds></div><p class="settings-hint">Tap a key, then press the key you want. Escape closes the panel.</p></div>
+    <div class="settings-section"><h3 class="settings-section-title">mobile controls</h3><div class="settings-control settings-checks"><label><input type="checkbox" id="settingMobileControls"> show touch controls</label></div><button class="settings-reset" id="customizeMobileControls" type="button" style="width:100%">customize touch layout</button><p class="settings-hint">8 small circular buttons. Drag them anywhere on the phone screen.</p></div><div class="settings-section"><h3 class="settings-section-title">key binds</h3><div class="settings-bind-list" data-setting-binds></div><p class="settings-hint">Tap a key, then press the key you want. Escape closes the panel.</p></div>
     <div class="settings-footer"><button class="settings-reset" data-settings-reset type="button">reset settings</button></div>
   </section>
+</div>
+<div class="mobile-controls" id="mobileControls" aria-label="Mobile Tetris controls">
+  <button class="mobile-control" data-mobile-action="left" aria-label="Left">←</button>
+  <button class="mobile-control" data-mobile-action="right" aria-label="Right">→</button>
+  <button class="mobile-control" data-mobile-action="soft" aria-label="Soft drop">↓</button>
+  <button class="mobile-control" data-mobile-action="hard" aria-label="Hard drop">DROP</button>
+  <button class="mobile-control" data-mobile-action="cw" aria-label="Rotate clockwise">↻</button>
+  <button class="mobile-control" data-mobile-action="ccw" aria-label="Rotate counterclockwise">↺</button>
+  <button class="mobile-control" data-mobile-action="half" aria-label="180 rotation">180</button>
+  <button class="mobile-control" data-mobile-action="hold" aria-label="Hold">HOLD</button>
+  <div class="mobile-controls-editbar"><button type="button" id="mobileControlsDone">DONE</button><button type="button" id="mobileControlsReset">RESET</button></div>
 </div>
 <div id="toast" hidden style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;padding:9px 14px;border:1px solid #5d4c7b;border-radius:999px;background:#17131e;color:#eee8fa;font:800 11px ui-monospace,monospace">Ready</div>
 
@@ -133,4 +158,80 @@ body{min-height:100vh}
 <script type="module" src="games/01/game.js"></script>
 
 
+<script>
+(()=> {
+  const root=document.getElementById('mobileControls');
+  const toggle=document.getElementById('settingMobileControls');
+  const customize=document.getElementById('customizeMobileControls');
+  const done=document.getElementById('mobileControlsDone');
+  const reset=document.getElementById('mobileControlsReset');
+  if(!root||!toggle||!customize)return;
+  const buttons=[...root.querySelectorAll('.mobile-control')];
+  const actions=buttons.map(b=>b.dataset.mobileAction);
+  const key='180180.mobileControls';
+  const defaults={
+    left:[7,80],right:[18,80],soft:[7,91],hard:[18,91],
+    cw:[82,80],ccw:[71,80],half:[82,91],hold:[71,91]
+  };
+  let layout=load();
+  let editing=false;
+  let activePointers=new Map();
+  function load(){try{const v=JSON.parse(localStorage.getItem(key)||'null');if(v&&typeof v==='object')return {...defaults,...v};}catch{}return {...defaults};}
+  function save(){try{localStorage.setItem(key,JSON.stringify(layout));}catch{}}
+  function applyLayout(){
+    buttons.forEach(b=>{const p=layout[b.dataset.mobileAction]||defaults[b.dataset.mobileAction];b.style.left=p[0]+'vw';b.style.top=p[1]+'vh';});
+  }
+  function setEnabled(on){root.classList.toggle('active',!!on&&!editing);toggle.checked=!!on;}
+  function send(action,type){
+    if(!window.trainer)return;
+    const code=window.trainer.binds?.[action];
+    if(!code)return;
+    const e={code,repeat:false,preventDefault(){}};
+    if(type==='down')window.trainer.handleKeydown(e);
+    else window.trainer.handleKeyup(e);
+  }
+  function press(b){
+    if(editing)return;
+    b.classList.add('pressed');
+    send(b.dataset.mobileAction,'down');
+  }
+  function release(b){
+    b.classList.remove('pressed');
+    send(b.dataset.mobileAction,'up');
+  }
+  buttons.forEach(b=>{
+    b.addEventListener('pointerdown',e=>{
+      e.preventDefault();
+      if(editing){activePointers.set(e.pointerId,{b,startX:e.clientX,startY:e.clientY,ox:e.clientX,oy:e.clientY});b.setPointerCapture?.(e.pointerId);return;}
+      press(b);activePointers.set(e.pointerId,{b});
+      b.setPointerCapture?.(e.pointerId);
+    });
+    b.addEventListener('pointermove',e=>{
+      const p=activePointers.get(e.pointerId);if(!editing||!p||p.b!==b)return;
+      const dx=e.clientX-p.startX,dy=e.clientY-p.startY;
+      const x=Math.max(3,Math.min(97,p.ox+dx));
+      const y=Math.max(8,Math.min(94,p.oy+dy));
+      layout[b.dataset.mobileAction]=[x/window.innerWidth*100,y/window.innerHeight*100];
+      applyLayout();
+    });
+    b.addEventListener('pointerup',e=>{
+      const p=activePointers.get(e.pointerId);activePointers.delete(e.pointerId);
+      if(editing){save();return;}
+      release(b);
+    });
+    b.addEventListener('pointercancel',e=>{activePointers.delete(e.pointerId);if(!editing)release(b);});
+    b.addEventListener('contextmenu',e=>e.preventDefault());
+  });
+  customize.addEventListener('click',()=>{
+    editing=true;root.classList.add('active','editing');applyLayout();
+  });
+  done?.addEventListener('click',()=>{editing=false;root.classList.remove('editing');setEnabled(toggle.checked);save();});
+  reset?.addEventListener('click',()=>{layout={...defaults};applyLayout();save();});
+  toggle.addEventListener('change',()=>{if(toggle.checked){editing=false;root.classList.remove('editing');setEnabled(true);}else{editing=false;root.classList.remove('editing');setEnabled(false);}});
+  applyLayout();
+  try{toggle.checked=localStorage.getItem('180180.mobileControls.enabled')==='1';}catch{}
+  toggle.addEventListener('change',()=>{try{localStorage.setItem('180180.mobileControls.enabled',toggle.checked?'1':'0');}catch{}});
+  window.addEventListener('trainerready',()=>{setEnabled(toggle.checked);applyLayout();});
+})();
+</script>
 </html>
