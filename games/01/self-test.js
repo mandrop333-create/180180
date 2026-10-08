@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
+import { routeCost,placementKey,placementIdentity,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -65,6 +65,12 @@ export function runTrainerSelfTest(){
   assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_0G_60HZ,'0G profile selection failed');
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
+
+  // Target identity contract: x + orientation is canonical; y remains
+  // available only as the physical landing result.
+  assert(placementIdentity({x:4,o:2,y:7})==='4,2','canonical placement identity failed');
+  assert(placementIdentity({x:4,o:2,y:18})===placementIdentity({x:4,o:2,y:7}),'landing y must not change target identity');
+  assert(placementKey({x:4,o:2,y:7})!==placementKey({x:4,o:2,y:18}),'physical landing key must retain y');
 
   // Combined gravity bridge: every vertical/timing event remains neutral,
   // while each deliberate horizontal/rotation input remains exactly one cost.
