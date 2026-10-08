@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
+import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -74,6 +74,18 @@ export function runTrainerSelfTest(){
   const declared=selectFinesseTarget(declaredTargets,targets=>targets[1]);
   assert(declared&&declared.x===7&&declared.o===1,'explicit target selector failed');
   assert(selectFinesseTarget(declaredTargets)===null,'target selection must not invent a selector');
+
+  // Reachability contract: candidate placements must be produced by legal
+  // movement/rotation transitions, never by raw coordinate enumeration.
+  const reachable=reachablePlacementIdentities({
+    piece:{x:4,y:0,o:0,type:'T'},
+    moveHorizontal:(p,d)=>{if(p.x+d<0||p.x+d>9)return false;p.x+=d;return true;},
+    rotate:(p,d)=>{p.o=(p.o+d+4)%4;return true},
+    maxCost:1
+  });
+  assert(reachable.some(p=>p.x===3&&p.o===0),'legal horizontal target missing');
+  assert(reachable.some(p=>p.x===4&&p.o===1),'legal rotation target missing');
+  assert(!reachable.some(p=>p.x===2&&p.o===0),'unreachable two-column target leaked into one-input set');
 
   // Target identity contract: x + orientation is canonical; y remains
   // available only as the physical landing result.
