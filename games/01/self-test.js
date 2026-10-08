@@ -53,6 +53,21 @@ export function runTrainerSelfTest(){
     assert(repeats===test.repeats,test.name+' timing contract failed');
   }
 
+  // Horizontal finesse contract: tap/DAS are one deliberate input each;
+  // wall completion requires an active hold; extra repeats are not new inputs.
+  const horizontalCases=[
+    {name:'tap-move',mode:'tap',moved:true,cost:1},
+    {name:'blocked-tap',mode:'tap',moved:false,cost:Infinity},
+    {name:'das-move',mode:'das',moved:true,cost:1},
+    {name:'blocked-das',mode:'das',moved:false,cost:Infinity}
+  ];
+  for(const test of horizontalCases){
+    const cost=test.moved?finesseInputCost(test.mode==='das'?'left':'right'):Infinity;
+    assert(cost===test.cost,test.name+' horizontal finesse cost contract failed');
+  }
+  assert(routeCost([{action:'left',mode:'das'}])===1,'DAS route must remain one deliberate input');
+  assert(routeCost([{action:'left',mode:'das'},{action:'cw'}])===2,'DAS plus rotation cost contract failed');
+
   // Training-rule contract: every implemented UI rule has a complete methodology record.
   const requiredRuleFields = new Set(TRAINING_RULE_SCHEMA);
   for (const trainingRule of listTrainingRules()) {
