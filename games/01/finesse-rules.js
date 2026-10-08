@@ -70,9 +70,15 @@ export const FINESSE_ACTIONS=Object.freeze({
 export const FINESSE_INPUT_MODES=Object.freeze({TAP:'tap',DAS:'das'});
 
 export function finesseActionCost(action,mode='tap',profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
-  if(!FINESSE_INPUT_MODES[mode?.toUpperCase?.()])return Infinity;
-  if(!profile||profile.dasCountsAsOneInput!==true&&mode==='das')return Infinity;
-  return finesseInputCost(action);
+  const normalizedMode=typeof mode==='string'?mode.toLowerCase():'';
+  const normalizedAction=typeof action==='string'?action.toLowerCase():'';
+  if(!Object.values(FINESSE_INPUT_MODES).includes(normalizedMode)||!profile)return Infinity;
+  if(normalizedMode==='das'&&profile.dasCountsAsOneInput!==true)return Infinity;
+  if(normalizedAction==='half'){
+    if(profile.supportsDirectHalfTurn!==true||!Number.isFinite(profile.halfTurnCost))return Infinity;
+    return profile.halfTurnCost;
+  }
+  return finesseInputCost(normalizedAction);
 }
 
 
@@ -249,14 +255,20 @@ export function wallX(piece,dir,moveHorizontal){
   return p.x;
 }
 
-export function routeCost(route=[]){
+export function routeCost(route=[],profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
   let cost=0;
-  for(const step of route)cost+=finesseInputCost(typeof step==='string'?step:step?.action);
+  for(const step of route){
+    const action=typeof step==='string'?step:step?.action;
+    const mode=typeof step==='string'?'tap':(step?.mode||'tap');
+    const stepCost=finesseActionCost(action,mode,profile);
+    if(!Number.isFinite(stepCost))return Infinity;
+    cost+=stepCost;
+  }
   return cost;
 }
 
-export function isFinessePerfect(route,targetCost){
-  return routeCost(route)===targetCost;
+export function isFinessePerfect(route,targetCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
+  return routeCost(route,profile)===targetCost;
 }
 
 export function chooseMinimumRoute(routes,targetKey){
