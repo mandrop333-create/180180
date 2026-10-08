@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES } from './finesse-rules.js';
+import { routeCost,placementKey,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -82,6 +82,10 @@ export function runTrainerSelfTest(){
   assert(routeCost([{action:'left',mode:'das'},{action:'cw'}])===2,'DAS plus rotation cost contract failed');
   // Lock delay/floor contact are automatic vertical state changes, not finesse inputs.
   assert(routeCost([{action:'gravity'},{action:'soft'},{action:'left'}])===1,'floor/vertical timing must not add finesse cost');
+  const wallPiece={x:4,y:19,o:0,type:'T'};
+  const wallLeft=wallX(wallPiece,-1,(p,d)=>{if(p.x+d<0||p.x+d>9)return false;p.x+=d;return true;});
+  const wallRight=wallX(wallPiece,1,(p,d)=>{if(p.x+d<0||p.x+d>9)return false;p.x+=d;return true;});
+  assert(wallLeft===0&&wallRight===9,'wall target must be derived from collision geometry');
 
   // Training-rule contract: every implemented UI rule has a complete methodology record.
   const requiredRuleFields = new Set(TRAINING_RULE_SCHEMA);
