@@ -250,7 +250,7 @@ export function reachablePlacementIdentities({
       queue.push({piece:p,cost});
     }
   }
-  return [...targets.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o);
+  return [...targets.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o||a.y-b.y);
 }
 
 export function wallX(piece,dir,moveHorizontal){
