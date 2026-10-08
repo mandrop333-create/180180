@@ -66,6 +66,19 @@ export function runTrainerSelfTest(){
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
 
+  // Combined gravity bridge: every vertical/timing event remains neutral,
+  // while each deliberate horizontal/rotation input remains exactly one cost.
+  const gravityNeutralRoute=[
+    {action:'gravity'},{action:'soft'},{action:'gravity'},
+    {action:'left'},{action:'gravity'},{action:'cw'},
+    {action:'soft'},{action:'hard'}
+  ];
+  assert(routeCost(gravityNeutralRoute)===2,'combined gravity bridge cost contract failed');
+  assert(isFinessePerfect(gravityNeutralRoute,2),'combined gravity bridge perfect-route contract failed');
+  assert(FINESSE_PROFILES.SRS_0G_60HZ.hardDropCost===0&&
+    FINESSE_PROFILES.SRS_NORMAL.hardDropCost===0&&
+    FINESSE_PROFILES.SRS_20G.hardDropCost===0,'all gravity profiles must exclude hard drop from finesse cost');
+
   // Lock-delay contract: floor contact and automatic lock timing are
   // vertical engine events, while deliberate movement/rotation remain the
   // only finesse-counted actions that can reset floor timing.
