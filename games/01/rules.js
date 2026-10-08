@@ -1,0 +1,37 @@
+// 180436 training-rule contract for Game 01.
+// Internal source of truth for the training methodology. Keep this aligned
+// with behavior actually implemented in the trainer.
+
+export const TRAINING_PILLARS = Object.freeze({
+  INFORMATION_REDUCTION: 'information-reduction',
+  AUTOPILOT: 'autopilot'
+});
+
+const rule = (definition) => Object.freeze({
+  status: 'implemented',
+  prerequisites: [],
+  next: [],
+  ...definition,
+  pillars: Object.freeze(definition.pillars || []),
+  removes: Object.freeze(definition.removes || []),
+  keeps: Object.freeze(definition.keeps || []),
+  trains: Object.freeze(definition.trains || []),
+  measurement: Object.freeze(definition.measurement || []),
+  prerequisites: Object.freeze(definition.prerequisites || []),
+  next: Object.freeze(definition.next || [])
+});
+
+export const TRAINING_RULES = Object.freeze({
+  'jol-only': rule({id:'jol-only',name:'JOL ONLY',kind:'constraint',purpose:'Reduce piece variety while practicing the 180 Flip movement.',pillars:[TRAINING_PILLARS.INFORMATION_REDUCTION],microHiccup:'Choosing among seven piece identities can add recognition work before the movement is executed.',removes:['normal seven-piece variety'],keeps:['J, O, and L pieces','normal movement','rotation','placement'],trains:['180 execution under reduced piece variety'],measurement:['180 execution and placement feedback'],difficulty:1}),
+  'color-only-focal': rule({id:'color-only-focal',name:'Color only focal piece',kind:'visual-constraint',purpose:'Reduce the shape information available from the active piece while preserving its color and position.',pillars:[TRAINING_PILLARS.INFORMATION_REDUCTION,TRAINING_PILLARS.AUTOPILOT],microHiccup:'Visually checking the active shape can interrupt execution after the piece has already been identified internally.',removes:['active-piece geometry and visible orientation'],keeps:['piece color','active-piece position','underlying gameplay state'],trains:['internal reconstruction of the focal piece','execution without repeated visual shape checks'],measurement:['placement quality','180 execution','rhythm when Calculate Rhythm is enabled'],difficulty:3}),
+  'color-only-hold': rule({id:'color-only-hold',name:'Color only Hold queue',kind:'visual-constraint',purpose:'Reduce shape information in Hold while preserving the held piece identity through color.',pillars:[TRAINING_PILLARS.INFORMATION_REDUCTION,TRAINING_PILLARS.AUTOPILOT],microHiccup:'Re-reading the held piece geometry can add a verification loop before execution.',removes:['held-piece geometry'],keeps:['held-piece color','Hold slot','held-piece identity'],trains:['internal reconstruction of Hold state','execution without repeated Hold-shape checking'],measurement:['placement quality','rhythm when Calculate Rhythm is enabled'],difficulty:2}),
+  'color-only-next': rule({id:'color-only-next',name:'Color only next queue',kind:'visual-constraint',purpose:'Reduce future-piece shape information while preserving queue identities through color.',pillars:[TRAINING_PILLARS.INFORMATION_REDUCTION,TRAINING_PILLARS.AUTOPILOT],microHiccup:'Repeatedly checking future-piece geometry can interrupt the current execution loop.',removes:['next-piece geometry'],keeps:['queue order','piece colors','queue position'],trains:['internal reconstruction of upcoming pieces','planning without repeated visual geometry checks'],measurement:['placement quality','rhythm when Calculate Rhythm is enabled'],difficulty:2}),
+  'calculate-rhythm': rule({id:'calculate-rhythm',name:'Calculate Rhythm',kind:'measurement',purpose:'Measure timing between piece placements and identify a consistently slow input within those intervals.',pillars:[TRAINING_PILLARS.AUTOPILOT],microHiccup:'A small input-to-input pause can interrupt otherwise automatic execution.',removes:['guesswork about where an execution interval is slowing down'],keeps:['normal gameplay','normal inputs','in-memory per-game timing only'],trains:['awareness of repeatable input timing gaps'],measurement:['average placement rhythm','slowest consistently sampled input and piece context'],difficulty:1}),
+  'invisible-focal': rule({id:'invisible-focal',name:'Invisible focal piece',kind:'visual-constraint',purpose:'Remove the visible active piece so placement must be reconstructed from the remaining board information and internal state.',pillars:[TRAINING_PILLARS.INFORMATION_REDUCTION,TRAINING_PILLARS.AUTOPILOT],microHiccup:'Looking back at the active piece to verify its location can interrupt execution.',removes:['visible active-piece geometry'],keeps:['gameplay state','board','other enabled visual signals'],trains:['internal tracking of the active piece','execution without active-piece verification'],measurement:['placement quality','rhythm when Calculate Rhythm is enabled'],difficulty:4}),
+  'invisible-ghost': rule({id:'invisible-ghost',name:'Invisible ghost piece',kind:'visual-constraint',purpose:'Remove the landing projection so the player must infer landing position without a ghost.',pillars:[TRAINING_PILLARS.INFORMATION_REDUCTION,TRAINING_PILLARS.AUTOPILOT],microHiccup:'Checking the ghost before committing a placement can interrupt an otherwise continuous execution.',removes:['landing projection'],keeps:['active piece','board','normal collision and placement rules'],trains:['landing-position estimation','commitment without ghost verification'],measurement:['placement quality','rhythm when Calculate Rhythm is enabled'],difficulty:3}),
+  'colored-ghost': rule({id:'colored-ghost',name:'Colored ghost piece',kind:'visual-constraint',purpose:'Transform the ghost into a clearer color-coded landing signal without changing the underlying placement state.',pillars:[TRAINING_PILLARS.AUTOPILOT],microHiccup:'Ambiguous or low-salience landing feedback can create a small visual verification step.',removes:['need to infer the ghost from its ordinary visual treatment'],keeps:['landing projection','active piece','board','normal placement rules'],trains:['faster recognition of landing information','continuous placement execution'],measurement:['placement quality','rhythm when Calculate Rhythm is enabled'],difficulty:1})
+});
+
+export function getTrainingRule(id){return TRAINING_RULES[id]||null;}
+export function listTrainingRules(){return Object.values(TRAINING_RULES);}
+export const TRAINING_RULE_SCHEMA=Object.freeze(['id','name','kind','purpose','pillars','microHiccup','removes','keeps','trains','measurement','difficulty','prerequisites','next']);
