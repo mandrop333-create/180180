@@ -1,4 +1,5 @@
 import { PIECE_TYPES, cellsFor, spawnFor } from './pieces.js';
+import { Trainer } from './engine.js';
 import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
@@ -321,14 +322,36 @@ export function runTrainerSelfTest(){
   assert(direct180Profile.supportsDirectHalfTurn===true,'direct 180 must be explicit in the game finesse profile');
   assert(direct180Profile.halfTurnCost===1,'direct 180 must cost one deliberate input');
 
-  // Spawn/hold movement contract: a physically held horizontal key gets exactly
-  // one immediate step on the newly spawned piece; repeat timing starts fresh.
-  // The engine's spawn path owns this behavior so Hold and normal locks cannot diverge.
-  assert(typeof TrainerSpawnMovementContract === 'undefined' || true,'spawn movement contract');
+  // Runtime integration: the displayed sequence, actual key observer, hard
+  // drop, target coordinates and lock-time finesse result must agree.
+  const testMode={id:'self-test',rules:{finesseProfile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,
+    supportsDirectHalfTurn:false,dasCountsAsOneInput:false}},hooks:{}};
+  const testGenerator={next:()=> 'O'};
+  const runtime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
+  runtime.emptyBoard();
+  runtime.piece={type:'O',x:4,y:0,o:0};
+  runtime.generateFinessePrompt();
+  assert(runtime.finesseTarget&&runtime.finesseTarget.x===2&&runtime.finesseTarget.y===18,
+    'runtime prompt must retain the exact physical landing target');
+  assert(runtime.finesseActions.length===2&&runtime.finesseActions.every(step=>step.action==='left'&&step.mode==='tap'),
+    'runtime should expose the minimum two-tap route to the selected O placement');
+  const keyEvent=code=>({code,preventDefault(){}});
+  for(let i=0;i<2;i++){
+    runtime.handleKeydown(keyEvent('ArrowLeft'));
+    runtime.handleKeyup(keyEvent('ArrowLeft'));
+  }
+  assert(runtime.finesseProgress===2&&!runtime.finesseFaulted,'runtime observer must accept the displayed route');
+  runtime.hardDrop();
+  assert(runtime.stats.finessePerfect===1&&runtime.stats.finesseFaults===0,
+    'correct route and physical landing must score exactly one clean finesse placement');
 
-  // Rotation-after-movement contract: rotation changes orientation only; it must not
-  // synthesize an extra horizontal movement or restart DAS by itself.
-  assert(typeof TrainerRotationMovementContract === 'undefined' || true,'Rotation-after-movement contract');
+  const faultyRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
+  faultyRuntime.emptyBoard();
+  faultyRuntime.piece={type:'O',x:4,y:0,o:0};
+  faultyRuntime.generateFinessePrompt();
+  faultyRuntime.handleKeydown(keyEvent('ArrowRight'));
+  assert(faultyRuntime.finesseFaulted&&faultyRuntime.stats.finesseFaults===1,
+    'wrong first input must produce exactly one finesse fault');
 
   // Live-transition planner contract: for every legal spawn-row x/orientation
   // across all seven pieces, every recommended action must execute through the
