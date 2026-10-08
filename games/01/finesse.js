@@ -1,78 +1,69 @@
-// Finesse route planner for the trainer's actual movement/rotation rules.
-// Hard drop is excluded from finesse cost. A completed DAS-to-wall movement
-// counts as one deliberate input, matching the trainer's movement model.
-//
-// The planner deliberately separates two ideas:
-//   1. route cost = number of deliberate inputs;
-//   2. target = the resulting resting x/orientation after natural gravity.
-// This lets the trainer choose a deterministic minimum-input placement without
-// pretending that every board state has a fixed universal input string.
+import { placementIdentity,normalizeFinesseTarget,FINESSE_PROFILES } from './finesse-rules.js';
 
+// Exact minimum-cost search over the supplied game transitions. This module
+// never mutates the live piece: every transition operates on a clone supplied
+// to the real collision/rotation functions.
 function copyPiece(piece){return {...piece};}
 
-export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxDepth=8}={}){
-  if(!piece)return null;
-  const start=copyPiece(piece);
+function routeKey(route){return route.map(step=>step.action+':'+(step.mode||'tap')).join('|');}
 
+export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost=2,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
+  if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
+  const start=copyPiece(piece);
   const actions=[
     {action:'left',mode:'tap',apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
     {action:'right',mode:'tap',apply:p=>{const n=copyPiece(p);return move(n,1,0,board,W,H,cellsFor)?n:null;}},
-    {action:'left',mode:'das',apply:p=>{const n=copyPiece(p);let moved=false;while(move(n,-1,0,board,W,H,cellsFor))moved=true;return moved?n:null;}},
-    {action:'right',mode:'das',apply:p=>{const n=copyPiece(p);let moved=false;while(move(n,1,0,board,W,H,cellsFor))moved=true;return moved?n:null;}},
     {action:'cw',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
-    {action:'ccw',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}},
-    {action:'half',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}}
+    {action:'ccw',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
   ];
+  if(profile?.supportsDirectHalfTurn!==false){
+    actions.push({action:'half',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
+  }
+  const wallAction=(dir,action)=>({action,mode:'das',apply:p=>{
+    const n=copyPiece(p);let moved=false;
+    while(move(n,dir,0,board,W,H,cellsFor))moved=true;
+    return moved?n:null;
+  }});
+  actions.push(wallAction(-1,'left'),wallAction(1,'right'));
 
-  const landing=p=>{
-    const n=copyPiece(p);
-    while(move(n,0,1,board,W,H,cellsFor)){}
-    return n;
-  };
+  const landing=p=>{const n=copyPiece(p);while(move(n,0,1,board,W,H,cellsFor)){}return n;};
   const stateKey=p=>p.x+','+p.y+','+p.o;
-  const targetKey=p=>{const land=landing(p);return land.x+','+land.o+','+land.y;};
-
-  // BFS guarantees minimum deliberate-input count. The deterministic action
-  // order is also our tie-breaker, so identical states produce stable prompts.
-  const queue=[{piece:start,route:[]}];
-  const seen=new Set([stateKey(start)]);
+  const queue=[{piece:start,cost:0,route:[]}];
+  const best=new Map([[stateKey(start),0]]);
   const targets=new Map();
 
   while(queue.length){
     const current=queue.shift();
-    if(current.route.length>=maxDepth)continue;
-
+    const land=landing(current.piece);
+    const target=normalizeFinesseTarget({x:land.x,o:land.o},W);
+    if(target){
+      const key=placementIdentity(target);
+      const candidate={route:current.route,target,cost:current.cost,landingY:land.y,routeKey:routeKey(current.route)};
+      const previous=targets.get(key);
+      if(!previous||candidate.cost<previous.cost||candidate.routeKey<previous.routeKey)targets.set(key,candidate);
+    }
+    if(current.cost>=maxCost)continue;
     for(const step of actions){
-      const next=step.apply(current.piece);
-      if(!next)continue;
-
-      const key=stateKey(next);
-      if(seen.has(key))continue;
-      seen.add(key);
-
-      const route=[...current.route,{action:step.action,mode:step.mode}];
-      const land=landing(next);
-      const target=targetKey(next);
-
-      // Only store the first route to a target: BFS makes it minimum cost.
-      if(!targets.has(target)){
-        targets.set(target,{route,target:{x:land.x,o:land.o,y:land.y}});
-      }
-
-      queue.push({piece:next,route});
+      const next=step.apply(current.piece);if(!next)continue;
+      const cost=current.cost+1,key=stateKey(next);
+      if(best.has(key)&&best.get(key)<=cost)continue;
+      best.set(key,cost);
+      queue.push({piece:next,cost,route:[...current.route,{action:step.action,mode:step.mode}]});
     }
   }
 
-  if(!targets.size)return {actions:[],target:{x:start.x,o:start.o,y:landing(start).y}};
+  const candidates=[...targets.values()].sort((a,b)=>a.cost-b.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.routeKey.localeCompare(b.routeKey));
+  if(!candidates.length){
+    const land=landing(start);
+    return {actions:[],target:{x:land.x,o:land.o},cost:0,landingY:land.y};
+  }
+  const offset=Math.abs(Number(seed)||0)%candidates.length;
+  const chosen=candidates[offset];
+  return {actions:chosen.route,target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
+}
 
-  const candidates=[...targets.values()];
-  // First choose a placement target, then use the minimum-input route to it.
-  // This is important: minimizing across targets would make the trainer
-  // trivially choose the nearest one-input placement every time.
-  //
-  // The seed only selects the target. The route stored for that target is
-  // already minimum-cost because it came from BFS.
-  const chosen=candidates[Math.abs(Number(seed)||0)%candidates.length];
-
-  return chosen;
+export function minimumRoutesForTargets(options={}){
+  const plan=planFinesse({...options,seed:0});
+  if(!plan)return [];
+  return [plan];
 }
