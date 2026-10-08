@@ -111,16 +111,18 @@ export function landingState(piece,moveDown){
   return {x:p.x,o:p.o,y:p.y};
 }
 
-// Canonical finesse target identity: horizontal column + orientation.
- // The resting y is a physical landing result, not part of the requested
- // placement identity because gravity and stack geometry determine it.
+// A target without landing y describes a column/orientation class. Once a
+// physical landing is known, y is part of the placement identity: kicks and
+// overhangs can make the same x/orientation reachable at different heights.
 export function placementIdentity(placement){
   if(!placement)return null;
-  return placement.x+','+placement.o;
+  const identity=placement.x+','+placement.o;
+  return Number.isInteger(placement.y)?identity+','+placement.y:identity;
 }
 
 export function normalizeFinesseTarget(target,W=10,{allowNegativeX=false}={}){
   if(!target||!Number.isInteger(target.x)||!Number.isInteger(target.o))return null;
+  if(target.y!==undefined&&!Number.isInteger(target.y))return null;
   const o=((target.o%4)+4)%4;
   // Piece origins are not always occupied-cell coordinates. For example, a
   // vertical I can be fully inside the field with a negative origin x because
@@ -128,7 +130,9 @@ export function normalizeFinesseTarget(target,W=10,{allowNegativeX=false}={}){
   // a generic target retain the conservative default; the engine-backed
   // planner may opt in because collision checks already proved it is legal.
   if((target.x<0&&!allowNegativeX)||target.x>=W)return null;
-  return Object.freeze({x:target.x,o});
+  const normalized={x:target.x,o};
+  if(Number.isInteger(target.y))normalized.y=target.y;
+  return Object.freeze(normalized);
 }
 
 export function selectFinesseTarget(targets,selector){
@@ -197,7 +201,7 @@ export function reachableLandingTargets({
   const reachable=reachablePlacementIdentities({piece,W,moveHorizontal,rotate,maxCost});
   const result=[];
   for(const target of reachable){
-    const start={...piece,x:target.x,o:target.o};
+    const start={...piece,x:target.x,y:target.y,o:target.o};
     const landing=landingState(start,moveDown);
     result.push(Object.freeze({
       x:target.x,
@@ -220,14 +224,14 @@ export function reachablePlacementIdentities({
 }={}){
   if(!piece||typeof moveHorizontal!=='function'||typeof rotate!=='function')return [];
   const clone=p=>({...p});
-  const key=p=>p.x+','+p.o;
+  const key=p=>p.x+','+p.y+','+p.o;
   const queue=[{piece:clone(piece),cost:0}];
-  const best=new Map([[piece.x+','+piece.y+','+piece.o,0]]);
+  const best=new Map([[key(piece),0]]);
   const targets=new Map();
   while(queue.length){
     const current=queue.shift();
     const identity=key(current.piece);
-    if(!targets.has(identity))targets.set(identity,{x:current.piece.x,o:current.piece.o,cost:current.cost});
+    if(!targets.has(identity))targets.set(identity,{x:current.piece.x,y:current.piece.y,o:current.piece.o,cost:current.cost});
     if(current.cost>=maxCost)continue;
     const candidates=[];
     for(const dir of [-1,1]){
