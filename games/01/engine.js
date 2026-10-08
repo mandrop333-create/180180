@@ -74,9 +74,13 @@ export class Trainer {
   hold(){
     if(this.gameOver||!this.piece||this.rules.hold===false||this.holdUsed)return false;
     const current=this.piece.type;this.holdUsed=true;
+    // Rhythm ownership belongs to the piece being held, so record the input
+    // before spawn() switches the active piece. handleKeydown() already records
+    // the same input; RhythmTracker dedupes the near-identical event.
+    this.rhythm?.hold(performance.now());
     if(this.holdType){const incoming=this.holdType;this.holdType=current;this.spawn(incoming);}
     else{this.holdType=current;this.ensureQueue();this.spawn();}
-    this.rhythm?.hold(performance.now());this.hook('hold',current,this.holdType);this.emitState();return true;
+    this.hook('hold',current,this.holdType);this.emitState();return true;
   }
   setColorOnlyFocalPiece(enabled){this.colorOnlyFocalPiece=!!enabled;this.render();}
   setCalculateRhythm(enabled){this.rhythm.enabled=!!enabled;this.rhythm.reset();}
