@@ -196,8 +196,8 @@ export function runTrainerSelfTest(){
 
   // Target identity contract: x + orientation is canonical; y remains
   // available only as the physical landing result.
-  assert(placementIdentity({x:4,o:2,y:7})==='4,2','canonical placement identity failed');
-  assert(placementIdentity({x:4,o:2,y:18})===placementIdentity({x:4,o:2,y:7}),'landing y must not change target identity');
+  assert(placementIdentity({x:4,o:2,y:7})==='4,2,7','physical placement identity must include landing height');
+  assert(placementIdentity({x:4,o:2,y:18})!==placementIdentity({x:4,o:2,y:7}),'distinct landing heights must remain distinct placements');
   assert(placementKey({x:4,o:2,y:7})!==placementKey({x:4,o:2,y:18}),'physical landing key must retain y');
 
   // Exact planner contract: BFS cost must equal the number of deliberate
@@ -361,7 +361,7 @@ export function runTrainerSelfTest(){
           }
         }
         while(move(simulated,0,1,emptyBoard,10,20,cellsFor)){}
-        assert(simulated.x===plan.target.x&&(type==='O'?0:simulated.o)===plan.target.o,
+        assert(simulated.x===plan.target.x&&(type==='O'?0:simulated.o)===plan.target.o&&simulated.y===plan.target.y,
           'executed route missed planner target for '+type+' x='+x+' o='+o);
         checkedPlans++;
       }
@@ -409,7 +409,7 @@ export function runTrainerSelfTest(){
               const landed={...state};
               while(move(landed,0,1,board,10,20,cellsFor)){}
               const orientation=type==='O'?0:landed.o;
-              const key=landed.x+','+orientation;
+              const key=landed.x+','+orientation+','+landed.y;
               const old=oracle.get(key);
               if(old===undefined||cost<old)oracle.set(key,cost);
             };
@@ -423,7 +423,7 @@ export function runTrainerSelfTest(){
               }
             };
             walk({...piece},0);
-            const plannedByKey=new Map(plannedTargets.map(t=>[t.target.x+','+(type==='O'?0:t.target.o),t]));
+            const plannedByKey=new Map(plannedTargets.map(t=>[t.target.x+','+(type==='O'?0:t.target.o)+','+t.target.y,t]));
             assert(plannedByKey.size===oracle.size,
               'planner/oracle target-set mismatch for '+type+' x='+x+' y='+y+' o='+o+
               ' plannerOnly='+[...plannedByKey.keys()].filter(key=>!oracle.has(key)).join(';')+
