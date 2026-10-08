@@ -1,0 +1,20 @@
+name: Finesse planner regression tests
+
+on:
+  push:
+    branches: ["main", "fix/finesse-planner-reconciliation"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  finesse-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run trainer self-tests
+        run: node --experimental-default-type=module -e "import('./games/01/self-test.js').then(({runTrainerSelfTest}) => console.log(JSON.stringify(runTrainerSelfTest()))).catch(error => { console.error(error); process.exit(1); })"
