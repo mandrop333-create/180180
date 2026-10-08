@@ -21,6 +21,8 @@ export const FINESSE_PROFILES = Object.freeze({
     maxCost:2,
     hardDropCost:0,
     dasCountsAsOneInput:true,
+    supportsDirectHalfTurn:false,
+    halfTurnCost:Infinity,
     description:'0G/60Hz SRS two-step movement finesse'
   }),
   SRS_NORMAL: Object.freeze({
@@ -28,6 +30,8 @@ export const FINESSE_PROFILES = Object.freeze({
     maxCost:2,
     hardDropCost:0,
     dasCountsAsOneInput:true,
+    supportsDirectHalfTurn:false,
+    halfTurnCost:Infinity,
     description:'Normal finite-gravity SRS movement finesse'
   }),
   SRS_20G: Object.freeze({
@@ -35,6 +39,8 @@ export const FINESSE_PROFILES = Object.freeze({
     maxCost:2,
     hardDropCost:0,
     dasCountsAsOneInput:true,
+    supportsDirectHalfTurn:false,
+    halfTurnCost:Infinity,
     description:'20G SRS movement finesse'
   }),
   SRS_20G_WALL: Object.freeze({
@@ -43,6 +49,7 @@ export const FINESSE_PROFILES = Object.freeze({
     hardDropCost:0,
     dasCountsAsOneInput:true,
     supportsDirectHalfTurn:false,
+    halfTurnCost:Infinity,
     description:'20G SRS wall finesse'
   }),
   TETRIO_SRS_PLUS_180: Object.freeze({
