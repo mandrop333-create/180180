@@ -7,6 +7,7 @@ import { collides,move } from './collision.js';
 import { tryRotate } from './rotation.js';
 import { drawActivePiece,renderBoard,startHalfTurn } from './renderer.js';
 import { createTrainingState,recordTrainingAction,recordTrainingRotation,tickTrainingState } from './training-state.js';
+import { RhythmTracker } from './rhythm.js';
 
 const defaultMode={id:null,rules:{},hooks:{}};
 const SCORE={single:100,double:300,triple:500,tetris:800,tspin:400,tspinSingle:800,tspinDouble:1200,tspinTriple:1600,mini:100,miniSingle:200,miniDouble:400,miniTriple:800,hardDropPerRow:2,softDropPerRow:1};
@@ -23,13 +24,13 @@ export class Trainer {
     if(Number.isFinite(options.dcd))this.rules.dcd=options.dcd;
     if(Number.isFinite(options.gravity))this.rules.gravity=options.gravity;
     if(Number.isFinite(options.lockDelay))this.rules.lockDelay=options.lockDelay;
-    this.options={onTurn:options.onTurn||(()=>{}),onPlace:options.onPlace||(()=>{}),onReset:options.onReset||(()=>{}),onState:options.onState||(()=>{})};
+    this.options={onTurn:options.onTurn||(()=>{}),onPlace:options.onPlace||(()=>{}),onReset:options.onReset||(()=>{}),onState:options.onState||(()=>{}),onRhythmReport:options.onRhythmReport||(()=>{})};
     this.W=this.rules.width;this.H=this.rules.height;this.cellsFor=options.cellsFor||defaultCellsFor;
     this.board=[];this.piece=null;this.generator=options.generator||(this.mode.createGenerator?this.mode.createGenerator({seed:options.seed}):new SevenBagGenerator({seed:options.seed}));
     this.queue=[];this.holdType=null;this.holdUsed=false;
     this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
-    this.gameOver=false;this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
+    this.gameOver=false;this.rhythm=new RhythmTracker(options.calculateRhythm===true);this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
     this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
@@ -45,14 +46,14 @@ export class Trainer {
     const type=forcedType||this.queue.shift();
     this.ensureQueue();
     this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.finesseDASPending=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
-    this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.render();queueMicrotask(()=>{if(this.gameOver)this.reset();});return;}
+    this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.finishRhythm();this.render();queueMicrotask(()=>{if(this.gameOver)this.reset();});return;}
     this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.generateFinessePrompt();this.markRender();
   }
   collides(px,py,o,type=this.piece?.type){return collides(px,py,o,this.board,this.W,this.H,this.cellsFor,type);}
   movePiece(dx,dy,{countSoftDrop=false}={}){
     if(this.gameOver||!this.piece)return false;const previous={...this.piece};
     const moved=move(this.piece,dx,dy,this.board,this.W,this.H,this.cellsFor);
-    if(moved){this.lastAction='move';this.lastRotation=false;if(countSoftDrop&&dy>0){this.stats.softDropRows+=dy;this.stats.score+=dy*(this.rules.scoring?.softDropPerRow??SCORE.softDropPerRow);}if(dy===0)this.resetLockAfterAction();this.hook('move',previous,{...this.piece},{dx,dy});this.markRender();}
+    if(moved){this.lastAction='move';this.lastRotation=false;if(countSoftDrop&&dy>0){this.stats.softDropRows+=dy;this.stats.score+=dy*(this.rules.scoring?.softDropPerRow??SCORE.softDropPerRow);}if(dy===0)this.resetLockAfterAction();this.rhythm?.move(dx,dy,performance.now());this.hook('move',previous,{...this.piece},{dx,dy});this.markRender();}
     return moved;
   }
   resetLockAfterAction(){if(!this.piece||!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type)){this.lockAcc=0;return;}if(this.lockResets<(this.rules.maxLockResets??15)){this.lockAcc=0;this.lockResets++;this.stats.lockResets++;}}
@@ -66,7 +67,7 @@ export class Trainer {
     // Rotation preserves horizontal DAS/ARR elapsed time. DCD temporarily blocks
     // repeats without resetting the underlying hold schedule.
     this.dasCutRemaining=this.rules.dcd||0; // Rotation preserves the active horizontal DAS clock; DCD is the only intentional cut.
-    recordTrainingRotation(this.training,delta,before,this.piece);this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
+    recordTrainingRotation(this.training,delta,before,this.piece);this.rhythm?.rotate(delta,performance.now());this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
     if(halfTurnOld)this.startHalfTurn(halfTurnOld,{...this.piece});this.markRender();return true;
   }
   startHalfTurn(old,next){const animation={from:{...old},to:{...next},layer:null,started:0,duration:240};if(this.anim?.layer)this.anim.layer.remove();this.anim=animation;startHalfTurn(animation,this.boardEl,this.cellsFor,NS,()=>{if(this.anim!==animation)return;this.anim=null;this.render();});}
@@ -75,9 +76,11 @@ export class Trainer {
     const current=this.piece.type;this.holdUsed=true;
     if(this.holdType){const incoming=this.holdType;this.holdType=current;this.spawn(incoming);}
     else{this.holdType=current;this.ensureQueue();this.spawn();}
-    this.hook('hold',current,this.holdType);this.emitState();return true;
+    this.rhythm?.hold(performance.now());this.hook('hold',current,this.holdType);this.emitState();return true;
   }
   setColorOnlyFocalPiece(enabled){this.colorOnlyFocalPiece=!!enabled;this.render();}
+  setCalculateRhythm(enabled){this.rhythm.enabled=!!enabled;this.rhythm.reset();}
+  finishRhythm(){const report=this.rhythm?.report();if(report)this.options.onRhythmReport(report);}
   setFinesseEnabled(enabled){this.finesseEnabled=false;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;this.emitState();
   }
   finesseFault(){
@@ -146,7 +149,7 @@ export class Trainer {
   }
   reapplyHeldHorizontalInput(){if(this.gameOver||!this.piece)return;const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);if(left===right)return;const dir=left?-1:1;const now=performance.now();this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();this.movePiece(dir,0);}
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
-  hardDrop(){if(this.gameOver||!this.piece)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
+  hardDrop(){if(this.gameOver||!this.piece)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.rhythm?.hardDrop(performance.now());this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
   isTSpin(piece){
     if(!piece||piece.type!=='T'||!this.lastRotation)return null;
     const cx=piece.x+1,cy=piece.y+1;let corners=0;
@@ -177,7 +180,7 @@ export class Trainer {
     this.placed++;this.stats.piecesPlaced++;
     this.holdUsed=false;
     this.stats.pieceInputs=this.pieceInputCount;if(this.finesseEnabled){if(this.finesseFaulted)this.stats.finesseFaults++;else if(this.finesseProgress>=this.finesseActions.length)this.stats.finessePerfect++;}
-    this.hook('place',{lockedPiece,cleared,spin,beforeLock:before,afterLock,afterClear});
+    this.rhythm?.place(lockedPiece,performance.now());this.hook('place',{lockedPiece,cleared,spin,beforeLock:before,afterLock,afterClear});
     this.options.onPlace(this.placed);if(this.rules.clearBoardAfterPlace)this.emptyBoard();
     this.spawn();this.emitState();
   }
@@ -276,7 +279,7 @@ export class Trainer {
   handleKeydown(e){
     if(this.gameOver)return;const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(!action)return;
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
-    this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
+    this.downKeys.add(e.code);const inputNow=performance.now();recordTrainingAction(this.training,action,inputNow,{code:e.code});this.rhythm?.input(action,inputNow);
     if(this.hook('input',{event:e,action})===true)return;
     const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
     const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
@@ -331,7 +334,7 @@ export class Trainer {
   say(s){if(this.toastCallback)this.toastCallback(s);}setToastCallback(cb){this.toastCallback=cb;}
   reset(){
     this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
-    this.softAcc=0;this.gravityAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=0;this.lastTime=0;this.gameOver=false;this.downKeys.clear();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;this.training=createTrainingState();
+    this.softAcc=0;this.gravityAcc=0;this.lockAcc=0;this.lockResets=0;this.rhythm?.reset();this.dasCutRemaining=0;this.lastTime=0;this.gameOver=false;this.downKeys.clear();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;this.training=createTrainingState();
     this.holdUsed=false;
     this.session=this.mode.createSession?this.mode.createSession():{};this.generator=this.mode.createGenerator?this.mode.createGenerator({}):this.generator;if(this.generator.reset)this.generator.reset();this.queue=[];this.holdType=null;this.holdUsed=false;this.emptyBoard();this.piece=null;this.anim=null;this.ensureQueue();this.spawn();this.hook('reset');this.options.onReset();this.markRender();this.flushRender();if(!this.running)this.start();
   }
