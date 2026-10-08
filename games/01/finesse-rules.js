@@ -104,6 +104,24 @@ export function stateKey(piece){
   return piece.x+','+piece.y+','+piece.o;
 }
 
+export function minimumFinesseTargets({
+  piece,
+  W=10,
+  maxCost=2,
+  moveHorizontal,
+  rotate,
+  moveDown
+}={}){
+  const candidates=reachableLandingTargets({piece,W,maxCost,moveHorizontal,rotate,moveDown});
+  const best=new Map();
+  for(const candidate of candidates){
+    const key=placementIdentity(candidate);
+    const previous=best.get(key);
+    if(!previous||candidate.cost<previous.cost)best.set(key,candidate);
+  }
+  return [...best.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o);
+}
+
 export function reachableLandingTargets({
   piece,
   W=10,
