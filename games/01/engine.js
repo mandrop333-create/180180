@@ -47,7 +47,7 @@ export class Trainer {
     this.ensureQueue();
     this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.finesseDASPending=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.finishRhythm();this.render();queueMicrotask(()=>{if(this.gameOver)this.reset('gameover');});return;}
-    this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.generateFinessePrompt();this.markRender();
+    this.hook('spawn',{...this.piece});this.generateFinessePrompt();this.reapplyHeldHorizontalInput();this.markRender();
   }
   collides(px,py,o,type=this.piece?.type){return collides(px,py,o,this.board,this.W,this.H,this.cellsFor,type);}
   movePiece(dx,dy,{countSoftDrop=false}={}){
@@ -176,7 +176,26 @@ export class Trainer {
     const chosen=shortest[(this.placed*7+this.piece.type.charCodeAt(0))%shortest.length];
     this.finesseActions=[...chosen,{action:'hard',mode:'tap'}];
   }
-  reapplyHeldHorizontalInput(){if(this.gameOver||!this.piece)return;const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);if(left===right)return;const dir=left?-1:1;const now=performance.now();this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();this.movePiece(dir,0);}
+  reapplyHeldHorizontalInput(){
+    if(this.gameOver||!this.piece)return;
+    const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);
+    if(left===right)return;
+    const action=left?'left':'right',dir=left?-1:1,now=performance.now();
+    this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();
+    const movedImmediately=this.movePiece(dir,0);
+    if(!this.finesseEnabled)return;
+    const expected=this.finesseActions[this.finesseProgress];
+    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
+    const expectedMode=expected&&(typeof expected==='string'?'tap':expected.mode);
+    if(expectedAction!==action){this.finesseFault();return;}
+    if(!movedImmediately){this.finesseFault();return;}
+    if(expectedMode==='das'){
+      this.finesseInput(action,'press');
+      if(this.piece&&this.piece.x===this.dasWallX(dir))this.finesseInput(action,'dasComplete');
+    }else if(expectedMode==='tap'){
+      this.finesseInput(action,'press');
+    }
+  }
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
   hardDrop(){if(this.gameOver||!this.piece)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.rhythm?.hardDrop(performance.now());this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
   isTSpin(piece){
