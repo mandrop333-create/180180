@@ -84,7 +84,7 @@ function renderState(state){
 }
 trainer.options.onState=renderState;
 trainer.options.onRhythmReport=renderRhythmReport;
-trainer.options.onReset=clearRhythmReport;
+trainer.options.onReset=reason=>{if(reason!=='gameover')clearRhythmReport();};
 trainer.emitState();
 trainer.setToastCallback(message=>{const toast=document.getElementById('toast');if(toast){toast.textContent=message;toast.hidden=false;clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>toast.hidden=true,1400);}});
 window.addEventListener('keydown',e=>trainer.handleKeydown(e),true);
