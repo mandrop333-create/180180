@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,isFinessePerfect,profileFor,FINESSE_PROFILES } from './finesse-rules.js';
+import { routeCost,placementKey,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
