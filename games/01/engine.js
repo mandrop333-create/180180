@@ -309,6 +309,14 @@ export class Trainer {
       const arr=this.arr();
       if(this.moveState.nextRepeatAt===Infinity)this.moveState.nextRepeatAt=this.moveState.startedAt+das;
       if(t>=this.moveState.nextRepeatAt){
+        const repeatedAction=this.moveState.dir<0?'left':'right';
+        const finesseExpected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
+        const finesseExpectedAction=finesseExpected&&(typeof finesseExpected==='string'?finesseExpected:finesseExpected.action);
+        const finesseExpectedMode=finesseExpected&&(typeof finesseExpected==='string'?'tap':finesseExpected.mode);
+        const repeatAllowed=this.finesseEnabled&&finesseExpectedAction===repeatedAction&&finesseExpectedMode==='das';
+        if(this.finesseEnabled&&!this.finesseFaulted&&!repeatAllowed){
+          this.finesseFault();
+        }
         if(arr===0){
           while(this.movePiece(this.moveState.dir,0)){}
           this.moveState.nextRepeatAt=Infinity;
