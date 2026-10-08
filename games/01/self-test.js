@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,placementIdentity,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
+import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -65,6 +65,15 @@ export function runTrainerSelfTest(){
   assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_0G_60HZ,'0G profile selection failed');
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
+
+  // Target selection contract: targets are normalized explicitly and are
+  // selected only through a supplied policy; no hidden random/route-order pick.
+  assert(normalizeFinesseTarget({x:4,o:6,y:99},10).o===2,'target orientation must normalize');
+  assert(normalizeFinesseTarget({x:10,o:0},10)===null,'out-of-board target must be rejected');
+  const declaredTargets=[{x:2,o:0},{x:7,o:1}];
+  const declared=selectFinesseTarget(declaredTargets,targets=>targets[1]);
+  assert(declared&&declared.x===7&&declared.o===1,'explicit target selector failed');
+  assert(selectFinesseTarget(declaredTargets)===null,'target selection must not invent a selector');
 
   // Target identity contract: x + orientation is canonical; y remains
   // available only as the physical landing result.
