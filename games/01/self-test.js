@@ -44,7 +44,8 @@ export function runTrainerSelfTest(){
     {name:'DAS-boundary',at:127,das:127,arr:0,repeats:1},
     {name:'DAS+2ARR',at:147,das:127,arr:10,repeats:3},
     {name:'DAS+5ARR',at:177,das:127,arr:10,repeats:6},
-    {name:'ARR-zero',at:500,das:127,arr:0,repeats:1}
+    {name:'ARR-zero',at:500,das:127,arr:0,repeats:1},
+    {name:'high-ARR-single-repeat',at:500,das:127,arr:1000,repeats:1}
   ];
   for(const test of timingCases){
     const elapsed=Math.max(0,test.at-test.das);
