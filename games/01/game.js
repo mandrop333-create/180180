@@ -31,7 +31,6 @@ const description=document.getElementById('miniHomeDescription');
 if(title)title.textContent=mode.name;
 if(number)number.textContent=mode.number;
 if(description)description.textContent=mode.description;
-document.title='180436 — '+mode.name;
 const score=document.getElementById('hudScore');
 const lines=document.getElementById('hudLines');
 const combo=document.getElementById('hudCombo');
