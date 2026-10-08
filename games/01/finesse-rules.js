@@ -81,6 +81,20 @@ export function placementIdentity(placement){
   return placement.x+','+placement.o;
 }
 
+export function normalizeFinesseTarget(target,W=10){
+  if(!target||!Number.isInteger(target.x)||!Number.isInteger(target.o))return null;
+  const o=((target.o%4)+4)%4;
+  if(target.x<0||target.x>=W)return null;
+  return Object.freeze({x:target.x,o});
+}
+
+export function selectFinesseTarget(targets,selector){
+  if(typeof selector!=='function')return null;
+  const list=(targets||[]).map(target=>normalizeFinesseTarget(target)).filter(Boolean);
+  const selected=selector(list.map(target=>Object.freeze({...target})));
+  return normalizeFinesseTarget(selected);
+}
+
 // Physical landing identity, retained for collision/lock verification.
 export function placementKey(placement){
   return placement.x+','+placement.o+','+placement.y;
