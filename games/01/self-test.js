@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,reachableLandingTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
+import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -74,6 +74,18 @@ export function runTrainerSelfTest(){
   const declared=selectFinesseTarget(declaredTargets,targets=>targets[1]);
   assert(declared&&declared.x===7&&declared.o===1,'explicit target selector failed');
   assert(selectFinesseTarget(declaredTargets)===null,'target selection must not invent a selector');
+
+  // Minimum-cost target contract: each canonical target retains its least
+  // deliberate-input cost even when multiple physical states reach it.
+  const minimumTargets=minimumFinesseTargets({
+    piece:{x:4,y:0,o:0,type:'T'},
+    moveHorizontal:(p,d)=>{if(p.x+d<0||p.x+d>9)return false;p.x+=d;return true;},
+    rotate:(p,d)=>{p.o=(p.o+d+4)%4;return true},
+    moveDown:p=>{if(p.y>=19)return false;p.y++;return true},
+    maxCost:2
+  });
+  const sameTarget=minimumTargets.find(p=>p.x===4&&p.o===0);
+  assert(sameTarget&&sameTarget.cost===0,'starting placement must have minimum finesse cost zero');
 
   // Landing contract: the canonical target remains x+orientation, while
   // physical landing y is derived from the real downward transition.
