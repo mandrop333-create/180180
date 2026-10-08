@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,wallX } from './finesse-rules.js';
+import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -82,6 +82,12 @@ export function runTrainerSelfTest(){
   const declared=selectFinesseTarget(declaredTargets,targets=>targets[1]);
   assert(declared&&declared.x===7&&declared.o===1,'explicit target selector failed');
   assert(selectFinesseTarget(declaredTargets)===null,'target selection must not invent a selector');
+  const trainingTargets=[{x:2,o:0,cost:1},{x:4,o:1,cost:2},{x:7,o:0,cost:2}];
+  const chosenTraining=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
+  assert(chosenTraining&&chosenTraining.cost===2,'training target policy must prefer the highest finesse cost inside the envelope');
+  const chosenAgain=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
+  assert(chosenTraining.x===chosenAgain.x&&chosenTraining.o===chosenAgain.o,'training target policy must be deterministic');
+  assert(chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T',maxCost:1}).cost===1,'training target policy must respect max cost');
 
   // Minimum-cost target contract: each canonical target retains its least
   // deliberate-input cost even when multiple physical states reach it.
