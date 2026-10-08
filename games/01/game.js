@@ -46,6 +46,8 @@ function renderRhythmReport(report){
   if(!rhythmCard||!rhythmReport)return;
   rhythmCard.hidden=false;
   if(!report?.ready){rhythmReport.innerHTML='<div class="rhythm-metric"><span>STATUS</span><strong>Not enough placements</strong></div>';return;}
+  const weaknesses=report.weaknesses||[];
+  const weaknessHtml=weaknesses.length?'<div class="rhythm-pattern">WEAK SPOTS</div>'+weaknesses.map(w=>'<div class="rhythm-outlier"><div class="rhythm-outlier-title"><span>'+w.label+(w.piece?' — '+w.piece:'')+'</span><strong>×'+w.count+'</strong></div></div>').join(''):'';
   const outliers=report.outliers||[];
   const recurring=report.recurringPattern?('<div class="rhythm-pattern">RECURRING: '+report.recurringPattern+'</div>'):'';
   const cards=outliers.map((o,i)=>{
@@ -54,7 +56,7 @@ function renderRhythmReport(report){
     const reversals=o.directionReversals?'<div class="rhythm-outlier-detail">direction reversals: '+o.directionReversals+'</div>':'';
     return '<div class="rhythm-outlier"><div class="rhythm-outlier-title"><span>#'+(i+1)+' '+o.piece+' OUTLIER</span><strong>+'+o.deviationMs+' ms</strong></div><div class="rhythm-outlier-detail">'+o.intervalMs+' ms placement · longest input gap '+o.longestGapMs+' ms</div><div class="rhythm-pattern">'+o.pattern+'</div>'+timing+reversals+'<div class="rhythm-outlier-detail">'+inputs+'</div></div>';
   }).join('');
-  rhythmReport.innerHTML='<div class="rhythm-metric"><span>AVERAGE INTERVAL</span><strong>'+report.averageMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN INTERVAL</span><strong>'+report.medianMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN PPS</span><strong>'+report.pps+'</strong></div>'+recurring+cards;
+  rhythmReport.innerHTML='<div class="rhythm-metric"><span>AVERAGE INTERVAL</span><strong>'+report.averageMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN INTERVAL</span><strong>'+report.medianMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN PPS</span><strong>'+report.pps+'</strong></div>'+weaknessHtml;
 }
 function miniPiece(type,colorOnly=false){
   if(!type)return '';
