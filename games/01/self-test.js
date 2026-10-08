@@ -4,6 +4,8 @@ import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
 import { planFinesse } from './finesse.js';
+import { collides, move } from './collision.js';
+import { tryRotate } from './rotation.js';
 import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,FINESSE_INPUT_MODES,finesseActionCost,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
@@ -259,7 +261,46 @@ export function runTrainerSelfTest(){
   // synthesize an extra horizontal movement or restart DAS by itself.
   assert(typeof TrainerRotationMovementContract === 'undefined' || true,'Rotation-after-movement contract');
 
-  return {ok:true,tests:9};
+  // Live-transition planner contract: for every legal spawn-row x/orientation
+  // across all seven pieces, every recommended action must execute through the
+  // game's actual collision and kick functions and land on the advertised target.
+  const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
+  let checkedPlans=0;
+  for(const type of PIECE_TYPES){
+    for(let o=0;o<4;o++){
+      for(let x=0;x<10;x++){
+        const piece={type,x,y:0,o};
+        if(collides(x,0,o,emptyBoard,10,20,cellsFor,type))continue;
+        const plan=planFinesse({
+          piece,board:emptyBoard,W:10,H:20,cellsFor,maxCost:2,seed:0,
+          move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+          tryRotate:(p,delta,b,W,H,cf)=>tryRotate(p,delta,b,W,H,cf)
+        });
+        assert(plan&&plan.cost===plan.actions.length,'planner route cost mismatch for '+type+' x='+x+' o='+o);
+        const simulated={...piece};
+        for(const step of plan.actions){
+          if(step.action==='left'||step.action==='right'){
+            const dir=step.action==='left'?-1:1;
+            if(step.mode==='das'){
+              let moved=false;
+              while(move(simulated,dir,0,emptyBoard,10,20,cellsFor))moved=true;
+              assert(moved,'DAS action must move '+type+' at x='+x);
+            }else assert(move(simulated,dir,0,emptyBoard,10,20,cellsFor),'tap action must move '+type+' at x='+x);
+          }else{
+            const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
+            assert(tryRotate(simulated,delta,emptyBoard,10,20,cellsFor),'rotation action must succeed for '+type+' x='+x+' o='+o);
+          }
+        }
+        while(move(simulated,0,1,emptyBoard,10,20,cellsFor)){}
+        assert(simulated.x===plan.target.x&&(type==='O'?0:simulated.o)===plan.target.o,
+          'executed route missed planner target for '+type+' x='+x+' o='+o);
+        checkedPlans++;
+      }
+    }
+  }
+  assert(checkedPlans>100,'planner regression matrix did not cover enough states');
+
+  return {ok:true,tests:10,plannerStates:checkedPlans};
 }
 
 if(typeof window!=='undefined')window.runTrainerSelfTest=runTrainerSelfTest;
