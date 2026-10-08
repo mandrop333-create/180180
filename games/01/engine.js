@@ -158,7 +158,7 @@ export class Trainer {
       cellsFor:this.cellsFor,
       move:(piece,dx,dy,board,W,H,cellsFor)=>move(piece,dx,dy,board,W,H,cellsFor),
       tryRotate:(piece,delta,board,W,H,cellsFor)=>tryRotate(piece,delta,board,W,H,cellsFor),
-      maxCost:2,
+      maxCost:this.mode.rules?.finesseProfile?.maxCost??2,
       seed:this.placed,
       profile:this.mode.rules?.finesseProfile
     });
@@ -211,7 +211,7 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;
     if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
-      const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o);
+      const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&(!Number.isInteger(target.y)||lockedPiece.y===target.y));
       const sequenceComplete=this.finesseProgress>=this.finesseActions.length;
       this.finessePlacementResolved=true;
       if(!this.finesseFaulted&&sequenceComplete&&targetOk)this.stats.finessePerfect++;

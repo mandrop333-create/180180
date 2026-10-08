@@ -4,11 +4,12 @@ import { placementIdentity,normalizeFinesseTarget,FINESSE_PROFILES } from './fin
 // never mutates the live piece: every transition operates on a clone supplied
 // to the real collision/rotation functions.
 function copyPiece(piece){return {...piece};}
-
 function routeKey(route){return route.map(step=>step.action+':'+(step.mode||'tap')).join('|');}
+function costLimit(maxCost,profile){return Number.isFinite(maxCost)?maxCost:(Number.isFinite(profile?.maxCost)?profile.maxCost:2);}
 
-export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost=2,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
-  if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
+export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
+  if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return [];
+  const limit=costLimit(maxCost,profile);
   const start=copyPiece(piece);
   const actions=[
     {action:'left',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
@@ -20,8 +21,8 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
     {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
     {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
   );
-  if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true){
-    actions.push({action:'half',mode:'tap',cost:Number.isFinite(profile.halfTurnCost)?profile.halfTurnCost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
+  if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true&&Number.isFinite(profile.halfTurnCost)){
+    actions.push({action:'half',mode:'tap',cost:profile.halfTurnCost,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
   }
   const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
     const n=copyPiece(p);let moved=false;
@@ -39,18 +40,24 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   while(queue.length){
     const current=queue.shift();
     const land=landing(current.piece);
-    const target=normalizeFinesseTarget({x:land.x,o:land.o},W);
+    const target=normalizeFinesseTarget({x:land.x,o:land.o,y:land.y},W,{allowNegativeX:true});
     if(target){
       const key=placementIdentity(target);
       const candidate={route:current.route,target,cost:current.cost,landingY:land.y,routeKey:routeKey(current.route)};
       const previous=targets.get(key);
-      if(!previous||candidate.cost<previous.cost||candidate.routeKey<previous.routeKey)targets.set(key,candidate);
+      // Cost must dominate route ordering. A lexicographically earlier route
+      // is only a tie-breaker between equally short routes, never permission
+      // to replace a minimum route with a longer one.
+      if(!previous||candidate.cost<previous.cost||
+        (candidate.cost===previous.cost&&candidate.routeKey<previous.routeKey)){
+        targets.set(key,candidate);
+      }
     }
-    if(current.cost>=maxCost)continue;
+    if(current.cost>=limit)continue;
     for(const step of actions){
       const next=step.apply(current.piece);if(!next)continue;
       const stepCost=Number.isFinite(step.cost)?step.cost:Infinity;
-      if(!Number.isFinite(stepCost)||current.cost+stepCost>maxCost)continue;
+      if(!Number.isFinite(stepCost)||current.cost+stepCost>limit)continue;
       const cost=current.cost+stepCost,key=stateKey(next);
       if(best.has(key)&&best.get(key)<=cost)continue;
       best.set(key,cost);
@@ -58,10 +65,17 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
     }
   }
 
-  const candidates=[...targets.values()].sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.routeKey.localeCompare(b.routeKey));
+  return [...targets.values()].sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.target.y-b.target.y||a.routeKey.localeCompare(b.routeKey));
+}
+
+export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
+  if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
+  const limit=costLimit(maxCost,profile);
+  const candidates=enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile});
   if(!candidates.length){
-    const land=landing(start);
-    return {actions:[],target:{x:land.x,o:land.o},cost:0,landingY:land.y};
+    const land=copyPiece(piece);
+    while(move(land,0,1,board,W,H,cellsFor)){}
+    return {actions:[],target:{x:land.x,o:land.o,y:land.y},cost:0,landingY:land.y};
   }
   // Teach the most demanding placement that is still inside the active
   // finesse envelope. Every target already carries its shortest route, so
@@ -74,7 +88,10 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
 }
 
 export function minimumRoutesForTargets(options={}){
-  const plan=planFinesse({...options,seed:0});
-  if(!plan)return [];
-  return [plan];
+  return enumerateFinesseTargets(options).map(candidate=>({
+    actions:candidate.route,
+    target:candidate.target,
+    cost:candidate.cost,
+    landingY:candidate.landingY
+  }));
 }

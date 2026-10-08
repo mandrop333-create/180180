@@ -1,9 +1,10 @@
 import { PIECE_TYPES, cellsFor, spawnFor } from './pieces.js';
+import { Trainer } from './engine.js';
 import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { planFinesse } from './finesse.js';
+import { enumerateFinesseTargets, minimumRoutesForTargets, planFinesse } from './finesse.js';
 import { collides, move } from './collision.js';
 import { tryRotate } from './rotation.js';
 import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,FINESSE_INPUT_MODES,finesseActionCost,wallX } from './finesse-rules.js';
@@ -39,6 +40,50 @@ export function runTrainerSelfTest(){
   // Kick tables always have a no-kick first test for normal rotations.
   for(const type of ['I','T','J','L','S','Z'])assert(getSrsKicks(type,0,1)[0][0]===0&&getSrsKicks(type,0,1)[0][1]===0,type+' SRS basic rotation missing');
 
+  // Exact TETR.IO SRS+ kick-order regression. Kick order changes which
+  // legal destination wins when more than one offset fits.
+  const expectedJLSTZ={
+    '0>1':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '1>0':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    '1>2':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    '2>1':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '2>3':[[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '3>2':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '3>0':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '0>3':[[0,0],[1,0],[1,-1],[0,2],[1,2]]
+  };
+  const expectedI={
+    '0>1':[[0,0],[1,0],[-2,0],[-2,1],[1,-2]],
+    '1>0':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+    '1>2':[[0,0],[-1,0],[2,0],[-1,-2],[2,1]],
+    '2>1':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '2>3':[[0,0],[2,0],[-1,0],[2,-1],[-1,2]],
+    '3>2':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '3>0':[[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
+    '0>3':[[0,0],[-1,0],[2,0],[2,1],[-1,-2]]
+  };
+  for(const [transition,expected] of Object.entries(expectedJLSTZ)){
+    assert(JSON.stringify(getSrsKicks('T',...transition.split('>').map(Number)))===JSON.stringify(expected),
+      'JLSTZ SRS+ kick order mismatch for '+transition);
+  }
+  for(const [transition,expected] of Object.entries(expectedI)){
+    assert(JSON.stringify(getSrsKicks('I',...transition.split('>').map(Number)))===JSON.stringify(expected),
+      'I-piece SRS+ kick order mismatch for '+transition);
+  }
+  const expectedHalfJLSTZ={
+    0:[[0,0],[0,-1],[1,-1],[-1,-1],[1,0],[-1,0]],
+    1:[[0,0],[1,0],[1,-2],[1,-1],[0,-2],[0,-1]],
+    2:[[0,0],[0,1],[-1,1],[1,1],[-1,0],[1,0]],
+    3:[[0,0],[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
+  };
+  const expectedHalfI={0:[[0,0],[0,-1]],1:[[0,0],[1,0]],2:[[0,0],[0,1]],3:[[0,0],[-1,0]]};
+  for(let o=0;o<4;o++){
+    assert(JSON.stringify(getTetrio180Kicks('T',o))===JSON.stringify(expectedHalfJLSTZ[o]),
+      'JLSTZ 180 kick order mismatch for orientation '+o);
+    assert(JSON.stringify(getTetrio180Kicks('I',o))===JSON.stringify(expectedHalfI[o]),
+      'I-piece 180 kick table mismatch for orientation '+o);
+  }
+
   // Timing contract: a held direction gets one immediate step, then repeats
   // only at DAS and thereafter on ARR boundaries. These are pure clock cases
   // so the contract can be checked without a browser.
@@ -73,8 +118,18 @@ export function runTrainerSelfTest(){
   assert(finesseActionCost('left','tap')===1,'tap movement must cost one input');
   assert(finesseActionCost('right','das')===1,'DAS movement must cost one deliberate input');
   assert(finesseActionCost('hard','das')===0,'hard drop must remain outside finesse cost');
+  assert(routeCost([{action:'hard'}],{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,hardDropCost:1})===1,
+    'route cost must honor the active profile hard-drop cost');
   assert(finesseActionCost('left','invalid')===Infinity,'invalid finesse mode must be rejected');
-
+  assert(finesseActionCost('left','DAS',FINESSE_PROFILES.SRS_NORMAL)===1,'input modes must normalize case before profile checks');
+  assert(finesseActionCost('left','das',{...FINESSE_PROFILES.SRS_NORMAL,dasCountsAsOneInput:false})===Infinity,
+    'profiles without DAS-as-one-input must reject DAS routes');
+  assert(finesseActionCost('half','tap',FINESSE_PROFILES.SRS_NORMAL)===Infinity,
+    'profiles without direct 180 support must reject half-turn inputs');
+  assert(routeCost([{action:'half'}],FINESSE_PROFILES.SRS_NORMAL)===Infinity,
+    'profile-aware route cost must reject unsupported direct 180 inputs');
+  assert(routeCost([{action:'half'}],FINESSE_PROFILES.TETRIO_SRS_PLUS_180)===1,
+    'TETR.IO direct 180 must cost one input');
   // Gravity contract: falling is state evolution, never a deliberate finesse input.
   assert(finesseInputCost('gravity')===0,'gravity must be finesse-neutral');
   assert(finesseInputCost('soft')===0,'soft drop must be finesse-neutral');
@@ -84,7 +139,8 @@ export function runTrainerSelfTest(){
   assert(FINESSE_PROFILES.SRS_0G_60HZ.hardDropCost===0,'0G profile hard drop must remain outside finesse cost');
   assert(FINESSE_PROFILES.SRS_20G.hardDropCost===0,'20G profile hard drop must remain outside finesse cost');
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
-  assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_0G_60HZ,'0G profile selection failed');
+  assert(profileFor({gravity:0,rotationSystem:'srs',wallFinesse:true})===FINESSE_PROFILES.SRS_20G_WALL,
+    '20G wall-finesse profile selection failed');  assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_0G_60HZ,'0G profile selection failed');
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
 
@@ -102,7 +158,9 @@ export function runTrainerSelfTest(){
   const chosenAgain=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
   assert(chosenTraining.x===chosenAgain.x&&chosenTraining.o===chosenAgain.o,'training target policy must be deterministic');
   assert(chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T',maxCost:1}).cost===1,'training target policy must respect max cost');
-
+  const verticalITarget=chooseTrainingTarget([{x:-2,o:1,cost:2}],{pieceType:'I',maxCost:2});
+  assert(verticalITarget&&verticalITarget.x===-2&&verticalITarget.o===1,
+    'generic training-target selection must preserve legal negative-origin vertical I placements');
   // Minimum-cost target contract: each canonical target retains its least
   // deliberate-input cost even when multiple physical states reach it.
   const minimumTargets=minimumFinesseTargets({
@@ -141,8 +199,8 @@ export function runTrainerSelfTest(){
 
   // Target identity contract: x + orientation is canonical; y remains
   // available only as the physical landing result.
-  assert(placementIdentity({x:4,o:2,y:7})==='4,2','canonical placement identity failed');
-  assert(placementIdentity({x:4,o:2,y:18})===placementIdentity({x:4,o:2,y:7}),'landing y must not change target identity');
+  assert(placementIdentity({x:4,o:2,y:7})==='4,2,7','physical placement identity must include landing height');
+  assert(placementIdentity({x:4,o:2,y:18})!==placementIdentity({x:4,o:2,y:7}),'distinct landing heights must remain distinct placements');
   assert(placementKey({x:4,o:2,y:7})!==placementKey({x:4,o:2,y:18}),'physical landing key must retain y');
 
   // Exact planner contract: BFS cost must equal the number of deliberate
@@ -159,6 +217,27 @@ export function runTrainerSelfTest(){
   assert(planned.actions.every(step=>['left','right','cw','ccw','half'].includes(step.action)),'planner must not count gravity or hard drop as finesse input');
   assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
+
+  // Minimum-route regression: a longer route must never replace a shorter
+  // route merely because its action labels sort earlier alphabetically.
+  const routeRegressionBoard=Array.from({length:20},()=>Array(10).fill(0));
+  const routeRegressionTargets=enumerateFinesseTargets({
+    piece:{type:'O',x:4,y:0,o:0},board:routeRegressionBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),
+    maxCost:2
+  });
+  const rightWallTarget=routeRegressionTargets.find(t=>t.target.x===8&&t.target.o===0);
+  assert(rightWallTarget&&rightWallTarget.cost===1&&rightWallTarget.route.length===1&&
+    rightWallTarget.route[0].action==='right'&&rightWallTarget.route[0].mode==='das',
+    'a two-input left-then-right-DAS route must not overwrite the one-input right-DAS wall route');
+  const allRegressionRoutes=minimumRoutesForTargets({
+    piece:{type:'O',x:4,y:0,o:0},board:routeRegressionBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),maxCost:2
+  });
+  assert(allRegressionRoutes.length===routeRegressionTargets.length,
+    'minimumRoutesForTargets must return every reachable physical target, not just one selected plan');
 
   // O-piece regression: a square has no meaningful rotation. Even when the
   // supplied rotation transition would mutate orientation metadata, the
@@ -252,14 +331,36 @@ export function runTrainerSelfTest(){
   assert(direct180Profile.supportsDirectHalfTurn===true,'direct 180 must be explicit in the game finesse profile');
   assert(direct180Profile.halfTurnCost===1,'direct 180 must cost one deliberate input');
 
-  // Spawn/hold movement contract: a physically held horizontal key gets exactly
-  // one immediate step on the newly spawned piece; repeat timing starts fresh.
-  // The engine's spawn path owns this behavior so Hold and normal locks cannot diverge.
-  assert(typeof TrainerSpawnMovementContract === 'undefined' || true,'spawn movement contract');
+  // Runtime integration: the displayed sequence, actual key observer, hard
+  // drop, target coordinates and lock-time finesse result must agree.
+  const testMode={id:'self-test',rules:{finesseProfile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,
+    supportsDirectHalfTurn:false,dasCountsAsOneInput:false}},hooks:{}};
+  const testGenerator={next:()=> 'O'};
+  const runtime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
+  runtime.emptyBoard();
+  runtime.piece={type:'O',x:4,y:0,o:0};
+  runtime.generateFinessePrompt();
+  assert(runtime.finesseTarget&&runtime.finesseTarget.x===2&&runtime.finesseTarget.y===18,
+    'runtime prompt must retain the exact physical landing target');
+  assert(runtime.finesseActions.length===2&&runtime.finesseActions.every(step=>step.action==='left'&&step.mode==='tap'),
+    'runtime should expose the minimum two-tap route to the selected O placement');
+  const keyEvent=code=>({code,preventDefault(){}});
+  for(let i=0;i<2;i++){
+    runtime.handleKeydown(keyEvent('ArrowLeft'));
+    runtime.handleKeyup(keyEvent('ArrowLeft'));
+  }
+  assert(runtime.finesseProgress===2&&!runtime.finesseFaulted,'runtime observer must accept the displayed route');
+  runtime.hardDrop();
+  assert(runtime.stats.finessePerfect===1&&runtime.stats.finesseFaults===0,
+    'correct route and physical landing must score exactly one clean finesse placement');
 
-  // Rotation-after-movement contract: rotation changes orientation only; it must not
-  // synthesize an extra horizontal movement or restart DAS by itself.
-  assert(typeof TrainerRotationMovementContract === 'undefined' || true,'Rotation-after-movement contract');
+  const faultyRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
+  faultyRuntime.emptyBoard();
+  faultyRuntime.piece={type:'O',x:4,y:0,o:0};
+  faultyRuntime.generateFinessePrompt();
+  faultyRuntime.handleKeydown(keyEvent('ArrowRight'));
+  assert(faultyRuntime.finesseFaulted&&faultyRuntime.stats.finesseFaults===1,
+    'wrong first input must produce exactly one finesse fault');
 
   // Live-transition planner contract: for every legal spawn-row x/orientation
   // across all seven pieces, every recommended action must execute through the
@@ -292,15 +393,116 @@ export function runTrainerSelfTest(){
           }
         }
         while(move(simulated,0,1,emptyBoard,10,20,cellsFor)){}
-        assert(simulated.x===plan.target.x&&(type==='O'?0:simulated.o)===plan.target.o,
+        assert(simulated.x===plan.target.x&&(type==='O'?0:simulated.o)===plan.target.o&&simulated.y===plan.target.y,
           'executed route missed planner target for '+type+' x='+x+' o='+o);
         checkedPlans++;
       }
     }
   }
-  assert(checkedPlans>100,'planner regression matrix did not cover enough states');
+  const oneInputTargets=enumerateFinesseTargets({
+    piece:{type:'T',x:3,y:0,o:0},board:emptyBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),
+    profile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxCost:1}
+  });
+  assert(oneInputTargets.length>0&&oneInputTargets.every(target=>target.cost<=1),
+    'planner must honor the active profile maximum input cost');
 
-  return {ok:true,tests:10,plannerStates:checkedPlans};
+    assert(checkedPlans>100,'planner regression matrix did not cover enough states');
+
+  // Independent bounded-route oracle. Enumerate every legal action ordering
+  // through two deliberate inputs and compare each target's minimum cost with
+  // the planner on empty and adversarial stack geometries.
+  const makeBoard=heights=>{
+    const board=Array.from({length:20},()=>Array(10).fill(0));
+    for(let x=0;x<10;x++)for(let n=0;n<heights[x];n++)board[19-n][x]='X';
+    return board;
+  };
+  const auditBoards=[
+    emptyBoard,
+    makeBoard([2,4,1,6,3,5,0,4,2,6]),
+    (()=>{const b=Array.from({length:20},()=>Array(10).fill(0));for(let y=12;y<20;y++)for(let x=0;x<10;x++)if(x!==4&&x!==5)b[y][x]='X';return b;})(),
+    (()=>{const b=Array.from({length:20},()=>Array(10).fill(0));for(let y=15;y<20;y++)for(let x=0;x<10;x++)if(!(y>=17&&(x===2||x===7)))b[y][x]='X';return b;})()
+  ];
+  const auditActions=[
+    {action:'left',mode:'tap',apply:(p,b)=>move(p,-1,0,b,10,20,cellsFor)},
+    {action:'right',mode:'tap',apply:(p,b)=>move(p,1,0,b,10,20,cellsFor)},
+    {action:'cw',mode:'tap',apply:(p,b)=>tryRotate(p,1,b,10,20,cellsFor)},
+    {action:'ccw',mode:'tap',apply:(p,b)=>tryRotate(p,-1,b,10,20,cellsFor)},
+    {action:'half',mode:'tap',apply:(p,b)=>tryRotate(p,2,b,10,20,cellsFor)},
+    {action:'left',mode:'das',apply:(p,b)=>{let moved=false;while(move(p,-1,0,b,10,20,cellsFor))moved=true;return moved;}},
+    {action:'right',mode:'das',apply:(p,b)=>{let moved=false;while(move(p,1,0,b,10,20,cellsFor))moved=true;return moved;}}
+  ];
+  let auditedStates=0,auditedTargets=0;
+  for(const board of auditBoards){
+    for(const profile of Object.values(FINESSE_PROFILES)){
+      for(const type of PIECE_TYPES){
+      for(let o=0;o<(type==='O'?1:4);o++){
+        for(let x=0;x<10;x++){
+          for(const y of [0,4]){
+            const piece={type,x,y,o};
+            if(collides(x,y,o,board,10,20,cellsFor,type))continue;
+            const options={piece,board,W:10,H:20,cellsFor,maxCost:2,profile,
+              move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+              tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)};
+            const plannedTargets=enumerateFinesseTargets(options);
+            const oracle=new Map();
+            const recordLanding=(state,cost)=>{
+              const landed={...state};
+              while(move(landed,0,1,board,10,20,cellsFor)){}
+              const orientation=type==='O'?0:landed.o;
+              const key=landed.x+','+orientation+','+landed.y;
+              const old=oracle.get(key);
+              if(old===undefined||cost<old)oracle.set(key,cost);
+            };
+            const walk=(state,cost)=>{
+              recordLanding(state,cost);
+              if(cost===2)return;
+              for(const action of auditActions){
+                if(type==='O'&&['cw','ccw','half'].includes(action.action))continue;
+                if(action.action==='half'&&profile.supportsDirectHalfTurn!==true)continue;
+                if(action.mode==='das'&&profile.dasCountsAsOneInput!==true)continue;
+                const next={...state};
+                if(action.apply(next,board))walk(next,cost+1);
+              }
+            };
+            walk({...piece},0);
+            const plannedByKey=new Map(plannedTargets.map(t=>[t.target.x+','+(type==='O'?0:t.target.o)+','+t.target.y,t]));
+            assert(plannedByKey.size===oracle.size,
+              'planner/oracle target-set mismatch for '+type+' x='+x+' y='+y+' o='+o+
+              ' plannerOnly='+[...plannedByKey.keys()].filter(key=>!oracle.has(key)).join(';')+
+              ' oracleOnly='+[...oracle.keys()].filter(key=>!plannedByKey.has(key)).join(';'));
+            for(const [key,minCost] of oracle){
+              const target=plannedByKey.get(key);
+              assert(target&&target.cost===minCost,
+                'non-minimum finesse cost for '+type+' state '+x+','+y+','+o+' target '+key);
+              const simulated={...piece};
+              for(const step of target.route){
+                if(step.action==='left'||step.action==='right'){
+                  const dir=step.action==='left'?-1:1;
+                  if(step.mode==='das'){
+                    let moved=false;while(move(simulated,dir,0,board,10,20,cellsFor))moved=true;
+                    assert(moved,'audited DAS step failed for '+type+' target '+key);
+                  }else assert(move(simulated,dir,0,board,10,20,cellsFor),'audited tap step failed for '+type+' target '+key);
+                }else{
+                  const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
+                  assert(tryRotate(simulated,delta,board,10,20,cellsFor),'audited rotation failed for '+type+' target '+key);
+                }
+              }
+              while(move(simulated,0,1,board,10,20,cellsFor)){}
+              assert(simulated.x===target.target.x&&(type==='O'?0:simulated.o)===target.target.o&&simulated.y===target.landingY,
+                'audited route did not reproduce its advertised landing for '+type+' target '+key);
+              auditedTargets++;
+            }
+            auditedStates++;
+          }
+        }
+      }
+    }
+      }
+  }
+
+  return {ok:true,tests:11,plannerStates:checkedPlans,auditedStates,auditedTargets};
 }
 
 if(typeof window!=='undefined')window.runTrainerSelfTest=runTrainerSelfTest;

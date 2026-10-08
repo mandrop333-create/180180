@@ -70,9 +70,16 @@ export const FINESSE_ACTIONS=Object.freeze({
 export const FINESSE_INPUT_MODES=Object.freeze({TAP:'tap',DAS:'das'});
 
 export function finesseActionCost(action,mode='tap',profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
-  if(!FINESSE_INPUT_MODES[mode?.toUpperCase?.()])return Infinity;
-  if(!profile||profile.dasCountsAsOneInput!==true&&mode==='das')return Infinity;
-  return finesseInputCost(action);
+  const normalizedMode=typeof mode==='string'?mode.toLowerCase():'';
+  const normalizedAction=typeof action==='string'?action.toLowerCase():'';
+  if(!Object.values(FINESSE_INPUT_MODES).includes(normalizedMode)||!profile)return Infinity;
+  if(normalizedMode==='das'&&profile.dasCountsAsOneInput!==true)return Infinity;
+  if(normalizedAction==='half'){
+    if(profile.supportsDirectHalfTurn!==true||!Number.isFinite(profile.halfTurnCost))return Infinity;
+    return profile.halfTurnCost;
+  }
+  if(normalizedAction==='hard')return Number.isFinite(profile.hardDropCost)?profile.hardDropCost:0;
+  return finesseInputCost(normalizedAction);
 }
 
 
@@ -105,19 +112,28 @@ export function landingState(piece,moveDown){
   return {x:p.x,o:p.o,y:p.y};
 }
 
-// Canonical finesse target identity: horizontal column + orientation.
- // The resting y is a physical landing result, not part of the requested
- // placement identity because gravity and stack geometry determine it.
+// A target without landing y describes a column/orientation class. Once a
+// physical landing is known, y is part of the placement identity: kicks and
+// overhangs can make the same x/orientation reachable at different heights.
 export function placementIdentity(placement){
   if(!placement)return null;
-  return placement.x+','+placement.o;
+  const identity=placement.x+','+placement.o;
+  return Number.isInteger(placement.y)?identity+','+placement.y:identity;
 }
 
-export function normalizeFinesseTarget(target,W=10){
+export function normalizeFinesseTarget(target,W=10,{allowNegativeX=false}={}){
   if(!target||!Number.isInteger(target.x)||!Number.isInteger(target.o))return null;
+  if(target.y!==undefined&&!Number.isInteger(target.y))return null;
   const o=((target.o%4)+4)%4;
-  if(target.x<0||target.x>=W)return null;
-  return Object.freeze({x:target.x,o});
+  // Piece origins are not always occupied-cell coordinates. For example, a
+  // vertical I can be fully inside the field with a negative origin x because
+  // its local mino coordinates are offset to the right. Callers that have only
+  // a generic target retain the conservative default; the engine-backed
+  // planner may opt in because collision checks already proved it is legal.
+  if((target.x<0&&!allowNegativeX)||target.x>=W)return null;
+  const normalized={x:target.x,o};
+  if(Number.isInteger(target.y))normalized.y=target.y;
+  return Object.freeze(normalized);
 }
 
 export function selectFinesseTarget(targets,selector){
@@ -133,14 +149,15 @@ export function selectFinesseTarget(targets,selector){
 // rotated deterministically so the trainer covers the available placements
 // without depending on object/map insertion order or randomness.
 export function chooseTrainingTarget(targets,{pieceIndex=0,pieceType='',maxCost=2,seed=0}={}){
-  const list=(targets||[]).map(target=>({
-    ...target,
-    normalized:normalizeFinesseTarget(target)
-  })).filter(target=>target.normalized&&Number.isFinite(target.cost)&&target.cost<=maxCost);
+  const list=(targets||[]).map(target=>{
+    const orientation=Number.isInteger(target?.o)?((target.o%4)+4)%4:null;
+    const allowNegativeX=pieceType==='I'&&(orientation===1||orientation===3);
+    return {...target,normalized:normalizeFinesseTarget(target,10,{allowNegativeX})};
+  }).filter(target=>target.normalized&&Number.isFinite(target.cost)&&target.cost<=maxCost);
   if(!list.length)return null;
   const highest=Math.max(...list.map(target=>target.cost));
   const eligible=list.filter(target=>target.cost===highest)
-    .sort((a,b)=>a.normalized.x-b.normalized.x||a.normalized.o-b.normalized.o);
+    .sort((a,b)=>a.normalized.x-b.normalized.x||a.normalized.o-b.normalized.o||((a.normalized.y??-Infinity)-(b.normalized.y??-Infinity)));
   const typeSeed=String(pieceType||'').split('').reduce((sum,ch)=>sum+ch.charCodeAt(0),0);
   const offset=Math.abs((Number(seed)||0)+pieceIndex*7+typeSeed)%eligible.length;
   return Object.freeze({...eligible[offset].normalized,cost:eligible[offset].cost});
@@ -170,7 +187,7 @@ export function minimumFinesseTargets({
     const previous=best.get(key);
     if(!previous||candidate.cost<previous.cost)best.set(key,candidate);
   }
-  return [...best.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o);
+  return [...best.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o||(a.y??-Infinity)-(b.y??-Infinity));
 }
 
 export function reachableLandingTargets({
@@ -185,7 +202,7 @@ export function reachableLandingTargets({
   const reachable=reachablePlacementIdentities({piece,W,moveHorizontal,rotate,maxCost});
   const result=[];
   for(const target of reachable){
-    const start={...piece,x:target.x,o:target.o};
+    const start={...piece,x:target.x,y:target.y,o:target.o};
     const landing=landingState(start,moveDown);
     result.push(Object.freeze({
       x:target.x,
@@ -208,14 +225,14 @@ export function reachablePlacementIdentities({
 }={}){
   if(!piece||typeof moveHorizontal!=='function'||typeof rotate!=='function')return [];
   const clone=p=>({...p});
-  const key=p=>p.x+','+p.o;
+  const key=p=>p.x+','+p.y+','+p.o;
   const queue=[{piece:clone(piece),cost:0}];
-  const best=new Map([[piece.x+','+piece.y+','+piece.o,0]]);
+  const best=new Map([[key(piece),0]]);
   const targets=new Map();
   while(queue.length){
     const current=queue.shift();
     const identity=key(current.piece);
-    if(!targets.has(identity))targets.set(identity,{x:current.piece.x,o:current.piece.o,cost:current.cost});
+    if(!targets.has(identity))targets.set(identity,{x:current.piece.x,y:current.piece.y,o:current.piece.o,cost:current.cost});
     if(current.cost>=maxCost)continue;
     const candidates=[];
     for(const dir of [-1,1]){
@@ -234,7 +251,7 @@ export function reachablePlacementIdentities({
       queue.push({piece:p,cost});
     }
   }
-  return [...targets.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o);
+  return [...targets.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o||a.y-b.y);
 }
 
 export function wallX(piece,dir,moveHorizontal){
@@ -244,14 +261,20 @@ export function wallX(piece,dir,moveHorizontal){
   return p.x;
 }
 
-export function routeCost(route=[]){
+export function routeCost(route=[],profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
   let cost=0;
-  for(const step of route)cost+=finesseInputCost(typeof step==='string'?step:step?.action);
+  for(const step of route){
+    const action=typeof step==='string'?step:step?.action;
+    const mode=typeof step==='string'?'tap':(step?.mode||'tap');
+    const stepCost=finesseActionCost(action,mode,profile);
+    if(!Number.isFinite(stepCost))return Infinity;
+    cost+=stepCost;
+  }
   return cost;
 }
 
-export function isFinessePerfect(route,targetCost){
-  return routeCost(route)===targetCost;
+export function isFinessePerfect(route,targetCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
+  return routeCost(route,profile)===targetCost;
 }
 
 export function chooseMinimumRoute(routes,targetKey){
@@ -263,13 +286,12 @@ export function chooseMinimumRoute(routes,targetKey){
   return best;
 }
 
-export function profileFor({gravity=800,rotationSystem='tetrio-srs-plus-180'}={}){
-  // Standard SRS profiles remain available as external references. The
+export function profileFor({gravity=800,rotationSystem='tetrio-srs-plus-180',wallFinesse=false}={}){
+  // Standard SRS profiles remain available as explicit reference cases. The
   // running game uses SRS+ 90° kicks plus a direct 180° system, so its
-  // execution profile is explicit rather than silently calling itself
-  // vanilla SRS.
+  // execution profile is not silently inferred from gravity alone.
   if(rotationSystem==='tetrio-srs-plus-180')return FINESSE_PROFILES.TETRIO_SRS_PLUS_180;
   if(gravity===Infinity)return FINESSE_PROFILES.SRS_0G_60HZ;
-  if(gravity===0)return FINESSE_PROFILES.SRS_20G;
+  if(gravity===0)return wallFinesse?FINESSE_PROFILES.SRS_20G_WALL:FINESSE_PROFILES.SRS_20G;
   return FINESSE_PROFILES.SRS_NORMAL;
 }
