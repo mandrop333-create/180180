@@ -88,7 +88,19 @@ export class Trainer {
   setColorOnlyFocalPiece(enabled){this.colorOnlyFocalPiece=!!enabled;this.render();}
   setCalculateRhythm(enabled){this.rhythm.enabled=!!enabled;this.rhythm.reset();}
   finishRhythm(){const report=this.rhythm?.report();if(report)this.options.onRhythmReport(report);}
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finessePlacementResolved=false;this.finesseDASPending=null;this.finesseTarget=null;this.emitState();
+  setFinesseEnabled(enabled){
+    this.finesseEnabled=!!enabled;
+    this.finesseActions=[];
+    this.finesseProgress=0;
+    this.finesseMistakes=0;
+    this.finesseFaulted=false;
+    this.finessePlacementResolved=false;
+    this.finesseDASPending=null;
+    this.finesseTarget=null;
+    // Enabling mid-piece must create a prompt for the current live piece;
+    // otherwise the toggle turns on but the visual trainer stays empty.
+    if(this.finesseEnabled)this.generateFinessePrompt();
+    this.emitState();
   }
   finesseFault(){
     if(this.finesseFaulted)return;
