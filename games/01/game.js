@@ -22,7 +22,8 @@ const trainer=new Trainer(board,{
   cancelDas:settings.cancelDas,
   preferSoftDrop:settings.preferSoftDrop,
   colorOnlyFocalPiece,
-  calculateRhythm
+  calculateRhythm,
+  finesseEnabled:settings.finesse
 });
 window.trainer=trainer;
 const title=document.getElementById('miniHomeTitle');
