@@ -3,6 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
+import { planFinesse } from './finesse.js';
 import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
@@ -130,6 +131,18 @@ export function runTrainerSelfTest(){
   assert(placementIdentity({x:4,o:2,y:7})==='4,2','canonical placement identity failed');
   assert(placementIdentity({x:4,o:2,y:18})===placementIdentity({x:4,o:2,y:7}),'landing y must not change target identity');
   assert(placementKey({x:4,o:2,y:7})!==placementKey({x:4,o:2,y:18}),'physical landing key must retain y');
+
+  // Exact planner contract: BFS cost must equal the number of deliberate
+  // movement/rotation inputs, and hard drop remains outside the route.
+  const planned=planFinesse({
+    piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,seed:0,
+    move:(p,dx,dy)=>{if(dx&& (p.x+dx<0||p.x+dx>9))return false;p.x+=dx;p.y+=dy;return p.y<20;},
+    tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
+    cellsFor:()=>[]
+  });
+  assert(planned&&planned.cost===planned.actions.length,'planner cost must equal deliberate route length');
+  assert(planned.actions.every(step=>['left','right','cw','ccw','half'].includes(step.action)),'planner must not count gravity or hard drop as finesse input');
+  assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
 
   // Combined gravity bridge: every vertical/timing event remains neutral,
   // while each deliberate horizontal/rotation input remains exactly one cost.
