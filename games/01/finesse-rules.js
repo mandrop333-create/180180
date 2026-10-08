@@ -35,7 +35,17 @@ export const FINESSE_PROFILES = Object.freeze({
     maxCost:2,
     hardDropCost:0,
     dasCountsAsOneInput:true,
+    supportsDirectHalfTurn:false,
     description:'20G SRS wall finesse'
+  }),
+  TETRIO_SRS_PLUS_180: Object.freeze({
+    id:'tetrio-srs-plus-180',
+    maxCost:2,
+    hardDropCost:0,
+    dasCountsAsOneInput:true,
+    supportsDirectHalfTurn:true,
+    halfTurnCost:1,
+    description:'SRS+ movement finesse with the game\'s direct 180 rotation'
   })
 });
 
@@ -81,9 +91,11 @@ export function chooseMinimumRoute(routes,targetKey){
   return best;
 }
 
-export function profileFor({gravity=800}={}){
-  // This is a profile selector, not a claim that the game is currently 0G.
-  // The 0G profile is the canonical two-step reference; 20G profiles are
-  // available when the engine's gravity actually requires their rules.
+export function profileFor({gravity=800,rotationSystem='tetrio-srs-plus-180'}={}){
+  // Standard SRS profiles remain available as external references. The
+  // running game uses SRS+ 90° kicks plus a direct 180° system, so its
+  // execution profile is explicit rather than silently calling itself
+  // vanilla SRS.
+  if(rotationSystem==='tetrio-srs-plus-180')return FINESSE_PROFILES.TETRIO_SRS_PLUS_180;
   return gravity===Infinity?FINESSE_PROFILES.SRS_20G:FINESSE_PROFILES.SRS_0G_60HZ;
 }
