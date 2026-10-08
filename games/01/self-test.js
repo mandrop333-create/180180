@@ -66,6 +66,11 @@ export function runTrainerSelfTest(){
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
 
+  // Floor-rotation contract: kicks may change the physical y state, but
+  // rotation remains exactly one deliberate finesse input.
+  assert(finesseInputCost('cw')===1&&finesseInputCost('ccw')===1&&finesseInputCost('half')===1,'floor rotation input cost contract failed');
+  assert(routeCost([{action:'gravity'},{action:'cw'},{action:'gravity'}])===1,'gravity around rotation must not add finesse cost');
+
   // Horizontal finesse contract: tap/DAS are one deliberate input each;
   // wall completion requires an active hold; extra repeats are not new inputs.
   const horizontalCases=[
