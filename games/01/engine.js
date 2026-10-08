@@ -88,7 +88,7 @@ export class Trainer {
   setColorOnlyFocalPiece(enabled){this.colorOnlyFocalPiece=!!enabled;this.render();}
   setCalculateRhythm(enabled){this.rhythm.enabled=!!enabled;this.rhythm.reset();}
   finishRhythm(){const report=this.rhythm?.report();if(report)this.options.onRhythmReport(report);}
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseTarget=null;this.emitState();
+  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finessePlacementResolved=false;this.finesseTarget=null;this.emitState();
   }
   finesseFault(){
     if(this.finesseFaulted)return;
@@ -113,7 +113,7 @@ export class Trainer {
     return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
   }
   generateFinessePrompt(){
-    this.finesseActions=[];this.finesseProgress=0;this.finesseTarget=null;
+    this.finesseActions=[];this.finesseProgress=0;this.finesseTarget=null;this.finessePlacementResolved=false;
     if(!this.finesseEnabled||this.gameOver||!this.piece)return;
     // Real movement finesse is about the final placement, with DAS-to-wall
     // counting as one movement input. Enumerate legal 0G SRS two-step routes:
@@ -158,7 +158,7 @@ export class Trainer {
     });
     if(!unique.length){
       this.finesseTarget={x:start.x,o:start.o};
-      this.finesseActions=[{action:'hard',mode:'tap'}];
+      this.finesseActions=[];
       return;
     }
 
@@ -185,7 +185,7 @@ export class Trainer {
       candidate.actions.length===chosenTarget?.cost
     )||targets[0];
     this.finesseTarget={x:chosen.landing.x,o:chosen.landing.o};
-    this.finesseActions=[...chosen.actions,{action:'hard',mode:'tap'}];
+    this.finesseActions=[...chosen.actions];
   }
   reapplyHeldHorizontalInput(){
     if(this.gameOver||!this.piece)return;
@@ -231,14 +231,18 @@ export class Trainer {
     this.placed++;this.stats.piecesPlaced++;
     this.holdUsed=false;
     this.stats.pieceInputs=this.pieceInputCount;
-    if(this.finesseEnabled){
+    if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
       const targetOk=!target||(lockedPiece.x===target.x&&lockedPiece.o===target.o);
-      // finesseFault() owns fault counting; locking an incomplete or
-      // wrong-target placement records one fault here.
-      if(!this.finesseFaulted){
-        if(this.finesseProgress>=this.finesseActions.length&&targetOk)this.stats.finessePerfect++;
-        else this.stats.finesseFaults++;
+      const sequenceComplete=this.finesseProgress>=this.finesseActions.length;
+      this.finessePlacementResolved=true;
+      if(!this.finesseFaulted&&sequenceComplete&&targetOk)this.stats.finessePerfect++;
+      else if(!this.finesseFaulted){
+        // Resolve a lock-time failure through the same observer-owned fault
+        // path as an input mismatch, so stats/state remain exactly once.
+        this.finessePlacementResolved=false;
+        this.finesseFault();
+        this.finessePlacementResolved=true;
       }
     }
     this.rhythm?.place(lockedPiece,performance.now());this.hook('place',{lockedPiece,cleared,spin,beforeLock:before,afterLock,afterClear});
