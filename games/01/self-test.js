@@ -54,6 +54,12 @@ export function runTrainerSelfTest(){
     assert(repeats===test.repeats,test.name+' timing contract failed');
   }
 
+  // Visual-state contract: progress and fault metadata are separate from
+  // the input path; rendering may only consume this state.
+  const visualState={progress:1,total:3,faulted:false,target:{x:4,o:2}};
+  assert(visualState.progress<=visualState.total,'visual Finesse progress must stay within its sequence');
+  assert(visualState.target&&Number.isInteger(visualState.target.x)&&Number.isInteger(visualState.target.o),'visual Finesse target must use canonical identity');
+
   // Read-only observer contract: observations describe actual inputs/state
   // after the fact; they never become permission checks for gameplay.
   assert(normalizeFinesseObservation('left')===FINESSE_OBSERVATIONS.LEFT,'left observation contract failed');
