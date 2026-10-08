@@ -33,7 +33,7 @@ export class RhythmTracker {
     const t=this.now(at);
     if(this.lastLockAt!==null){
       const interval=Math.max(0,t-this.lastLockAt);
-      this.intervals.push({intervalMs:interval,piece:piece?.type||'?',events:this.pending});
+      this.intervals.push({intervalMs:interval,piece:piece?.type||'?',events:this.pending,_start:this.lastLockAt,_end:t});
     }
     this.pending=[];
     this.lastLockAt=t;
