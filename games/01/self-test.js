@@ -4,7 +4,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { enumerateFinesseTargets, planFinesse } from './finesse.js';
+import { enumerateFinesseTargets, minimumRoutesForTargets, planFinesse } from './finesse.js';
 import { collides, move } from './collision.js';
 import { tryRotate } from './rotation.js';
 import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,FINESSE_INPUT_MODES,finesseActionCost,wallX } from './finesse-rules.js';
@@ -229,6 +229,13 @@ export function runTrainerSelfTest(){
   assert(rightWallTarget&&rightWallTarget.cost===1&&rightWallTarget.route.length===1&&
     rightWallTarget.route[0].action==='right'&&rightWallTarget.route[0].mode==='das',
     'a two-input left-then-right-DAS route must not overwrite the one-input right-DAS wall route');
+  const allRegressionRoutes=minimumRoutesForTargets({
+    piece:{type:'O',x:4,y:0,o:0},board:routeRegressionBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),maxCost:2
+  });
+  assert(allRegressionRoutes.length===routeRegressionTargets.length,
+    'minimumRoutesForTargets must return every reachable physical target, not just one selected plan');
 
   // O-piece regression: a square has no meaningful rotation. Even when the
   // supplied rotation transition would mutate orientation metadata, the
