@@ -73,6 +73,15 @@ export function landingState(piece,moveDown){
   return {x:p.x,o:p.o,y:p.y};
 }
 
+// Canonical finesse target identity: horizontal column + orientation.
+ // The resting y is a physical landing result, not part of the requested
+ // placement identity because gravity and stack geometry determine it.
+export function placementIdentity(placement){
+  if(!placement)return null;
+  return placement.x+','+placement.o;
+}
+
+// Physical landing identity, retained for collision/lock verification.
 export function placementKey(placement){
   return placement.x+','+placement.o+','+placement.y;
 }
