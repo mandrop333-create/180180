@@ -337,8 +337,12 @@ export class Trainer {
           if(movedImmediately)this.finesseInput(action,'press');
           else this.finesseFault();
         }else if(expectedMode==='das'){
-          this.finesseInput(action,'press');
-          if(this.piece&&this.piece.x===this.dasWallX(nextDir))this.finesseInput(action,'dasComplete');
+          if(!movedImmediately){
+            this.finesseFault();
+          }else{
+            this.finesseInput(action,'press');
+            if(this.piece&&this.piece.x===this.dasWallX(nextDir))this.finesseInput(action,'dasComplete');
+          }
         }
       }
     }else if(action==='soft'){
