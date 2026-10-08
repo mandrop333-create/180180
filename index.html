@@ -3,9 +3,28 @@
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>180180 — Tetris</title>
+<title>180436 — Falling-Block Training</title>
+<meta name="description" content="180436 is a focused falling-block training tool built for deliberate practice, visual-information reduction, rotation, placement, rhythm, and customizable training rules.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#101014">
 <link rel="canonical" href="https://180436.xyz/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="180436">
+<meta property="og:title" content="180436 — Falling-Block Training">
+<meta property="og:description" content="A focused falling-block training tool for deliberate practice, visual-information reduction, rotation, placement, rhythm, and customizable rules.">
 <meta property="og:url" content="https://180436.xyz/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="180436 — Falling-Block Training">
+<meta name="twitter:description" content="A focused falling-block training tool for deliberate practice and customizable training rules.">
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebSite",
+  "name":"180436",
+  "url":"https://180436.xyz/",
+  "description":"A focused falling-block training tool for deliberate practice and customizable training rules."
+}
+</script>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/trainer.css">
 <link rel="stylesheet" href="css/settings.css">
@@ -14,6 +33,7 @@ body{min-height:100vh}
 .trainer-page{min-height:100vh;display:flex;flex-direction:column}
 .trainer-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:22px clamp(18px,5vw,56px)}
 .trainer-brand{margin:0;text-align:center;font:900 clamp(20px,4vw,32px)/1 ui-monospace,monospace;letter-spacing:.08em;color:#eee8fb}
+.trainer-description{margin:8px auto 0;max-width:520px;text-align:center;color:#81778b;font-size:11px;line-height:1.45}
 .trainer-main{flex:1;padding:0 18px 40px;transform:translateX(112px)}
 .trainer-shell{width:min(1060px,100%);margin:0 auto}
 .homepage-game-first .trainer-layout{display:grid;grid-template-columns:220px 300px 220px 220px;gap:28px;align-items:start;justify-content:center}.homepage-game-first .board-column{justify-self:center}.homepage-game-first .rules-column{display:grid;gap:12px;padding-top:54px}
@@ -38,7 +58,7 @@ body{min-height:100vh}
 .action-button:hover{border-color:#a78bfa;background:#201b29}
 @media(max-width:1100px){.homepage-game-first .trainer-layout{grid-template-columns:220px 300px 220px;}.rules-column{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:0}.rules-column .trainer-card{width:100%}}
 @media(max-width:900px){.homepage-game-first .trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side,.rules-column{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
-@media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}}
+@media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}.trainer-description{font-size:10px}}
 </style>
 <style>
 .mobile-controls{display:none;position:fixed;inset:0;z-index:400;pointer-events:none;touch-action:none}
@@ -62,12 +82,20 @@ body{min-height:100vh}
     <button class="settings-gear trainer-settings-gear" data-settings-open type="button" aria-label="Open settings" aria-expanded="false"><span class="power-orb" aria-hidden="true"><span class="power-orbit"><span class="power-star">✦</span></span></span></button>
     <span class="trainer-settings-label">SETTINGS</span>
   </div>
+  <header class="trainer-top" aria-label="180436">
+    <div></div>
+    <div>
+      <h1 class="trainer-brand">180436</h1>
+      <p class="trainer-description">Focused falling-block training through deliberate visual and input constraints.</p>
+    </div>
+    <div></div>
+  </header>
   <main class="trainer-main homepage-game-first">
     <div class="trainer-shell">
-      <div class="mini-home">
+      <section class="mini-home" aria-labelledby="miniHomeTitle">
         <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
         <p class="mini-home-description" id="miniHomeDescription">Train the 180° rotation as one deliberate movement</p>
-      </div>
+      </section>
       <div class="trainer-layout">
         <aside class="trainer-side">
           <section class="trainer-card">
