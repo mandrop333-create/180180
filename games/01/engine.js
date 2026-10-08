@@ -211,7 +211,7 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;
     if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
-      const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o);
+      const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&(!Number.isInteger(target.y)||lockedPiece.y===target.y));
       const sequenceComplete=this.finesseProgress>=this.finesseActions.length;
       this.finessePlacementResolved=true;
       if(!this.finesseFaulted&&sequenceComplete&&targetOk)this.stats.finessePerfect++;
