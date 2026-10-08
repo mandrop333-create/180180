@@ -6,6 +6,7 @@ import { cellsFor } from './pieces.js';
 
 const settings=getSettings();
 const colorOnlyFocalPiece=localStorage.getItem('180180.colorOnlyFocalPiece')==='1';
+const calculateRhythm=localStorage.getItem('180180.calculateRhythm')==='1';
 const board=document.getElementById('board');
 const trainer=new Trainer(board,{
   mode,
@@ -37,6 +38,20 @@ const b2b=document.getElementById('hudB2B');
 const pieces=document.getElementById('hudPieces');
 const hold=document.getElementById('holdPreview');
 const next=document.getElementById('nextPreview');
+const rhythmCard=document.getElementById('rhythmCard');
+const rhythmReport=document.getElementById('rhythmReport');
+function clearRhythmReport(){if(rhythmCard)rhythmCard.hidden=true;if(rhythmReport)rhythmReport.innerHTML='';}
+function renderRhythmReport(report){
+  if(!rhythmCard||!rhythmReport)return;
+  rhythmCard.hidden=false;
+  if(!report?.ready){rhythmReport.innerHTML='<div class="rhythm-metric"><span>STATUS</span><strong>Not enough placements</strong></div>';return;}
+  const outliers=report.outliers||[];
+  const cards=outliers.map((o,i)=>{
+    const inputs=(o.inputs||[]).map(x=>x.action+' ×'+x.count).join(' · ')||'No tracked inputs';
+    return '<div class="rhythm-outlier"><div class="rhythm-outlier-title"><span>#'+(i+1)+' '+o.piece+' OUTLIER</span><strong>+'+o.deviationMs+' ms</strong></div><div class="rhythm-outlier-detail">'+o.intervalMs+' ms placement · longest input gap '+o.longestGapMs+' ms</div><div class="rhythm-pattern">'+o.pattern+'</div><div class="rhythm-outlier-detail">'+inputs+'</div></div>';
+  }).join('');
+  rhythmReport.innerHTML='<div class="rhythm-metric"><span>AVERAGE INTERVAL</span><strong>'+report.averageMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN INTERVAL</span><strong>'+report.medianMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN PPS</span><strong>'+report.pps+'</strong></div>'+cards;
+}
 function miniPiece(type,colorOnly=false){
   if(!type)return '';
   const cells=cellsFor(type,0);
@@ -68,6 +83,8 @@ function renderState(state){
   if(next){const count=Math.max(1,Math.min(15,Number(trainer.nextQueueSize)||5));next.innerHTML=state.queue.slice(0,count).map(type=>miniPiece(type,colorOnlyNextEnabled)).join('');}
 }
 trainer.options.onState=renderState;
+trainer.options.onRhythmReport=renderRhythmReport;
+trainer.options.onReset=clearRhythmReport;
 trainer.emitState();
 trainer.setToastCallback(message=>{const toast=document.getElementById('toast');if(toast){toast.textContent=message;toast.hidden=false;clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>toast.hidden=true,1400);}});
 window.addEventListener('keydown',e=>trainer.handleKeydown(e),true);
