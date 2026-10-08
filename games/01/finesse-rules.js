@@ -106,7 +106,7 @@ export function profileFor({gravity=800,rotationSystem='tetrio-srs-plus-180'}={}
   // execution profile is explicit rather than silently calling itself
   // vanilla SRS.
   if(rotationSystem==='tetrio-srs-plus-180')return FINESSE_PROFILES.TETRIO_SRS_PLUS_180;
-  if(gravity===Infinity)return FINESSE_PROFILES.SRS_20G;
-  if(gravity===0)return FINESSE_PROFILES.SRS_0G_60HZ;
+  if(gravity===Infinity)return FINESSE_PROFILES.SRS_0G_60HZ;
+  if(gravity===0)return FINESSE_PROFILES.SRS_20G;
   return FINESSE_PROFILES.SRS_NORMAL;
 }
