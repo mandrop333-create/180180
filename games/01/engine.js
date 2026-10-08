@@ -124,7 +124,7 @@ export class Trainer {
     return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
   }
   generateFinessePrompt(){
-    this.finesseActions=[];this.finesseProgress=0;
+    this.finesseActions=[];this.finesseProgress=0;this.finesseTarget=null;
     if(!this.finesseEnabled||this.gameOver||!this.piece)return;
     // Real movement finesse is about the final placement, with DAS-to-wall
     // counting as one movement input. Enumerate legal 0G SRS two-step routes:
@@ -167,14 +167,30 @@ export class Trainer {
       const k2=key(c.landing)+':'+c.actions.map(a=>(a.mode||'tap')+a.action).join(',');
       if(seen.has(k2))return false;seen.add(k2);return true;
     });
-    if(!unique.length){this.finesseActions=[{action:'hard',mode:'tap'}];return;}
-    const min=Math.min(...unique.map(c=>c.actions.length));
-    const shortest=unique.filter(c=>c.actions.length===min);
-    if(!shortest.length){this.finesseActions=[{action:'hard',mode:'tap'}];return;}
-    // Vary the legal target placement instead of teaching an arbitrary
-    // left/right/rotation loop. Every generated route ends in a valid landing.
-    const chosen=shortest[(this.placed*7+this.piece.type.charCodeAt(0))%shortest.length];
-    this.finesseActions=[...chosen,{action:'hard',mode:'tap'}];
+    if(!unique.length){
+      this.finesseTarget={x:start.x,o:start.o};
+      this.finesseActions=[{action:'hard',mode:'tap'}];
+      return;
+    }
+
+    // First define canonical targets by x + orientation. Landing y is only a
+    // physical result of the board/gravity and never changes target identity.
+    // For each target, retain its minimum-input route; only after that do we
+    // choose which target this training piece will teach.
+    const targetRoutes=new Map();
+    for(const candidate of unique){
+      const targetKey=candidate.landing.x+','+candidate.landing.o;
+      const previous=targetRoutes.get(targetKey);
+      if(!previous||candidate.actions.length<previous.actions.length){
+        targetRoutes.set(targetKey,candidate);
+      }
+    }
+    const targets=[...targetRoutes.values()].sort((a,b)=>
+      a.landing.x-b.landing.x||a.landing.o-b.landing.o||a.actions.length-b.actions.length
+    );
+    const chosen=targets[(this.placed*7+this.piece.type.charCodeAt(0))%targets.length];
+    this.finesseTarget={x:chosen.landing.x,o:chosen.landing.o};
+    this.finesseActions=[...chosen.actions,{action:'hard',mode:'tap'}];
   }
   reapplyHeldHorizontalInput(){
     if(this.gameOver||!this.piece)return;
@@ -230,7 +246,7 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;
     if(this.finesseEnabled){
       const target=this.finesseTarget;
-      const targetOk=!target||(lockedPiece.x===target.x&&lockedPiece.y===target.y&&lockedPiece.o===target.o);
+      const targetOk=!target||(lockedPiece.x===target.x&&lockedPiece.o===target.o);
       // finesseFault() owns fault counting; locking an incomplete or
       // wrong-target placement records one fault here.
       if(!this.finesseFaulted){
