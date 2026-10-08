@@ -296,10 +296,16 @@ export class Trainer {
     if(action==='left'||action==='right'){
       this.pieceInputCount++;
       const nextDir=action==='left'?-1:1;
+      // A direction used as a DAS step must be allowed to remain held.
+      // Only a tap step is completed on keydown; the DAS step completes
+      // when the held piece actually reaches the wall.
       if(this.finesseEnabled&&expectedAction===action&&expectedMode==='tap')this.finesseInput(action,'press');
       else if(this.finesseEnabled&&expectedAction!==action)this.finesseFault();
-this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);}
-    else if(action==='soft'){this.applySoftDrop();}
+      this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);
+    }else if(action==='soft'){
+      // Soft drop is gameplay input, not a horizontal finesse step. Never
+      // let Show Finesse alter its vertical clock or block the input.
+      this.applySoftDrop();
     else if(action==='hard'){
       if(this.finesseEnabled){
         const expected=this.finesseActions[this.finesseProgress];
