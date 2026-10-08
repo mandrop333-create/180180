@@ -12,10 +12,14 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   const start=copyPiece(piece);
   const actions=[
     {action:'left',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
-    {action:'right',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,1,0,board,W,H,cellsFor)?n:null;}},
+    {action:'right',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,1,0,board,W,H,cellsFor)?n:null;}}
+  ];
+  // The O piece is rotationally invariant. Never offer rotations as a
+  // finesse step when they cannot change its physical placement.
+  if(start.type!=='O')actions.push(
     {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
     {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
-  ];
+  );
   if(profile?.supportsDirectHalfTurn===true){
     actions.push({action:'half',mode:'tap',cost:Number.isFinite(profile.halfTurnCost)?profile.halfTurnCost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
   }
