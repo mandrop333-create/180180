@@ -54,8 +54,11 @@ export function runTrainerSelfTest(){
   }
 
   // Gravity contract: falling is state evolution, never a deliberate finesse input.
-  assert(finesseInputCost('gravity')===1,'unknown actions must not silently become free');
-  assert(routeCost([{action:'left'},{action:'right'}])===2,'gravity-independent input cost baseline failed');
+  assert(finesseInputCost('gravity')===0,'gravity must be finesse-neutral');
+  assert(finesseInputCost('soft')===0,'soft drop must be finesse-neutral');
+  assert(finesseInputCost('hard')===0,'hard drop must be finesse-neutral');
+  assert(finesseInputCost('not-an-input')===Infinity,'unknown actions must not become finesse inputs');
+  assert(routeCost([{action:'soft'},{action:'gravity'},{action:'left'},{action:'right'}])===2,'vertical movement must not change horizontal finesse cost');
   assert(FINESSE_PROFILES.SRS_0G_60HZ.hardDropCost===0,'0G profile hard drop must remain outside finesse cost');
   assert(FINESSE_PROFILES.SRS_20G.hardDropCost===0,'20G profile hard drop must remain outside finesse cost');
   assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
