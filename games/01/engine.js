@@ -60,10 +60,6 @@ export class Trainer {
   isLockDelayed(){return !!this.piece&&this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type)&&this.lockAcc>0;}
   rotate(delta){
     if(this.gameOver||!this.piece)return false;
-    const finesseAction=delta===2||delta===-2?'half':delta===1?'cw':delta===-1?'ccw':null;
-    const finesseExpected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-    const finesseExpectedAction=finesseExpected&&(typeof finesseExpected==='string'?finesseExpected:finesseExpected.action);
-    if(this.finesseEnabled&&finesseAction&&finesseExpectedAction!==finesseAction)this.finesseFault();
     const before={...this.piece};let halfTurnOld=null;
     const success=tryRotate(this.piece,delta,this.board,this.W,this.H,this.cellsFor,old=>{halfTurnOld=old;});
     if(!success)return false;
@@ -73,7 +69,7 @@ export class Trainer {
     // repeats without resetting the underlying hold schedule.
     this.dasCutRemaining=this.rules.dcd||0; // Rotation preserves the active horizontal DAS clock; DCD is the only intentional cut.
     recordTrainingRotation(this.training,delta,before,this.piece);this.rhythm?.rotate(delta,performance.now());this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
-    if(this.finesseEnabled&&finesseAction&&finesseExpectedAction===finesseAction)this.finesseInput(finesseAction,'press');
+    if(this.finesseEnabled&&delta){const finesseAction=delta===2||delta===-2?'half':delta===1?'cw':delta===-1?'ccw':null;if(finesseAction)this.observeFinesseInput(finesseAction);}
     if(halfTurnOld)this.startHalfTurn(halfTurnOld,{...this.piece});this.markRender();return true;
   }
   startHalfTurn(old,next){const animation={from:{...old},to:{...next},layer:null,started:0,duration:240};if(this.anim?.layer)this.anim.layer.remove();this.anim=animation;startHalfTurn(animation,this.boardEl,this.cellsFor,NS,()=>{if(this.anim!==animation)return;this.anim=null;this.render();});}
@@ -96,7 +92,7 @@ export class Trainer {
   finesseFault(){
     if(this.finesseFaulted)return;
     this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;this.finesseDASPending=false;
-    this.say('Finesse fault');this.emitState();
+    this.emitState();
   }
   finesseInput(action,source='press'){
     if(!this.finesseEnabled||this.finesseFaulted)return false;
@@ -311,18 +307,6 @@ export class Trainer {
     // Soft drop never suppresses horizontal handling. TETR.IO keeps
     // left/right DAS/ARR active while soft drop is held, including during
     // lock delay after the piece reaches the floor.
-    if(this.finesseEnabled&&this.finesseActions.length){
-      const expected=this.finesseActions[this.finesseProgress];
-      if(expected&&typeof expected==='object'&&expected.mode==='das'&&
-         (expected.action==='left'||expected.action==='right')){
-        const dir=expected.action==='left'?-1:1;
-        const expectedCode=this.binds[expected.action];
-        const holdStillActive=this.downKeys.has(expectedCode)&&this.moveState.dir===dir&&this.finesseDASPending;
-        if(holdStillActive&&this.piece&&this.piece.x===this.dasWallX(dir)){
-          this.finesseInput(expected.action,'dasComplete');
-        }
-      }
-    }
     this.moveSuppressedAt=0;
     // Horizontal movement remains fully active during lock delay; successful
     // moves reset the lock timer subject to the configured reset cap.
@@ -331,14 +315,6 @@ export class Trainer {
       const arr=this.arr();
       if(this.moveState.nextRepeatAt===Infinity)this.moveState.nextRepeatAt=this.moveState.startedAt+das;
       if(t>=this.moveState.nextRepeatAt){
-        const repeatedAction=this.moveState.dir<0?'left':'right';
-        const finesseExpected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-        const finesseExpectedAction=finesseExpected&&(typeof finesseExpected==='string'?finesseExpected:finesseExpected.action);
-        const finesseExpectedMode=finesseExpected&&(typeof finesseExpected==='string'?'tap':finesseExpected.mode);
-        const repeatAllowed=this.finesseEnabled&&finesseExpectedAction===repeatedAction&&finesseExpectedMode==='das';
-        if(this.finesseEnabled&&!this.finesseFaulted&&!repeatAllowed){
-          this.finesseFault();
-        }
         if(arr===0){
           while(this.movePiece(this.moveState.dir,0)){}
           this.moveState.nextRepeatAt=Infinity;
@@ -371,9 +347,6 @@ export class Trainer {
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);const inputNow=performance.now();recordTrainingAction(this.training,action,inputNow,{code:e.code});this.rhythm?.input(action,inputNow,e.code);
     if(this.hook('input',{event:e,action})===true)return;
-    const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
-    const expectedMode=expected&&(typeof expected==='string'?'tap':expected.mode);
     if(action==='left'||action==='right'){
       this.pieceInputCount++;
       const nextDir=action==='left'?-1:1;
@@ -382,32 +355,15 @@ export class Trainer {
       // when the held piece actually reaches the wall.
       this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();
       const movedImmediately=this.movePiece(nextDir,0);
-      if(this.finesseEnabled){
-        if(expectedAction!==action)this.finesseFault();
-        else if(expectedMode==='tap'){
-          if(movedImmediately)this.finesseInput(action,'press');
-          else this.finesseFault();
-        }else if(expectedMode==='das'){
-          if(!movedImmediately){
-            this.finesseFault();
-          }else{
-            this.finesseInput(action,'press');
-            if(this.piece&&this.piece.x===this.dasWallX(nextDir))this.finesseInput(action,'dasComplete');
-          }
-        }
-      }
-    }else if(action==='soft'){
+      if(this.finesseEnabled&&movedImmediately)this.observeFinesseInput(action);
+    }else if(action==='soft'{
       // Soft drop is gameplay input, not a horizontal finesse step. Never
       // let Show Finesse alter its vertical clock or block the input.
       this.applySoftDrop();
     }
     else if(action==='hard'){
-      if(this.finesseEnabled){
-        const expected=this.finesseActions[this.finesseProgress];
-        if(expected&&(typeof expected==='string'?expected:expected.action)==='hard')this.finesseInput('hard','press');
-        else this.finesseFault();
-      }
       this.hardDrop();
+      if(this.finesseEnabled)this.observeFinesseInput(action);
     }
     else if(action==='cw'){
       this.pieceInputCount++;
