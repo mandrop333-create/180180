@@ -55,7 +55,9 @@ export const FINESSE_ACTIONS=Object.freeze({
 
 export function finesseInputCost(action){
   if(!action)return Infinity;
-  return action==='hard'?0:1;
+  if(action==='hard'||action==='soft'||action==='gravity')return 0;
+  if(action==='left'||action==='right'||action==='cw'||action==='ccw'||action==='half')return 1;
+  return Infinity;
 }
 
 export function landingState(piece,moveDown){
