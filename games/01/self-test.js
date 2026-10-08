@@ -433,13 +433,14 @@ export function runTrainerSelfTest(){
   ];
   let auditedStates=0,auditedTargets=0;
   for(const board of auditBoards){
-    for(const type of PIECE_TYPES){
+    for(const profile of Object.values(FINESSE_PROFILES)){
+      for(const type of PIECE_TYPES){
       for(let o=0;o<(type==='O'?1:4);o++){
         for(let x=0;x<10;x++){
           for(const y of [0,4]){
             const piece={type,x,y,o};
             if(collides(x,y,o,board,10,20,cellsFor,type))continue;
-            const options={piece,board,W:10,H:20,cellsFor,maxCost:2,
+            const options={piece,board,W:10,H:20,cellsFor,maxCost:2,profile,
               move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
               tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)};
             const plannedTargets=enumerateFinesseTargets(options);
@@ -457,6 +458,8 @@ export function runTrainerSelfTest(){
               if(cost===2)return;
               for(const action of auditActions){
                 if(type==='O'&&['cw','ccw','half'].includes(action.action))continue;
+                if(action.action==='half'&&profile.supportsDirectHalfTurn!==true)continue;
+                if(action.mode==='das'&&profile.dasCountsAsOneInput!==true)continue;
                 const next={...state};
                 if(action.apply(next,board))walk(next,cost+1);
               }
@@ -494,6 +497,7 @@ export function runTrainerSelfTest(){
         }
       }
     }
+      }
   }
 
   return {ok:true,tests:11,plannerStates:checkedPlans,auditedStates,auditedTargets};
