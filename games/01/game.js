@@ -49,7 +49,9 @@ function renderRhythmReport(report){
   const outliers=report.outliers||[];
   const cards=outliers.map((o,i)=>{
     const inputs=(o.inputs||[]).map(x=>x.action+' ×'+x.count).join(' · ')||'No tracked inputs';
-    return '<div class="rhythm-outlier"><div class="rhythm-outlier-title"><span>#'+(i+1)+' '+o.piece+' OUTLIER</span><strong>+'+o.deviationMs+' ms</strong></div><div class="rhythm-outlier-detail">'+o.intervalMs+' ms placement · longest input gap '+o.longestGapMs+' ms</div><div class="rhythm-pattern">'+o.pattern+'</div><div class="rhythm-outlier-detail">'+inputs+'</div></div>';
+    const comparison=o.comparison?('<div class="rhythm-outlier-detail">'+o.comparison.label+': '+o.comparison.actual+' vs '+o.comparison.normal+' normal (+'+o.comparison.delta+')</div>'):'';
+    const hesitation=o.longestGapMs>0?('<div class="rhythm-outlier-detail">longest gap '+o.longestGapMs+' ms · normal '+o.baselineGapMs+' ms</div>'):'';
+    return '<div class="rhythm-outlier"><div class="rhythm-outlier-title"><span>#'+(i+1)+' '+o.piece+' OUTLIER</span><strong>+'+o.deviationMs+' ms</strong></div><div class="rhythm-outlier-detail">'+o.intervalMs+' ms placement</div><div class="rhythm-pattern">'+o.pattern+'</div>'+comparison+hesitation+'<div class="rhythm-outlier-detail">'+inputs+'</div></div>';
   }).join('');
   rhythmReport.innerHTML='<div class="rhythm-metric"><span>AVERAGE INTERVAL</span><strong>'+report.averageMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN INTERVAL</span><strong>'+report.medianMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN PPS</span><strong>'+report.pps+'</strong></div>'+cards;
 }
