@@ -104,6 +104,30 @@ export function stateKey(piece){
   return piece.x+','+piece.y+','+piece.o;
 }
 
+export function reachableLandingTargets({
+  piece,
+  W=10,
+  maxCost=2,
+  moveHorizontal,
+  rotate,
+  moveDown
+}={}){
+  if(!piece||typeof moveHorizontal!=='function'||typeof rotate!=='function'||typeof moveDown!=='function')return [];
+  const reachable=reachablePlacementIdentities({piece,W,moveHorizontal,rotate,maxCost});
+  const result=[];
+  for(const target of reachable){
+    const start={...piece,x:target.x,o:target.o};
+    const landing=landingState(start,moveDown);
+    result.push(Object.freeze({
+      x:target.x,
+      o:target.o,
+      y:landing.y,
+      cost:target.cost
+    }));
+  }
+  return result;
+}
+
 export function reachablePlacementIdentities({
   piece,
   board,
