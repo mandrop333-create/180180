@@ -293,6 +293,7 @@ export class Trainer {
       // Soft drop is gameplay input, not a horizontal finesse step. Never
       // let Show Finesse alter its vertical clock or block the input.
       this.applySoftDrop();
+    }
     else if(action==='hard'){
       if(this.finesseEnabled){
         const expected=this.finesseActions[this.finesseProgress];
