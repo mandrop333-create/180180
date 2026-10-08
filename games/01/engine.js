@@ -290,50 +290,31 @@ export class Trainer {
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
     this.downKeys.add(e.code);recordTrainingAction(this.training,action,performance.now(),{code:e.code});
     if(this.hook('input',{event:e,action})===true)return;
-    const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
-    const expectedMode=expected&&(typeof expected==='string'?'tap':expected.mode);
     if(action==='left'||action==='right'){
       this.pieceInputCount++;
       const nextDir=action==='left'?-1:1;
       // A direction used as a DAS step must be allowed to remain held.
       // Only a tap step is completed on keydown; the DAS step completes
       // when the held piece actually reaches the wall.
-      if(this.finesseEnabled&&expectedAction===action&&expectedMode==='tap')this.finesseInput(action,'press');
-      else if(this.finesseEnabled&&expectedAction!==action)this.finesseFault();
       this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();this.movePiece(nextDir,0);
     }else if(action==='soft'){
       // Soft drop is gameplay input, not a horizontal finesse step. Never
       // let Show Finesse alter its vertical clock or block the input.
       this.applySoftDrop();
     else if(action==='hard'){
-      if(this.finesseEnabled){
-        const expected=this.finesseActions[this.finesseProgress];
-        if(expected&&(typeof expected==='string'?expected:expected.action)==='hard')this.finesseInput('hard','press');
-        else this.finesseFault();
-      }
       this.hardDrop();
     }
     else if(action==='cw'){
       this.pieceInputCount++;
-      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='cw'))this.finesseFault();
       const ok=this.rotate(1);
-      if(this.finesseEnabled&&ok)this.finesseInput('cw','press');
     }
     else if(action==='ccw'){
       this.pieceInputCount++;
-      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='ccw'))this.finesseFault();
       const ok=this.rotate(-1);
-      if(this.finesseEnabled&&ok)this.finesseInput('ccw','press');
     }
     else if(action==='half'){
       this.pieceInputCount++;
-      const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
-      if(this.finesseEnabled&&!(expected&&(typeof expected==='string'?expected:expected.action)==='half'))this.finesseFault();
       const ok=this.rotate(2);
-      if(this.finesseEnabled&&ok)this.finesseInput('half','press');
     }
     else if(action==='hold'){this.hold();}
   }
