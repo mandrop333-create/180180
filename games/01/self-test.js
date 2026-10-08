@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
+import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,reachableLandingTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -74,6 +74,18 @@ export function runTrainerSelfTest(){
   const declared=selectFinesseTarget(declaredTargets,targets=>targets[1]);
   assert(declared&&declared.x===7&&declared.o===1,'explicit target selector failed');
   assert(selectFinesseTarget(declaredTargets)===null,'target selection must not invent a selector');
+
+  // Landing contract: the canonical target remains x+orientation, while
+  // physical landing y is derived from the real downward transition.
+  const landingTargets=reachableLandingTargets({
+    piece:{x:4,y:0,o:0,type:'T'},
+    moveHorizontal:(p,d)=>{if(p.x+d<0||p.x+d>9)return false;p.x+=d;return true;},
+    rotate:(p,d)=>{p.o=(p.o+d+4)%4;return true},
+    moveDown:p=>{if(p.y>=19)return false;p.y++;return true},
+    maxCost:1
+  });
+  const landed=landingTargets.find(p=>p.x===4&&p.o===0);
+  assert(landed&&landed.y===19,'landing target must derive physical resting y');
 
   // Reachability contract: candidate placements must be produced by legal
   // movement/rotation transitions, never by raw coordinate enumeration.
