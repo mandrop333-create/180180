@@ -51,9 +51,9 @@ function appendPieceGeometry(root, shape, depthPx, NS, { frontGradient = ACTIVE_
   }
 }
 
-export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS, cache = {}) {
+export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS, cache = {}, colorOnlyFocalPiece = false) {
   if (!piece || anim?.layer) { if (!anim?.layer) cache.activeKey = null; pieceSvg.replaceChildren(); return; }
-  const key = piece.type + ':' + piece.x + ':' + piece.y + ':' + piece.o + ':' + depth;
+  const key = piece.type + ':' + piece.x + ':' + piece.y + ':' + piece.o + ':' + depth + ':' + colorOnlyFocalPiece;
   if (cache.activeKey === key) return;
   cache.activeKey = key;
   pieceSvg.replaceChildren();
@@ -63,6 +63,18 @@ export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS
   addGradient(defs, ACTIVE_FRONT_GRADIENT, pieceGradient(piece.type), NS);
   pieceSvg.append(defs);
   const shape = cellsFor(piece.type, piece.o).map(([cx, cy]) => [piece.x + cx, piece.y + cy]).filter(([x, y]) => y >= 0 && y < H && x >= 0 && x < W);
+  if (colorOnlyFocalPiece) {
+    const minX = Math.min(...shape.map(([x]) => x)), maxX = Math.max(...shape.map(([x]) => x));
+    const minY = Math.min(...shape.map(([,y]) => y)), maxY = Math.max(...shape.map(([,y]) => y));
+    const widthPx = (maxX - minX + 1) * pitch;
+    const heightPx = (maxY - minY + 1) * pitch;
+    const cx = (minX + maxX + 1) * pitch / 2;
+    const cy = (minY + maxY + 1) * pitch / 2;
+    const radius = Math.hypot(widthPx, heightPx) / 2;
+    const color = (PIECE_COLORS[piece.type] || PIECE_COLORS.T)[0];
+    pieceSvg.append(svgEl('circle', { cx, cy, r: radius, fill: color }, 'color-only-focal-circle', NS));
+    return;
+  }
   appendPieceGeometry(pieceSvg, shape, depthPx, NS);
 }
 
