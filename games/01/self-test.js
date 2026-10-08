@@ -370,7 +370,9 @@ export function runTrainerSelfTest(){
             walk({...piece},0);
             const plannedByKey=new Map(plannedTargets.map(t=>[t.target.x+','+(type==='O'?0:t.target.o),t]));
             assert(plannedByKey.size===oracle.size,
-              'planner/oracle target-set mismatch for '+type+' x='+x+' y='+y+' o='+o);
+              'planner/oracle target-set mismatch for '+type+' x='+x+' y='+y+' o='+o+
+              ' plannerOnly='+[...plannedByKey.keys()].filter(key=>!oracle.has(key)).join(';')+
+              ' oracleOnly='+[...oracle.keys()].filter(key=>!plannedByKey.has(key)).join(';'));
             for(const [key,minCost] of oracle){
               const target=plannedByKey.get(key);
               assert(target&&target.cost===minCost,
