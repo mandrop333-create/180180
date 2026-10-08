@@ -104,6 +104,46 @@ export function stateKey(piece){
   return piece.x+','+piece.y+','+piece.o;
 }
 
+export function reachablePlacementIdentities({
+  piece,
+  board,
+  W=10,
+  H=20,
+  moveHorizontal,
+  rotate,
+  maxCost=2
+}={}){
+  if(!piece||typeof moveHorizontal!=='function'||typeof rotate!=='function')return [];
+  const clone=p=>({...p});
+  const key=p=>p.x+','+p.o;
+  const queue=[{piece:clone(piece),cost:0}];
+  const best=new Map([[piece.x+','+piece.y+','+piece.o,0]]);
+  const targets=new Map();
+  while(queue.length){
+    const current=queue.shift();
+    const identity=key(current.piece);
+    if(!targets.has(identity))targets.set(identity,{x:current.piece.x,o:current.piece.o,cost:current.cost});
+    if(current.cost>=maxCost)continue;
+    const candidates=[];
+    for(const dir of [-1,1]){
+      const p=clone(current.piece);
+      if(moveHorizontal(p,dir))candidates.push(p);
+    }
+    for(const delta of [1,-1,2]){
+      const p=clone(current.piece);
+      if(rotate(p,delta))candidates.push(p);
+    }
+    for(const p of candidates){
+      const state=p.x+','+p.y+','+p.o;
+      const cost=current.cost+1;
+      if(best.has(state)&&best.get(state)<=cost)continue;
+      best.set(state,cost);
+      queue.push({piece:p,cost});
+    }
+  }
+  return [...targets.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o);
+}
+
 export function wallX(piece,dir,moveHorizontal){
   if(!piece||dir!==-1&&dir!==1||typeof moveHorizontal!=='function')return null;
   const p={...piece};
