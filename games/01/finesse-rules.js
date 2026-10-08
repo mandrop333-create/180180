@@ -60,6 +60,15 @@ export const FINESSE_ACTIONS=Object.freeze({
   LEFT:'left',RIGHT:'right',CW:'cw',CCW:'ccw',HALF:'half'
 });
 
+export const FINESSE_INPUT_MODES=Object.freeze({TAP:'tap',DAS:'das'});
+
+export function finesseActionCost(action,mode='tap',profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
+  if(!FINESSE_INPUT_MODES[mode?.toUpperCase?.()])return Infinity;
+  if(!profile||profile.dasCountsAsOneInput!==true&&mode==='das')return Infinity;
+  return finesseInputCost(action);
+}
+
+
 // Observation vocabulary: the game reports what actually happened; the
 // visual trainer may interpret it, but this contract never authorizes or
 // blocks gameplay. Non-movement events remain observable without becoming
