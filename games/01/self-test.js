@@ -66,6 +66,12 @@ export function runTrainerSelfTest(){
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
 
+  // Soft-drop contract: vertical acceleration/scoring is not a finesse
+  // action and cannot satisfy a pending movement or rotation requirement.
+  assert(routeCost([{action:'soft'},{action:'left'}])===1,'soft drop must not add horizontal finesse cost');
+  assert(routeCost([{action:'soft'},{action:'cw'}])===1,'soft drop must not add rotation finesse cost');
+  assert(routeCost([{action:'soft'},{action:'gravity'},{action:'hard'}])===0,'vertical/drop sequence must remain finesse-neutral');
+
   // Spawn/gravity contract: automatic descent between spawn and the first
   // deliberate input never changes finesse cost or consumes trainer progress.
   assert(routeCost([{action:'gravity'},{action:'gravity'},{action:'left'}])===1,'spawn gravity must not consume finesse cost');
