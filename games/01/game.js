@@ -5,6 +5,7 @@ import { runTrainerSelfTest } from './self-test.js';
 import { cellsFor } from './pieces.js';
 
 const settings=getSettings();
+const colorOnlyFocalPiece=localStorage.getItem('180180.colorOnlyFocalPiece')==='1';
 const board=document.getElementById('board');
 const trainer=new Trainer(board,{
   mode,
@@ -18,7 +19,8 @@ const trainer=new Trainer(board,{
   lockDelay:settings.lockDelay,
   safeLock:settings.safeLock,
   cancelDas:settings.cancelDas,
-  preferSoftDrop:settings.preferSoftDrop
+  preferSoftDrop:settings.preferSoftDrop,
+  colorOnlyFocalPiece
 });
 window.trainer=trainer;
 const title=document.getElementById('miniHomeTitle');
