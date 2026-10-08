@@ -33,8 +33,6 @@ const lines=document.getElementById('hudLines');
 const combo=document.getElementById('hudCombo');
 const b2b=document.getElementById('hudB2B');
 const pieces=document.getElementById('hudPieces');
-const finesse=document.getElementById('hudFinesse');
-const finessePrompt=document.getElementById('finessePrompt'),finessePromptText=document.getElementById('finessePromptText');
 const hold=document.getElementById('holdPreview');
 const next=document.getElementById('nextPreview');
 function miniPiece(type){
@@ -55,7 +53,6 @@ function renderState(state){
   if(combo)combo.textContent=state.combo<0?'—':String(state.combo);
   if(b2b)b2b.textContent=state.b2b?'ON':'—';
   if(pieces)pieces.textContent=String(state.stats.piecesPlaced);
-  if(finesse)finesse.textContent=state.stats.finesseFaults+' faults · '+state.stats.finessePerfect+' clean';
   if(hold)hold.innerHTML=miniPiece(state.hold);
   if(next){const count=Math.max(1,Math.min(15,Number(trainer.nextQueueSize)||5));next.innerHTML=state.queue.slice(0,count).map(miniPiece).join('');}
 }
