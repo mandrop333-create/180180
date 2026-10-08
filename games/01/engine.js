@@ -31,7 +31,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=false;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -44,7 +44,7 @@ export class Trainer {
     this.ensureQueue();
     const type=forcedType||this.queue.shift();
     this.ensureQueue();
-    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
+    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.render();queueMicrotask(()=>{if(this.gameOver)this.reset();});return;}
     this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.generateFinessePrompt();this.markRender();
   }
@@ -77,9 +77,9 @@ export class Trainer {
     else{this.holdType=current;this.ensureQueue();this.spawn();}
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseProgress=0;this.finesseMistakes=0;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
+  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
   finesseInput(action,phase='press'){
-    if(!this.finesseEnabled||!this.finesseActions.length)return false;
+    if(!this.finesseEnabled||!this.finesseActions.length||this.finesseFaulted)return false;
     const expected=this.finesseActions[this.finesseProgress];
     if(!expected)return false;
     const expectedAction=typeof expected==='string'?expected:expected.action;
@@ -93,7 +93,9 @@ export class Trainer {
     return true;
   }
   finesseFault(){
-    this.finesseMistakes++;this.stats.finesseFaults++;this.finesseProgress=0;this.say('Retry finesse');this.emitState();
+    if(this.finesseFaulted)return;
+    this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;
+    this.say('Finesse fault');this.emitState();
   }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
