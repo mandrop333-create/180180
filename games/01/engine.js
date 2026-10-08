@@ -8,6 +8,7 @@ import { tryRotate } from './rotation.js';
 import { drawActivePiece,renderBoard,startHalfTurn } from './renderer.js';
 import { createTrainingState,recordTrainingAction,recordTrainingRotation,tickTrainingState } from './training-state.js';
 import { RhythmTracker } from './rhythm.js';
+import { chooseTrainingTarget } from './finesse-rules.js';
 
 const defaultMode={id:null,rules:{},hooks:{}};
 const SCORE={single:100,double:300,triple:500,tetris:800,tspin:400,tspinSingle:800,tspinDouble:1200,tspinTriple:1600,mini:100,miniSingle:200,miniDouble:400,miniTriple:800,hardDropPerRow:2,softDropPerRow:1};
@@ -173,10 +174,16 @@ export class Trainer {
         targetRoutes.set(targetKey,candidate);
       }
     }
-    const targets=[...targetRoutes.values()].sort((a,b)=>
-      a.landing.x-b.landing.x||a.landing.o-b.landing.o||a.actions.length-b.actions.length
+    const targets=[...targetRoutes.values()];
+    const chosenTarget=chooseTrainingTarget(
+      targets.map(candidate=>({x:candidate.landing.x,o:candidate.landing.o,cost:candidate.actions.length})),
+      {pieceIndex:this.placed,pieceType:this.piece.type,maxCost:2}
     );
-    const chosen=targets[(this.placed*7+this.piece.type.charCodeAt(0))%targets.length];
+    const chosen=targets.find(candidate=>
+      candidate.landing.x===chosenTarget?.x &&
+      candidate.landing.o===chosenTarget?.o &&
+      candidate.actions.length===chosenTarget?.cost
+    )||targets[0];
     this.finesseTarget={x:chosen.landing.x,o:chosen.landing.o};
     this.finesseActions=[...chosen.actions,{action:'hard',mode:'tap'}];
   }
