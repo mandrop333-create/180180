@@ -94,24 +94,23 @@ export class Trainer {
     this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;this.finesseDASPending=false;
     this.emitState();
   }
-  finesseInput(action,source='press'){
+  finesseInput(action){
     if(!this.finesseEnabled||this.finesseFaulted)return false;
     const expected=this.finesseActions[this.finesseProgress];
     const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
-    const expectedMode=expected&&(typeof expected==='string'?'tap':expected.mode);
     if(expectedAction!==action)return false;
-    if(expectedMode==='das'){
-      if(source==='press'){
-        this.finesseDASPending=true;
-        this.emitState();
-        return true;
-      }
-      if(source!=='dasComplete')return false;
-      this.finesseDASPending=false;
-    }else if(source!=='press')return false;
     this.finesseProgress++;
+    this.finesseDASPending=false;
     this.emitState();
     return true;
+  }
+  observeFinesseInput(action){
+    if(!this.finesseEnabled||this.finesseFaulted)return false;
+    const expected=this.finesseActions[this.finesseProgress];
+    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
+    if(expectedAction===action)return this.finesseInput(action);
+    this.finesseFault();
+    return false;
   }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
@@ -356,7 +355,7 @@ export class Trainer {
       this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();
       const movedImmediately=this.movePiece(nextDir,0);
       if(this.finesseEnabled&&movedImmediately)this.observeFinesseInput(action);
-    }else if(action==='soft'{
+    }else if(action==='soft'){
       // Soft drop is gameplay input, not a horizontal finesse step. Never
       // let Show Finesse alter its vertical clock or block the input.
       this.applySoftDrop();
