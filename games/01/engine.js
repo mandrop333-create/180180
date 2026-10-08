@@ -92,6 +92,25 @@ export class Trainer {
     this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;this.finesseDASPending=false;
     this.say('Finesse fault');this.emitState();
   }
+  finesseInput(action,source='press'){
+    if(!this.finesseEnabled||this.finesseFaulted)return false;
+    const expected=this.finesseActions[this.finesseProgress];
+    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
+    const expectedMode=expected&&(typeof expected==='string'?'tap':expected.mode);
+    if(expectedAction!==action)return false;
+    if(expectedMode==='das'){
+      if(source==='press'){
+        this.finesseDASPending=true;
+        this.emitState();
+        return true;
+      }
+      if(source!=='dasComplete')return false;
+      this.finesseDASPending=false;
+    }else if(source!=='press')return false;
+    this.finesseProgress++;
+    this.emitState();
+    return true;
+  }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
     const code=this.binds?.[action];
