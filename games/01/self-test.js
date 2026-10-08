@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,isFinessePerfect } from './finesse-rules.js';
+import { routeCost,placementKey,isFinessePerfect,profileFor,FINESSE_PROFILES } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -69,6 +69,10 @@ export function runTrainerSelfTest(){
   assert(routeCost([{action:'left',mode:'das'}])===1,'DAS must count as one deliberate input');
   assert(placementKey({x:3,o:1,y:17})==='3,1,17','finesse placement key must include landing position');
   assert(isFinessePerfect([{action:'left'},{action:'cw'}],2),'minimum-cost route equality failed');
+  const direct180Profile=profileFor();
+  assert(direct180Profile===FINESSE_PROFILES.TETRIO_SRS_PLUS_180,'default finesse profile must match the game rotation system');
+  assert(direct180Profile.supportsDirectHalfTurn===true,'direct 180 must be explicit in the game finesse profile');
+  assert(direct180Profile.halfTurnCost===1,'direct 180 must cost one deliberate input');
 
   // Spawn/hold movement contract: a physically held horizontal key gets exactly
   // one immediate step on the newly spawned piece; repeat timing starts fresh.
