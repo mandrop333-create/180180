@@ -60,6 +60,22 @@ export const FINESSE_ACTIONS=Object.freeze({
   LEFT:'left',RIGHT:'right',CW:'cw',CCW:'ccw',HALF:'half'
 });
 
+// Observation vocabulary: the game reports what actually happened; the
+// visual trainer may interpret it, but this contract never authorizes or
+// blocks gameplay. Non-movement events remain observable without becoming
+// finesse-cost inputs.
+export const FINESSE_OBSERVATIONS=Object.freeze({
+  LEFT:'left',RIGHT:'right',CW:'cw',CCW:'ccw',HALF:'half',
+  SOFT:'soft',HARD:'hard',HOLD:'hold',GRAVITY:'gravity'
+});
+
+export function normalizeFinesseObservation(action){
+  if(typeof action!=='string')return null;
+  return Object.prototype.hasOwnProperty.call(FINESSE_OBSERVATIONS,action.toUpperCase())
+    ? FINESSE_OBSERVATIONS[action.toUpperCase()]
+    : null;
+}
+
 export function finesseInputCost(action){
   if(!action)return Infinity;
   if(action==='hard'||action==='soft'||action==='gravity')return 0;
