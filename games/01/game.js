@@ -46,19 +46,22 @@ const rhythmReport=document.getElementById('rhythmReport');
 function clearRhythmReport(){if(rhythmCard)rhythmCard.hidden=true;if(rhythmReport)rhythmReport.innerHTML='';}
 function renderFinesse(state){
   if(!finessePrompt)return;
-  if(!state.finesse?.length){
+  const steps=state.finesse||[];
+  if(!steps.length){
     finessePrompt.hidden=true;
     finessePrompt.innerHTML='';
     return;
   }
   finessePrompt.hidden=false;
   finessePrompt.innerHTML='';
-  state.finesse.forEach((step,index)=>{
+  const faulted=!!state.finesseState?.faulted;
+  steps.forEach((step,index)=>{
     if(index)finessePrompt.appendChild(document.createTextNode(' '));
     const el=document.createElement('span');
-    el.className='finesse-key '+step.state;
+    el.className='finesse-key '+step.state+(faulted?' faulted':'');
     el.textContent=step.label;
-    el.setAttribute('aria-label',(step.state==='done'?'Completed ':step.state==='next'?'Required ':'Pending ')+step.label);
+    const status=step.state==='done'?'Completed ':step.state==='next'?'Required ':'Pending ';
+    el.setAttribute('aria-label',status+step.label+(faulted?' — placement has a finesse fault':''));
     finessePrompt.appendChild(el);
   });
 }
