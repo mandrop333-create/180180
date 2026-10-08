@@ -52,7 +52,9 @@ function miniPiece(type,colorOnly=false){
   const blocks=cells.map(([x,y])=>'<span class="mini-block" style="grid-column:'+(x-minX+1)+';grid-row:'+(y-minY+1)+';display:block;width:8px;height:8px;background:'+color+';border:1px solid '+color+';box-sizing:border-box;border-radius:1px"></span>').join('');
   return '<span class="mini-piece" aria-label="'+type+' piece"><span class="mini-grid mini-grid-'+w+'x'+h+'">'+blocks+'</span></span>';
 }
+let latestState=null;
 function renderState(state){
+  latestState=state;
   if(score)score.textContent=String(state.stats.score);
   if(lines)lines.textContent=String(state.lines);
   if(combo)combo.textContent=state.combo<0?'—':String(state.combo);
