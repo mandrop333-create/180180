@@ -138,15 +138,19 @@ export class Trainer {
     const tap=(p,dir)=>{const n=clone(p);return move(n,dir,0,this.board,this.W,this.H,this.cellsFor)?n:null;};
     const das=(p,dir)=>{const n=clone(p);let moved=false;while(move(n,dir,0,this.board,this.W,this.H,this.cellsFor))moved=true;return moved?n:null;};
     const rot=(p,d)=>{const n=clone(p);return tryRotate(n,d,this.board,this.W,this.H,this.cellsFor)?n:null;};
+    // O-piece rotation changes only internal orientation metadata, never its
+    // square geometry. It is not a meaningful finesse action, so never teach it.
     const transitions=[
       [{action:'left',mode:'tap'},p=>tap(p,-1)],
       [{action:'right',mode:'tap'},p=>tap(p,1)],
       [{action:'left',mode:'das'},p=>das(p,-1)],
-      [{action:'right',mode:'das'},p=>das(p,1)],
+      [{action:'right',mode:'das'},p=>das(p,1)]
+    ];
+    if(start.type!=='O')transitions.push(
       [{action:'cw',mode:'tap'},p=>rot(p,1)],
       [{action:'ccw',mode:'tap'},p=>rot(p,-1)],
       [{action:'half',mode:'tap'},p=>rot(p,2)]
-    ];
+    );
     const key=p=>p.x+','+p.y+','+p.o;
     const candidates=[];
     const pushCandidate=(p,actions)=>{
@@ -183,7 +187,8 @@ export class Trainer {
     // choose which target this training piece will teach.
     const targetRoutes=new Map();
     for(const candidate of unique){
-      const targetKey=candidate.landing.x+','+candidate.landing.o;
+      const targetOrientation=candidate.landing.type==='O'?0:candidate.landing.o;
+      const targetKey=candidate.landing.x+','+targetOrientation;
       const previous=targetRoutes.get(targetKey);
       if(!previous||candidate.actions.length<previous.actions.length){
         targetRoutes.set(targetKey,candidate);
@@ -191,15 +196,15 @@ export class Trainer {
     }
     const targets=[...targetRoutes.values()];
     const chosenTarget=chooseTrainingTarget(
-      targets.map(candidate=>({x:candidate.landing.x,o:candidate.landing.o,cost:candidate.actions.length})),
+      targets.map(candidate=>({x:candidate.landing.x,o:candidate.landing.type==='O'?0:candidate.landing.o,cost:candidate.actions.length})),
       {pieceIndex:this.placed,pieceType:this.piece.type,maxCost:2}
     );
     const chosen=targets.find(candidate=>
       candidate.landing.x===chosenTarget?.x &&
-      candidate.landing.o===chosenTarget?.o &&
+      (candidate.landing.type==='O'?0:candidate.landing.o)===chosenTarget?.o &&
       candidate.actions.length===chosenTarget?.cost
     )||targets[0];
-    this.finesseTarget={x:chosen.landing.x,o:chosen.landing.o};
+    this.finesseTarget={x:chosen.landing.x,o:chosen.landing.type==='O'?0:chosen.landing.o};
     this.finesseActions=[...chosen.actions];
   }
   reapplyHeldHorizontalInput(){
@@ -247,7 +252,7 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;
     if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
-      const targetOk=!target||(lockedPiece.x===target.x&&lockedPiece.o===target.o);
+      const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o);
       const sequenceComplete=this.finesseProgress>=this.finesseActions.length;
       this.finessePlacementResolved=true;
       if(!this.finesseFaulted&&sequenceComplete&&targetOk)this.stats.finessePerfect++;
