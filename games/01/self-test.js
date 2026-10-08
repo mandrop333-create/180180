@@ -66,6 +66,11 @@ export function runTrainerSelfTest(){
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
 
+  // Spawn/gravity contract: automatic descent between spawn and the first
+  // deliberate input never changes finesse cost or consumes trainer progress.
+  assert(routeCost([{action:'gravity'},{action:'gravity'},{action:'left'}])===1,'spawn gravity must not consume finesse cost');
+  assert(routeCost([{action:'gravity'},{action:'cw'},{action:'gravity'},{action:'hard'}])===1,'spawn/floor gravity around rotation must remain finesse-neutral');
+
   // Floor-rotation contract: kicks may change the physical y state, but
   // rotation remains exactly one deliberate finesse input.
   assert(finesseInputCost('cw')===1&&finesseInputCost('ccw')===1&&finesseInputCost('half')===1,'floor rotation input cost contract failed');
