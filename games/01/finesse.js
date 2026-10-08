@@ -66,11 +66,13 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxD
   if(!targets.size)return {actions:[],target:{x:start.x,o:start.o,y:landing(start).y}};
 
   const candidates=[...targets.values()];
-  // Prefer the shortest routes (normally 1–2 inputs under 0G SRS finesse).
-  // Among equal-cost routes, choose deterministically using the seeded index.
-  const minLength=Math.min(...candidates.map(c=>c.route.length));
-  const pool=candidates.filter(c=>c.route.length===minLength);
-  const chosen=pool[(Math.abs(Number(seed)||0))%pool.length];
+  // First choose a placement target, then use the minimum-input route to it.
+  // This is important: minimizing across targets would make the trainer
+  // trivially choose the nearest one-input placement every time.
+  //
+  // The seed only selects the target. The route stored for that target is
+  // already minimum-cost because it came from BFS.
+  const chosen=candidates[Math.abs(Number(seed)||0)%candidates.length];
 
   return chosen;
 }
