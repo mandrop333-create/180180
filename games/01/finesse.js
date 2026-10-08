@@ -58,13 +58,18 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
     }
   }
 
-  const candidates=[...targets.values()].sort((a,b)=>a.cost-b.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.routeKey.localeCompare(b.routeKey));
+  const candidates=[...targets.values()].sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.routeKey.localeCompare(b.routeKey));
   if(!candidates.length){
     const land=landing(start);
     return {actions:[],target:{x:land.x,o:land.o},cost:0,landingY:land.y};
   }
-  const offset=Math.abs(Number(seed)||0)%candidates.length;
-  const chosen=candidates[offset];
+  // Teach the most demanding placement that is still inside the active
+  // finesse envelope. Every target already carries its shortest route, so
+  // this maximizes training value without ever recommending a longer route.
+  const highestCost=candidates[0].cost;
+  const hardest=candidates.filter(candidate=>candidate.cost===highestCost);
+  const offset=Math.abs(Number(seed)||0)%hardest.length;
+  const chosen=hardest[offset];
   return {actions:chosen.route,target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
 }
 
