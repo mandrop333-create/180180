@@ -66,6 +66,13 @@ export function runTrainerSelfTest(){
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
 
+  // Lock-delay contract: floor contact and automatic lock timing are
+  // vertical engine events, while deliberate movement/rotation remain the
+  // only finesse-counted actions that can reset floor timing.
+  assert(routeCost([{action:'gravity'},{action:'gravity'}])===0,'lock-delay gravity must be finesse-neutral');
+  assert(routeCost([{action:'gravity'},{action:'left'},{action:'gravity'}])===1,'floor timing around movement must remain one finesse input');
+  assert(routeCost([{action:'gravity'},{action:'cw'},{action:'gravity'}])===1,'floor timing around rotation must remain one finesse input');
+
   // Soft-drop contract: vertical acceleration/scoring is not a finesse
   // action and cannot satisfy a pending movement or rotation requirement.
   assert(routeCost([{action:'soft'},{action:'left'}])===1,'soft drop must not add horizontal finesse cost');
