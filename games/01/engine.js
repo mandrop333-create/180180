@@ -158,7 +158,7 @@ export class Trainer {
       cellsFor:this.cellsFor,
       move:(piece,dx,dy,board,W,H,cellsFor)=>move(piece,dx,dy,board,W,H,cellsFor),
       tryRotate:(piece,delta,board,W,H,cellsFor)=>tryRotate(piece,delta,board,W,H,cellsFor),
-      maxCost:2,
+      maxCost:this.mode.rules?.finesseProfile?.maxCost??2,
       seed:this.placed,
       profile:this.mode.rules?.finesseProfile
     });
