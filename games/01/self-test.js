@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,wallX } from './finesse-rules.js';
+import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,wallX } from './finesse-rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -52,6 +52,14 @@ export function runTrainerSelfTest(){
     const repeats=test.arr===0?(test.at>=test.das?1:0):(test.at<test.das?0:1+Math.floor(elapsed/test.arr));
     assert(repeats===test.repeats,test.name+' timing contract failed');
   }
+
+  // Read-only observer contract: observations describe actual inputs/state
+  // after the fact; they never become permission checks for gameplay.
+  assert(normalizeFinesseObservation('left')===FINESSE_OBSERVATIONS.LEFT,'left observation contract failed');
+  assert(normalizeFinesseObservation('CW')===FINESSE_OBSERVATIONS.CW,'rotation observation contract failed');
+  assert(normalizeFinesseObservation('hard')===FINESSE_OBSERVATIONS.HARD,'hard-drop observation contract failed');
+  assert(normalizeFinesseObservation('unknown')===null,'unknown observation must be ignored');
+  assert(normalizeFinesseObservation(null)===null,'non-string observation must be ignored');
 
   // Gravity contract: falling is state evolution, never a deliberate finesse input.
   assert(finesseInputCost('gravity')===0,'gravity must be finesse-neutral');
