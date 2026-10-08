@@ -3,7 +3,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { planFinesse } from './finesse.js';
+import { enumerateFinesseTargets, planFinesse } from './finesse.js';
 import { collides, move } from './collision.js';
 import { tryRotate } from './rotation.js';
 import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,FINESSE_INPUT_MODES,finesseActionCost,wallX } from './finesse-rules.js';
@@ -160,6 +160,20 @@ export function runTrainerSelfTest(){
   assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
 
+  // Minimum-route regression: a longer route must never replace a shorter
+  // route merely because its action labels sort earlier alphabetically.
+  const routeRegressionBoard=Array.from({length:20},()=>Array(10).fill(0));
+  const routeRegressionTargets=enumerateFinesseTargets({
+    piece:{type:'O',x:4,y:0,o:0},board:routeRegressionBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),
+    maxCost:2
+  });
+  const rightWallTarget=routeRegressionTargets.find(t=>t.target.x===8&&t.target.o===0);
+  assert(rightWallTarget&&rightWallTarget.cost===1&&rightWallTarget.route.length===1&&
+    rightWallTarget.route[0].action==='right'&&rightWallTarget.route[0].mode==='das',
+    'a two-input left-then-right-DAS route must not overwrite the one-input right-DAS wall route');
+
   // O-piece regression: a square has no meaningful rotation. Even when the
   // supplied rotation transition would mutate orientation metadata, the
   // planner must never include rotation in its recommended route.
@@ -300,7 +314,93 @@ export function runTrainerSelfTest(){
   }
   assert(checkedPlans>100,'planner regression matrix did not cover enough states');
 
-  return {ok:true,tests:10,plannerStates:checkedPlans};
+  // Independent bounded-route oracle. Enumerate every legal action ordering
+  // through two deliberate inputs and compare each target's minimum cost with
+  // the planner on empty and adversarial stack geometries.
+  const makeBoard=heights=>{
+    const board=Array.from({length:20},()=>Array(10).fill(0));
+    for(let x=0;x<10;x++)for(let n=0;n<heights[x];n++)board[19-n][x]='X';
+    return board;
+  };
+  const auditBoards=[
+    emptyBoard,
+    makeBoard([2,4,1,6,3,5,0,4,2,6]),
+    (()=>{const b=Array.from({length:20},()=>Array(10).fill(0));for(let y=12;y<20;y++)for(let x=0;x<10;x++)if(x!==4&&x!==5)b[y][x]='X';return b;})(),
+    (()=>{const b=Array.from({length:20},()=>Array(10).fill(0));for(let y=15;y<20;y++)for(let x=0;x<10;x++)if(!(y>=17&&(x===2||x===7)))b[y][x]='X';return b;})()
+  ];
+  const auditActions=[
+    {action:'left',mode:'tap',apply:(p,b)=>move(p,-1,0,b,10,20,cellsFor)},
+    {action:'right',mode:'tap',apply:(p,b)=>move(p,1,0,b,10,20,cellsFor)},
+    {action:'cw',mode:'tap',apply:(p,b)=>tryRotate(p,1,b,10,20,cellsFor)},
+    {action:'ccw',mode:'tap',apply:(p,b)=>tryRotate(p,-1,b,10,20,cellsFor)},
+    {action:'half',mode:'tap',apply:(p,b)=>tryRotate(p,2,b,10,20,cellsFor)},
+    {action:'left',mode:'das',apply:(p,b)=>{let moved=false;while(move(p,-1,0,b,10,20,cellsFor))moved=true;return moved;}},
+    {action:'right',mode:'das',apply:(p,b)=>{let moved=false;while(move(p,1,0,b,10,20,cellsFor))moved=true;return moved;}}
+  ];
+  let auditedStates=0,auditedTargets=0;
+  for(const board of auditBoards){
+    for(const type of PIECE_TYPES){
+      for(let o=0;o<(type==='O'?1:4);o++){
+        for(let x=0;x<10;x++){
+          for(const y of [0,4]){
+            const piece={type,x,y,o};
+            if(collides(x,y,o,board,10,20,cellsFor,type))continue;
+            const options={piece,board,W:10,H:20,cellsFor,maxCost:2,
+              move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+              tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)};
+            const plannedTargets=enumerateFinesseTargets(options);
+            const oracle=new Map();
+            const recordLanding=(state,cost)=>{
+              const landed={...state};
+              while(move(landed,0,1,board,10,20,cellsFor)){}
+              const orientation=type==='O'?0:landed.o;
+              const key=landed.x+','+orientation;
+              const old=oracle.get(key);
+              if(old===undefined||cost<old)oracle.set(key,cost);
+            };
+            const walk=(state,cost)=>{
+              recordLanding(state,cost);
+              if(cost===2)return;
+              for(const action of auditActions){
+                if(type==='O'&&['cw','ccw','half'].includes(action.action))continue;
+                const next={...state};
+                if(action.apply(next,board))walk(next,cost+1);
+              }
+            };
+            walk({...piece},0);
+            const plannedByKey=new Map(plannedTargets.map(t=>[t.target.x+','+(type==='O'?0:t.target.o),t]));
+            assert(plannedByKey.size===oracle.size,
+              'planner/oracle target-set mismatch for '+type+' x='+x+' y='+y+' o='+o);
+            for(const [key,minCost] of oracle){
+              const target=plannedByKey.get(key);
+              assert(target&&target.cost===minCost,
+                'non-minimum finesse cost for '+type+' state '+x+','+y+','+o+' target '+key);
+              const simulated={...piece};
+              for(const step of target.route){
+                if(step.action==='left'||step.action==='right'){
+                  const dir=step.action==='left'?-1:1;
+                  if(step.mode==='das'){
+                    let moved=false;while(move(simulated,dir,0,board,10,20,cellsFor))moved=true;
+                    assert(moved,'audited DAS step failed for '+type+' target '+key);
+                  }else assert(move(simulated,dir,0,board,10,20,cellsFor),'audited tap step failed for '+type+' target '+key);
+                }else{
+                  const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
+                  assert(tryRotate(simulated,delta,board,10,20,cellsFor),'audited rotation failed for '+type+' target '+key);
+                }
+              }
+              while(move(simulated,0,1,board,10,20,cellsFor)){}
+              assert(simulated.x===target.target.x&&(type==='O'?0:simulated.o)===target.target.o&&simulated.y===target.landingY,
+                'audited route did not reproduce its advertised landing for '+type+' target '+key);
+              auditedTargets++;
+            }
+            auditedStates++;
+          }
+        }
+      }
+    }
+  }
+
+  return {ok:true,tests:11,plannerStates:checkedPlans,auditedStates,auditedTargets};
 }
 
 if(typeof window!=='undefined')window.runTrainerSelfTest=runTrainerSelfTest;
