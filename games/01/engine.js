@@ -283,7 +283,7 @@ export class Trainer {
   handleKeydown(e){
     if(this.gameOver)return;const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(!action)return;
     if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(e.code))e.preventDefault();if(this.downKeys.has(e.code))return;
-    this.downKeys.add(e.code);const inputNow=performance.now();recordTrainingAction(this.training,action,inputNow,{code:e.code});this.rhythm?.input(action,inputNow);
+    this.downKeys.add(e.code);const inputNow=performance.now();recordTrainingAction(this.training,action,inputNow,{code:e.code});this.rhythm?.input(action,inputNow,e.code);
     if(this.hook('input',{event:e,action})===true)return;
     const expected=this.finesseEnabled?this.finesseActions[this.finesseProgress]:null;
     const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
