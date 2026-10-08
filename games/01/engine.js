@@ -275,7 +275,9 @@ export class Trainer {
       if(expected&&typeof expected==='object'&&expected.mode==='das'&&
          (expected.action==='left'||expected.action==='right')){
         const dir=expected.action==='left'?-1:1;
-        if(this.piece&&this.piece.x===this.dasWallX(dir)){
+        const expectedCode=this.binds[expected.action];
+        const holdStillActive=this.downKeys.has(expectedCode)&&this.moveState.dir===dir&&this.finesseDASPending;
+        if(holdStillActive&&this.piece&&this.piece.x===this.dasWallX(dir)){
           this.finesseInput(expected.action,'dasComplete');
         }
       }
