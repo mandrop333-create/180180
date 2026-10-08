@@ -8,7 +8,7 @@ import { tryRotate } from './rotation.js';
 import { drawActivePiece,renderBoard,startHalfTurn } from './renderer.js';
 import { createTrainingState,recordTrainingAction,recordTrainingRotation,tickTrainingState } from './training-state.js';
 import { RhythmTracker } from './rhythm.js';
-import { chooseTrainingTarget } from './finesse-rules.js';
+import { planFinesse } from './finesse.js';
 
 const defaultMode={id:null,rules:{},hooks:{}};
 const SCORE={single:100,double:300,triple:500,tetris:800,tspin:400,tspinSingle:800,tspinDouble:1200,tspinTriple:1600,mini:100,miniSingle:200,miniDouble:400,miniTriple:800,hardDropPerRow:2,softDropPerRow:1};
@@ -140,84 +140,31 @@ export class Trainer {
     return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
   }
   generateFinessePrompt(){
-    this.finesseActions=[];this.finesseProgress=0;this.finesseTarget=null;this.finessePlacementResolved=false;this.finesseDASPending=null;
+    this.finesseActions=[];
+    this.finesseProgress=0;
+    this.finesseTarget=null;
+    this.finessePlacementResolved=false;
+    this.finesseDASPending=null;
     if(!this.finesseEnabled||this.gameOver||!this.piece)return;
-    // Real movement finesse is about the final placement, with DAS-to-wall
-    // counting as one movement input. Enumerate legal 0G SRS two-step routes:
-    // tap left/right, DAS to either wall, or rotate/180, then hard drop.
-    const start={...this.piece};
-    const clone=p=>({...p});
-    const tap=(p,dir)=>{const n=clone(p);return move(n,dir,0,this.board,this.W,this.H,this.cellsFor)?n:null;};
-    const das=(p,dir)=>{const n=clone(p);let moved=false;while(move(n,dir,0,this.board,this.W,this.H,this.cellsFor))moved=true;return moved?n:null;};
-    const rot=(p,d)=>{const n=clone(p);return tryRotate(n,d,this.board,this.W,this.H,this.cellsFor)?n:null;};
-    // O-piece rotation changes only internal orientation metadata, never its
-    // square geometry. It is not a meaningful finesse action, so never teach it.
-    const transitions=[
-      [{action:'left',mode:'tap'},p=>tap(p,-1)],
-      [{action:'right',mode:'tap'},p=>tap(p,1)],
-      [{action:'left',mode:'das'},p=>das(p,-1)],
-      [{action:'right',mode:'das'},p=>das(p,1)]
-    ];
-    if(start.type!=='O')transitions.push(
-      [{action:'cw',mode:'tap'},p=>rot(p,1)],
-      [{action:'ccw',mode:'tap'},p=>rot(p,-1)],
-      [{action:'half',mode:'tap'},p=>rot(p,2)]
-    );
-    const key=p=>p.x+','+p.y+','+p.o;
-    const candidates=[];
-    const pushCandidate=(p,actions)=>{
-      if(!actions.length)return;
-      if(p.x===start.x&&p.y===start.y&&p.o===start.o)return;
-      const landing={...p};while(move(landing,0,1,this.board,this.W,this.H,this.cellsFor)){}
-      candidates.push({piece:p,actions,landing});
-    };
-    for(const [step,apply] of transitions){
-      const p=apply(start);if(p)pushCandidate(p,[step]);
-    }
-    for(const [step1,apply1] of transitions){
-      const p1=apply1(start);if(!p1)continue;
-      for(const [step2,apply2] of transitions){
-        const p2=apply2(p1);if(!p2)continue;
-        if(p2.x===start.x&&p2.y===start.y&&p2.o===start.o)continue;
-        pushCandidate(p2,[step1,step2]);
-      }
-    }
-    const seen=new Set();
-    const unique=candidates.filter(c=>{
-      const k2=key(c.landing)+':'+c.actions.map(a=>(a.mode||'tap')+a.action).join(',');
-      if(seen.has(k2))return false;seen.add(k2);return true;
-    });
-    if(!unique.length){
-      this.finesseTarget={x:start.x,o:start.o};
-      this.finesseActions=[];
-      return;
-    }
 
-    // First define canonical targets by x + orientation. Landing y is only a
-    // physical result of the board/gravity and never changes target identity.
-    // For each target, retain its minimum-input route; only after that do we
-    // choose which target this training piece will teach.
-    const targetRoutes=new Map();
-    for(const candidate of unique){
-      const targetOrientation=candidate.landing.type==='O'?0:candidate.landing.o;
-      const targetKey=candidate.landing.x+','+targetOrientation;
-      const previous=targetRoutes.get(targetKey);
-      if(!previous||candidate.actions.length<previous.actions.length){
-        targetRoutes.set(targetKey,candidate);
-      }
-    }
-    const targets=[...targetRoutes.values()];
-    const chosenTarget=chooseTrainingTarget(
-      targets.map(candidate=>({x:candidate.landing.x,o:candidate.landing.type==='O'?0:candidate.landing.o,cost:candidate.actions.length})),
-      {pieceIndex:this.placed,pieceType:this.piece.type,maxCost:2}
-    );
-    const chosen=targets.find(candidate=>
-      candidate.landing.x===chosenTarget?.x &&
-      (candidate.landing.type==='O'?0:candidate.landing.o)===chosenTarget?.o &&
-      candidate.actions.length===chosenTarget?.cost
-    )||targets[0];
-    this.finesseTarget={x:chosen.landing.x,o:chosen.landing.type==='O'?0:chosen.landing.o};
-    this.finesseActions=[...chosen.actions];
+    // The shared planner uses the same collision and rotation transitions as
+    // gameplay. It returns the minimum-input route for the chosen reachable
+    // placement; hard drop and gravity are deliberately outside finesse cost.
+    const plan=planFinesse({
+      piece:{...this.piece},
+      board:this.board,
+      W:this.W,
+      H:this.H,
+      cellsFor:this.cellsFor,
+      move:(piece,dx,dy,board,W,H,cellsFor)=>move(piece,dx,dy,board,W,H,cellsFor),
+      tryRotate:(piece,delta,board,W,H,cellsFor)=>tryRotate(piece,delta,board,W,H,cellsFor),
+      maxCost:2,
+      seed:this.placed,
+      profile:this.mode.rules?.finesseProfile
+    });
+    if(!plan)return;
+    this.finesseTarget={...plan.target};
+    this.finesseActions=plan.actions.map(step=>({...step}));
   }
   reapplyHeldHorizontalInput(){
     if(this.gameOver||!this.piece)return;
@@ -402,12 +349,14 @@ export class Trainer {
       // Only a tap step is completed on keydown; the DAS step completes
       // when the held piece actually reaches the wall.
       this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();
-      this.movePiece(nextDir,0);
+      const moved=this.movePiece(nextDir,0);
       if(this.finesseEnabled){
         const expected=this.finesseActions[this.finesseProgress];
         const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
         const expectedMode=expected&&typeof expected==='object'?(expected.mode||'tap'):'tap';
-        if(expectedAction===action&&expectedMode==='das'){
+        if(!moved){
+          this.finesseFault();
+        }else if(expectedAction===action&&expectedMode==='das'){
           this.finesseDASPending={action};
           this.observeFinesseDAS(action);
         }else{
@@ -426,15 +375,15 @@ export class Trainer {
     }
     else if(action==='cw'){
       this.pieceInputCount++;
-      this.rotate(1);
+      if(!rotate(1&&this.finesseEnabled)this.finesseFault();
     }
     else if(action==='ccw'){
       this.pieceInputCount++;
-      this.rotate(-1);
+      if(!rotate(-1&&this.finesseEnabled)this.finesseFault();
     }
     else if(action==='half'){
       this.pieceInputCount++;
-      this.rotate(2);
+      if(!rotate(2&&this.finesseEnabled)this.finesseFault();
     }
     else if(action==='hold'){this.hold();}
   }
