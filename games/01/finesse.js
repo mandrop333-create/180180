@@ -38,7 +38,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   while(queue.length){
     const current=queue.shift();
     const land=landing(current.piece);
-    const target=normalizeFinesseTarget({x:land.x,o:land.o},W);
+    const target=normalizeFinesseTarget({x:land.x,o:land.o},W,{allowNegativeX:true});
     if(target){
       const key=placementIdentity(target);
       const candidate={route:current.route,target,cost:current.cost,landingY:land.y,routeKey:routeKey(current.route)};
