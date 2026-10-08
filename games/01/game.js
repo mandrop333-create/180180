@@ -47,11 +47,14 @@ function renderRhythmReport(report){
   rhythmCard.hidden=false;
   if(!report?.ready){rhythmReport.innerHTML='<div class="rhythm-metric"><span>STATUS</span><strong>Not enough placements</strong></div>';return;}
   const outliers=report.outliers||[];
+  const recurring=report.recurringPattern?('<div class="rhythm-pattern">RECURRING: '+report.recurringPattern+'</div>'):'';
   const cards=outliers.map((o,i)=>{
     const inputs=(o.inputs||[]).map(x=>x.action+' ×'+x.count).join(' · ')||'No tracked inputs';
-    return '<div class="rhythm-outlier"><div class="rhythm-outlier-title"><span>#'+(i+1)+' '+o.piece+' OUTLIER</span><strong>+'+o.deviationMs+' ms</strong></div><div class="rhythm-outlier-detail">'+o.intervalMs+' ms placement · longest input gap '+o.longestGapMs+' ms</div><div class="rhythm-pattern">'+o.pattern+'</div><div class="rhythm-outlier-detail">'+inputs+'</div></div>';
+    const timing=o.timingPattern&&o.timingPattern!=='normal timing'?'<div class="rhythm-outlier-detail">timing: '+o.timingPattern+'</div>':'';
+    const reversals=o.directionReversals?'<div class="rhythm-outlier-detail">direction reversals: '+o.directionReversals+'</div>':'';
+    return '<div class="rhythm-outlier"><div class="rhythm-outlier-title"><span>#'+(i+1)+' '+o.piece+' OUTLIER</span><strong>+'+o.deviationMs+' ms</strong></div><div class="rhythm-outlier-detail">'+o.intervalMs+' ms placement · longest input gap '+o.longestGapMs+' ms</div><div class="rhythm-pattern">'+o.pattern+'</div>'+timing+reversals+'<div class="rhythm-outlier-detail">'+inputs+'</div></div>';
   }).join('');
-  rhythmReport.innerHTML='<div class="rhythm-metric"><span>AVERAGE INTERVAL</span><strong>'+report.averageMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN INTERVAL</span><strong>'+report.medianMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN PPS</span><strong>'+report.pps+'</strong></div>'+cards;
+  rhythmReport.innerHTML='<div class="rhythm-metric"><span>AVERAGE INTERVAL</span><strong>'+report.averageMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN INTERVAL</span><strong>'+report.medianMs+' ms</strong></div><div class="rhythm-metric"><span>MEDIAN PPS</span><strong>'+report.pps+'</strong></div>'+recurring+cards;
 }
 function miniPiece(type,colorOnly=false){
   if(!type)return '';
