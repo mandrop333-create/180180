@@ -113,10 +113,15 @@ export function placementIdentity(placement){
   return placement.x+','+placement.o;
 }
 
-export function normalizeFinesseTarget(target,W=10){
+export function normalizeFinesseTarget(target,W=10,{allowNegativeX=false}={}){
   if(!target||!Number.isInteger(target.x)||!Number.isInteger(target.o))return null;
   const o=((target.o%4)+4)%4;
-  if(target.x<0||target.x>=W)return null;
+  // Piece origins are not always occupied-cell coordinates. For example, a
+  // vertical I can be fully inside the field with a negative origin x because
+  // its local mino coordinates are offset to the right. Callers that have only
+  // a generic target retain the conservative default; the engine-backed
+  // planner may opt in because collision checks already proved it is legal.
+  if((target.x<0&&!allowNegativeX)||target.x>=W)return null;
   return Object.freeze({x:target.x,o});
 }
 
