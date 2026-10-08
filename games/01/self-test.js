@@ -61,6 +61,15 @@ export function runTrainerSelfTest(){
     assert(trainingRule.pillars.length > 0, trainingRule.id + ' has no training pillar');
   }
 
+
+  // Finesse math contract: the scoring layer counts deliberate inputs, not
+  // simulated frames or individual ARR movements. Hard drop remains free.
+  const {routeCost,placementKey,isFinessePerfect}=await import('./finesse-rules.js');
+  assert(routeCost([{action:'left'},{action:'cw'}])===2,'finesse route cost must count deliberate inputs');
+  assert(routeCost([{action:'left',mode:'das'}])===1,'DAS must count as one deliberate input');
+  assert(placementKey({x:3,o:1,y:17})==='3,1,17','finesse placement key must include landing position');
+  assert(isFinessePerfect([{action:'left'},{action:'cw'}],2),'minimum-cost route equality failed');
+
   // Spawn/hold movement contract: a physically held horizontal key gets exactly
   // one immediate step on the newly spawned piece; repeat timing starts fresh.
   // The engine's spawn path owns this behavior so Hold and normal locks cannot diverge.
