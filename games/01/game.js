@@ -1,6 +1,6 @@
 import { Trainer } from './engine.js';
 import mode from './mode.js';
-import { getSettings, mountSettings } from './settings.js';
+import { getSettings, mountSettings, keyLabel } from './settings.js';
 import { runTrainerSelfTest } from './self-test.js';
 import { cellsFor } from './pieces.js';
 
@@ -47,7 +47,8 @@ function renderRhythmReport(report){
   rhythmCard.hidden=false;
   if(!report?.ready){rhythmReport.innerHTML='<div class="rhythm-metric"><span>STATUS</span><strong>Not enough placements</strong></div>';return;}
   const slow=report.slowestInput;
-  const slowText=slow?slow.label+(slow.piece?' ('+slow.piece+')':''):'Not enough input data';
+  const slowControl=slow?.code?keyLabel(slow.code):(slow?.action||'Not enough input data');
+  const slowText=slow?(slowControl+(slow.piece?' ('+slow.piece+')':'')):'Not enough input data';
   rhythmReport.innerHTML='<div class="rhythm-metric"><span>AVERAGE RHYTHM</span><strong>'+report.averageMs+' ms</strong></div><div class="rhythm-metric"><span>SLOWEST INPUT</span><strong>'+slowText+'</strong></div>';
 }
 function miniPiece(type,colorOnly=false){
