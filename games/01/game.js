@@ -53,6 +53,8 @@ function miniPiece(type,colorOnly=false){
   return '<span class="mini-piece" aria-label="'+type+' piece"><span class="mini-grid mini-grid-'+w+'x'+h+'">'+blocks+'</span></span>';
 }
 let latestState=null;
+let colorOnlyHoldEnabled=localStorage.getItem('180180.colorOnlyHold')==='1';
+window.setColorOnlyHold=enabled=>{colorOnlyHoldEnabled=!!enabled;if(latestState)renderState(latestState);};
 function renderState(state){
   latestState=state;
   if(score)score.textContent=String(state.stats.score);
@@ -60,7 +62,7 @@ function renderState(state){
   if(combo)combo.textContent=state.combo<0?'—':String(state.combo);
   if(b2b)b2b.textContent=state.b2b?'ON':'—';
   if(pieces)pieces.textContent=String(state.stats.piecesPlaced);
-  if(hold){const colorOnlyHold=localStorage.getItem('180180.colorOnlyHold')==='1';hold.innerHTML=miniPiece(state.hold,colorOnlyHold);}
+  if(hold)hold.innerHTML=miniPiece(state.hold,colorOnlyHoldEnabled);
   if(next){const count=Math.max(1,Math.min(15,Number(trainer.nextQueueSize)||5));next.innerHTML=state.queue.slice(0,count).map(miniPiece).join('');}
 }
 trainer.options.onState=renderState;
