@@ -32,7 +32,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.rhythm=new RhythmTracker(options.calculateRhythm===true);this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -45,7 +45,7 @@ export class Trainer {
     this.ensureQueue();
     const type=forcedType||this.queue.shift();
     this.ensureQueue();
-    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.finesseDASPending=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
+    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.finishRhythm();this.render();queueMicrotask(()=>{if(this.gameOver)this.reset('gameover');});return;}
     this.hook('spawn',{...this.piece});this.generateFinessePrompt();this.reapplyHeldHorizontalInput();this.markRender();
   }
@@ -69,7 +69,7 @@ export class Trainer {
     // repeats without resetting the underlying hold schedule.
     this.dasCutRemaining=this.rules.dcd||0; // Rotation preserves the active horizontal DAS clock; DCD is the only intentional cut.
     recordTrainingRotation(this.training,delta,before,this.piece);this.rhythm?.rotate(delta,performance.now());this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
-    if(this.finesseEnabled&&delta){const finesseAction=delta===2||delta===-2?'half':delta===1?'cw':delta===-1?'ccw':null;if(finesseAction)this.observeFinesseInput(finesseAction);}
+    if(this.finesseEnabled&&delta){const finesseAction=delta===2||delta===-2?'half':delta===1?'cw':delta===-1?'ccw':null;if(finesseAction)this.recordFinesseObservation(finesseAction);}
     if(halfTurnOld)this.startHalfTurn(halfTurnOld,{...this.piece});this.markRender();return true;
   }
   startHalfTurn(old,next){const animation={from:{...old},to:{...next},layer:null,started:0,duration:240};if(this.anim?.layer)this.anim.layer.remove();this.anim=animation;startHalfTurn(animation,this.boardEl,this.cellsFor,NS,()=>{if(this.anim!==animation)return;this.anim=null;this.render();});}
@@ -87,30 +87,23 @@ export class Trainer {
   setColorOnlyFocalPiece(enabled){this.colorOnlyFocalPiece=!!enabled;this.render();}
   setCalculateRhythm(enabled){this.rhythm.enabled=!!enabled;this.rhythm.reset();}
   finishRhythm(){const report=this.rhythm?.report();if(report)this.options.onRhythmReport(report);}
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;this.finesseTarget=null;this.emitState();
+  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseTarget=null;this.emitState();
   }
   finesseFault(){
     if(this.finesseFaulted)return;
-    this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;this.finesseDASPending=false;
+    this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;
     this.emitState();
   }
-  finesseInput(action){
-    if(!this.finesseEnabled||this.finesseFaulted)return false;
+  recordFinesseObservation(action){
+    if(!this.finesseEnabled||this.finesseFaulted)return;
     const expected=this.finesseActions[this.finesseProgress];
     const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
-    if(expectedAction!==action)return false;
-    this.finesseProgress++;
-    this.finesseDASPending=false;
-    this.emitState();
-    return true;
-  }
-  observeFinesseInput(action){
-    if(!this.finesseEnabled||this.finesseFaulted)return false;
-    const expected=this.finesseActions[this.finesseProgress];
-    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
-    if(expectedAction===action)return this.finesseInput(action);
+    if(expectedAction===action){
+      this.finesseProgress++;
+      this.emitState();
+      return;
+    }
     this.finesseFault();
-    return false;
   }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
@@ -354,7 +347,7 @@ export class Trainer {
       // when the held piece actually reaches the wall.
       this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();
       const movedImmediately=this.movePiece(nextDir,0);
-      if(this.finesseEnabled&&movedImmediately)this.observeFinesseInput(action);
+      if(this.finesseEnabled&&movedImmediately)this.recordFinesseObservation(action);
     }else if(action==='soft'){
       // Soft drop is gameplay input, not a horizontal finesse step. Never
       // let Show Finesse alter its vertical clock or block the input.
@@ -362,7 +355,7 @@ export class Trainer {
     }
     else if(action==='hard'){
       this.hardDrop();
-      if(this.finesseEnabled)this.observeFinesseInput(action);
+      if(this.finesseEnabled)this.recordFinesseObservation(action);
     }
     else if(action==='cw'){
       this.pieceInputCount++;
@@ -378,9 +371,8 @@ export class Trainer {
     }
     else if(action==='hold'){this.hold();}
   }
-  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if((action==='left'||action==='right')&&this.finesseEnabled&&!this.finesseFaulted&&this.finesseDASPending){const expected=this.finesseActions[this.finesseProgress];if(expected&&typeof expected==='object'&&expected.mode==='das'&&expected.action===action)this.finesseFault();}if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
+  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
   handleBlur(){
-    if(this.finesseEnabled&&!this.finesseFaulted&&this.finesseDASPending)this.finesseFault();
     this.downKeys.clear();this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;
   }
   say(s){if(this.toastCallback)this.toastCallback(s);}setToastCallback(cb){this.toastCallback=cb;}
