@@ -39,9 +39,29 @@ const b2b=document.getElementById('hudB2B');
 const pieces=document.getElementById('hudPieces');
 const hold=document.getElementById('holdPreview');
 const next=document.getElementById('nextPreview');
+const finessePrompt=document.getElementById('finessePrompt');
+const hudFinesse=document.getElementById('hudFinesse');
 const rhythmCard=document.getElementById('rhythmCard');
 const rhythmReport=document.getElementById('rhythmReport');
 function clearRhythmReport(){if(rhythmCard)rhythmCard.hidden=true;if(rhythmReport)rhythmReport.innerHTML='';}
+function renderFinesse(state){
+  if(!finessePrompt)return;
+  if(!state.finesse?.length){
+    finessePrompt.hidden=true;
+    finessePrompt.innerHTML='';
+    return;
+  }
+  finessePrompt.hidden=false;
+  finessePrompt.innerHTML='';
+  state.finesse.forEach((step,index)=>{
+    if(index)finessePrompt.appendChild(document.createTextNode(' '));
+    const el=document.createElement('span');
+    el.className='finesse-key '+step.state;
+    el.textContent=step.label;
+    el.setAttribute('aria-label',(step.state==='done'?'Completed ':step.state==='next'?'Required ':'Pending ')+step.label);
+    finessePrompt.appendChild(el);
+  });
+}
 function renderRhythmReport(report){
   if(!rhythmCard||!rhythmReport)return;
   rhythmCard.hidden=false;
@@ -78,6 +98,8 @@ function renderState(state){
   if(combo)combo.textContent=state.combo<0?'—':String(state.combo);
   if(b2b)b2b.textContent=state.b2b?'ON':'—';
   if(pieces)pieces.textContent=String(state.stats.piecesPlaced);
+  if(hudFinesse)hudFinesse.textContent=String(state.stats.finesseFaults)+' faults · '+String(state.stats.finessePerfect)+' clean';
+  renderFinesse(state);
   if(hold)hold.innerHTML=miniPiece(state.hold,colorOnlyHoldEnabled);
   if(next){const count=Math.max(1,Math.min(15,Number(trainer.nextQueueSize)||5));next.innerHTML=state.queue.slice(0,count).map(type=>miniPiece(type,colorOnlyNextEnabled)).join('');}
 }
