@@ -8,7 +8,6 @@ import { tryRotate } from './rotation.js';
 import { drawActivePiece,renderBoard,startHalfTurn } from './renderer.js';
 import { createTrainingState,recordTrainingAction,recordTrainingRotation,tickTrainingState } from './training-state.js';
 import { RhythmTracker } from './rhythm.js';
-import { planFinesse } from './finesse.js';
 
 const defaultMode={id:null,rules:{},hooks:{}};
 const SCORE={single:100,double:300,triple:500,tetris:800,tspin:400,tspinSingle:800,tspinDouble:1200,tspinTriple:1600,mini:100,miniSingle:200,miniDouble:400,miniTriple:800,hardDropPerRow:2,softDropPerRow:1};
@@ -119,12 +118,57 @@ export class Trainer {
     return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
   }
   generateFinessePrompt(){
-    this.finesseActions=[];this.finesseProgress=0;this.finesseTarget=null;
+    this.finesseActions=[];this.finesseProgress=0;
     if(!this.finesseEnabled||this.gameOver||!this.piece)return;
-    const plan=planFinesse({piece:this.piece,board:this.board,W:this.W,H:this.H,cellsFor:this.cellsFor,move,tryRotate,seed:this.placed+this.piece.type.charCodeAt(0)});
-    if(!plan)return;
-    this.finesseActions=plan.actions;
-    this.finesseTarget=plan.target;
+    // Real movement finesse is about the final placement, with DAS-to-wall
+    // counting as one movement input. Enumerate legal 0G SRS two-step routes:
+    // tap left/right, DAS to either wall, or rotate/180, then hard drop.
+    const start={...this.piece};
+    const clone=p=>({...p});
+    const tap=(p,dir)=>{const n=clone(p);return move(n,dir,0,this.board,this.W,this.H,this.cellsFor)?n:null;};
+    const das=(p,dir)=>{const n=clone(p);let moved=false;while(move(n,dir,0,this.board,this.W,this.H,this.cellsFor))moved=true;return moved?n:null;};
+    const rot=(p,d)=>{const n=clone(p);return tryRotate(n,d,this.board,this.W,this.H,this.cellsFor)?n:null;};
+    const transitions=[
+      [{action:'left',mode:'tap'},p=>tap(p,-1)],
+      [{action:'right',mode:'tap'},p=>tap(p,1)],
+      [{action:'left',mode:'das'},p=>das(p,-1)],
+      [{action:'right',mode:'das'},p=>das(p,1)],
+      [{action:'cw',mode:'tap'},p=>rot(p,1)],
+      [{action:'ccw',mode:'tap'},p=>rot(p,-1)],
+      [{action:'half',mode:'tap'},p=>rot(p,2)]
+    ];
+    const key=p=>p.x+','+p.y+','+p.o;
+    const candidates=[];
+    const pushCandidate=(p,actions)=>{
+      if(!actions.length)return;
+      if(p.x===start.x&&p.y===start.y&&p.o===start.o)return;
+      const landing={...p};while(move(landing,0,1,this.board,this.W,this.H,this.cellsFor)){}
+      candidates.push({piece:p,actions,landing});
+    };
+    for(const [step,apply] of transitions){
+      const p=apply(start);if(p)pushCandidate(p,[step]);
+    }
+    for(const [step1,apply1] of transitions){
+      const p1=apply1(start);if(!p1)continue;
+      for(const [step2,apply2] of transitions){
+        const p2=apply2(p1);if(!p2)continue;
+        if(p2.x===start.x&&p2.y===start.y&&p2.o===start.o)continue;
+        pushCandidate(p2,[step1,step2]);
+      }
+    }
+    const seen=new Set();
+    const unique=candidates.filter(c=>{
+      const k2=key(c.landing)+':'+c.actions.map(a=>(a.mode||'tap')+a.action).join(',');
+      if(seen.has(k2))return false;seen.add(k2);return true;
+    });
+    if(!unique.length){this.finesseActions=[{action:'hard',mode:'tap'}];return;}
+    const min=Math.min(...unique.map(c=>c.actions.length));
+    const shortest=unique.filter(c=>c.actions.length===min);
+    if(!shortest.length){this.finesseActions=[{action:'hard',mode:'tap'}];return;}
+    // Vary the legal target placement instead of teaching an arbitrary
+    // left/right/rotation loop. Every generated route ends in a valid landing.
+    const chosen=shortest[(this.placed*7+this.piece.type.charCodeAt(0))%shortest.length];
+    this.finesseActions=[...chosen,{action:'hard',mode:'tap'}];
   }
   reapplyHeldHorizontalInput(){if(this.gameOver||!this.piece)return;const left=this.downKeys.has(this.binds.left),right=this.downKeys.has(this.binds.right);if(left===right)return;const dir=left?-1:1;const now=performance.now();this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();this.movePiece(dir,0);}
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
