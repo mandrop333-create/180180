@@ -38,7 +38,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   while(queue.length){
     const current=queue.shift();
     const land=landing(current.piece);
-    const target=normalizeFinesseTarget({x:land.x,o:land.o},W,{allowNegativeX:true});
+    const target=normalizeFinesseTarget({x:land.x,o:land.o,y:land.y},W,{allowNegativeX:true});
     if(target){
       const key=placementIdentity(target);
       const candidate={route:current.route,target,cost:current.cost,landingY:land.y,routeKey:routeKey(current.route)};
@@ -63,7 +63,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
     }
   }
 
-  return [...targets.values()].sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.routeKey.localeCompare(b.routeKey));
+  return [...targets.values()].sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.target.y-b.target.y||a.routeKey.localeCompare(b.routeKey));
 }
 
 export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost=2,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
@@ -72,7 +72,7 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   if(!candidates.length){
     const land=copyPiece(piece);
     while(move(land,0,1,board,W,H,cellsFor)){}
-    return {actions:[],target:{x:land.x,o:land.o},cost:0,landingY:land.y};
+    return {actions:[],target:{x:land.x,o:land.o,y:land.y},cost:0,landingY:land.y};
   }
   // Teach the most demanding placement that is still inside the active
   // finesse envelope. Every target already carries its shortest route, so
