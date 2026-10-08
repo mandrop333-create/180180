@@ -26,85 +26,36 @@ export class RhythmTracker {
     if(items.length<3)return {ready:false,reason:'Not enough placements'};
     const sorted=items.map(x=>x.intervalMs).sort((a,b)=>a-b);
     const median=sorted[Math.floor(sorted.length/2)];
-    const deviations=items.map((x,index)=>({...x,index,deviation:x.intervalMs-median})).filter(x=>x.deviation>0);
-    const madValues=items.map(x=>Math.abs(x.intervalMs-median)).sort((a,b)=>a-b);
-    const mad=madValues[Math.floor(madValues.length/2)]||0;
-    const threshold=Math.max(120,mad*3);
-    const ranked=deviations.sort((a,b)=>b.deviation-a.deviation);
-    const significant=ranked.filter(x=>x.deviation>=threshold);
-    const top=(significant.length>=2?significant:ranked).slice(0,2);
-    const diagnoses=this.findWeaknesses(items,median);
+    const inputStats={};
+    for(const item of items){
+      const events=(item.events||[]).filter(e=>Number.isFinite(e.t)).sort((a,b)=>a.t-b.t);
+      for(let i=0;i<events.length;i++){
+        const e=events[i];
+        const prev=i===0?item._start:events[i-1].t;
+        const gap=Math.max(0,e.t-prev);
+        const action=e.action;
+        if(!inputStats[action])inputStats[action]={sum:0,count:0,pieces:{}};
+        inputStats[action].sum+=gap;inputStats[action].count++;
+        inputStats[action].pieces[item.piece]=(inputStats[action].pieces[item.piece]||0)+1;
+      }
+    }
+    const labels={left:'Left',right:'Right','rotate cw':'CW rotation','rotate ccw':'CCW rotation','180':'180° rotation',hold:'Hold',soft:'Soft drop','hard drop':'Hard drop'};
+    const inputCandidates=Object.entries(inputStats)
+      .filter(([,s])=>s.count>=2)
+      .map(([action,s])=>{
+        const pieceEntry=Object.entries(s.pieces).sort((a,b)=>b[1]-a[1])[0];
+        return {action,label:labels[action]||action,piece:pieceEntry&&pieceEntry[1]>=2?pieceEntry[0]:'',avgMs:s.sum/s.count,count:s.count};
+      })
+      .sort((a,b)=>b.avgMs-a.avgMs);
+    const slow=inputCandidates[0]||null;
     return {
       ready:true,
       averageMs:Math.round(items.reduce((s,x)=>s+x.intervalMs,0)/items.length),
       medianMs:Math.round(median),
       pps:Math.round(1000/median*100)/100,
-      outliers:top.map(x=>this.explain(x,median)),
-      weaknesses:diagnoses
+      slowestInput:slow?{label:slow.label,piece:slow.piece,avgMs:Math.round(slow.avgMs),count:slow.count}:null,
+      outliers:[]
     };
-  }
-  findWeaknesses(items,median){
-    const candidates=[];
-    const add=(key,label,piece,intervalMs,baselineCount)=>{
-      if(!key||baselineCount<2)return;
-      candidates.push({key,label,piece,intervalMs,baselineCount});
-    };
-    const pieceStats={};
-    for(const item of items){
-      const p=item.piece||'?';
-      if(!pieceStats[p])pieceStats[p]={sum:0,count:0};
-      pieceStats[p].sum+=item.intervalMs;pieceStats[p].count++;
-    }
-    Object.entries(pieceStats).forEach(([piece,s])=>{
-      if(s.count>=2)add('piece:'+piece,piece,piece,s.sum/s.count,s.count);
-    });
-    const inputStats={};
-    for(const item of items){
-      const ev=item.events||[];
-      const seen=new Set(ev.map(e=>e.action));
-      seen.forEach(action=>{
-        if(!inputStats[action])inputStats[action]={sum:0,count:0,pieceCounts:{}};
-        inputStats[action].sum+=item.intervalMs;inputStats[action].count++;
-        inputStats[action].pieceCounts[item.piece]=(inputStats[action].pieceCounts[item.piece]||0)+1;
-      });
-    }
-    Object.entries(inputStats).forEach(([action,s])=>{
-      if(s.count<2)return;
-      const avg=s.sum/s.count;
-      const label={left:'Left',right:'Right','rotate cw':'CW rotation','rotate ccw':'CCW rotation','180':'180° rotation',hold:'Hold',soft:'Soft drop','hard drop':'Hard drop'}[action]||action;
-      const pieceEntry=Object.entries(s.pieceCounts).sort((a,b)=>b[1]-a[1])[0];
-      const piece=pieceEntry&&pieceEntry[1]>=2?pieceEntry[0]:'';
-      add('input:'+action,label,piece,avg,s.count);
-    });
-    Object.entries(pieceStats).forEach(([piece,s])=>{
-      const seqCounts={};
-      for(const item of items.filter(x=>x.piece===piece)){
-        const seq=[...(item.events||[])].map(e=>e.action).filter(a=>a!=='hard drop');
-        for(let i=0;i<seq.length-1;i++){
-          const key=seq[i]+'>'+seq[i+1];
-          seqCounts[key]=(seqCounts[key]||0)+1;
-        }
-      }
-      Object.entries(seqCounts).forEach(([seq,count])=>{
-        if(count>=2){
-          const [a,b]=seq.split('>');
-          add('seq:'+piece+':'+seq,a+' + '+b,piece,s.sum/s.count,count);
-        }
-      });
-    });
-    const scored=candidates.map(c=>({...c,score:c.intervalMs-median+Math.log2(c.baselineCount+1)*10}))
-      .filter(c=>c.score>0)
-      .sort((a,b)=>b.score-a.score);
-    const unique=[];
-    const keys=new Set();
-    for(const c of scored){
-      const family=c.key.split(':')[0];
-      const dedupe=family==='input'?c.key:c.key;
-      if(keys.has(dedupe))continue;
-      keys.add(dedupe);unique.push(c);
-      if(unique.length>=2)break;
-    }
-    return unique.map(c=>({label:c.label,piece:c.piece||'',score:Math.round(c.score),count:c.baselineCount}));
   }
   explain(item,median){
     const events=item.events||[];
