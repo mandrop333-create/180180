@@ -139,6 +139,8 @@ export function runTrainerSelfTest(){
 
   // Exact planner contract: BFS cost must equal the number of deliberate
   // movement/rotation inputs, and hard drop remains outside the route.
+  assert(FINESSE_PROFILES.SRS_0G_60HZ.supportsDirectHalfTurn===false,'standard SRS must not advertise direct 180');
+  assert(FINESSE_PROFILES.TETRIO_SRS_PLUS_180.supportsDirectHalfTurn===true&&FINESSE_PROFILES.TETRIO_SRS_PLUS_180.halfTurnCost===1,'TETR.IO profile must explicitly define direct 180 cost');
   const planned=planFinesse({
     piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,seed:0,
     move:(p,dx,dy)=>{if(dx&& (p.x+dx<0||p.x+dx>9))return false;p.x+=dx;p.y+=dy;return p.y<20;},
@@ -147,6 +149,7 @@ export function runTrainerSelfTest(){
   });
   assert(planned&&planned.cost===planned.actions.length,'planner cost must equal deliberate route length');
   assert(planned.actions.every(step=>['left','right','cw','ccw','half'].includes(step.action)),'planner must not count gravity or hard drop as finesse input');
+  assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
 
   // Combined gravity bridge: every vertical/timing event remains neutral,
