@@ -378,8 +378,9 @@ export class Trainer {
       this.applySoftDrop();
     }
     else if(action==='hard'){
+      // Hard drop is a gameplay action, not a finesse input. The lock that it
+      // causes resolves the already-observed movement/rotation sequence.
       this.hardDrop();
-      if(this.finesseEnabled)this.recordFinesseObservation(action);
     }
     else if(action==='cw'){
       this.pieceInputCount++;
