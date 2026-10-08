@@ -158,7 +158,17 @@ export class Trainer {
     if(countFilled(this.board)===0&&cleared>0){this.stats.perfectClears++;this.stats.score+=3500;}
     this.placed++;this.stats.piecesPlaced++;
     this.holdUsed=false;
-    this.stats.pieceInputs=this.pieceInputCount;if(this.finesseEnabled){const targetOk=!this.finesseTarget||(!this.piece||this.piece.x===this.finesseTarget.x&&this.piece.o===this.finesseTarget.o);if(this.finesseFaulted)this.stats.finesseFaults++;else if(this.finesseProgress>=this.finesseActions.length&&targetOk)this.stats.finessePerfect++;else this.stats.finesseFaults++;}
+    this.stats.pieceInputs=this.pieceInputCount;
+    if(this.finesseEnabled){
+      const target=this.finesseTarget;
+      const targetOk=!target||(lockedPiece.x===target.x&&lockedPiece.y===target.y&&lockedPiece.o===target.o);
+      // finesseFault() owns fault counting; locking an incomplete or
+      // wrong-target placement records one fault here.
+      if(!this.finesseFaulted){
+        if(this.finesseProgress>=this.finesseActions.length&&targetOk)this.stats.finessePerfect++;
+        else this.stats.finesseFaults++;
+      }
+    }
     this.rhythm?.place(lockedPiece,performance.now());this.hook('place',{lockedPiece,cleared,spin,beforeLock:before,afterLock,afterClear});
     this.options.onPlace(this.placed);if(this.rules.clearBoardAfterPlace)this.emptyBoard();
     this.spawn();this.emitState();
