@@ -39,6 +39,50 @@ export function runTrainerSelfTest(){
   // Kick tables always have a no-kick first test for normal rotations.
   for(const type of ['I','T','J','L','S','Z'])assert(getSrsKicks(type,0,1)[0][0]===0&&getSrsKicks(type,0,1)[0][1]===0,type+' SRS basic rotation missing');
 
+  // Exact TETR.IO SRS+ kick-order regression. Kick order changes which
+  // legal destination wins when more than one offset fits.
+  const expectedJLSTZ={
+    '0>1':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '1>0':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    '1>2':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    '2>1':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '2>3':[[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '3>2':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '3>0':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '0>3':[[0,0],[1,0],[1,-1],[0,2],[1,2]]
+  };
+  const expectedI={
+    '0>1':[[0,0],[1,0],[-2,0],[-2,1],[1,-2]],
+    '1>0':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+    '1>2':[[0,0],[-1,0],[2,0],[-1,-2],[2,1]],
+    '2>1':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '2>3':[[0,0],[2,0],[-1,0],[2,-1],[-1,2]],
+    '3>2':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '3>0':[[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
+    '0>3':[[0,0],[-1,0],[2,0],[2,1],[-1,-2]]
+  };
+  for(const [transition,expected] of Object.entries(expectedJLSTZ)){
+    assert(JSON.stringify(getSrsKicks('T',...transition.split('>').map(Number)))===JSON.stringify(expected),
+      'JLSTZ SRS+ kick order mismatch for '+transition);
+  }
+  for(const [transition,expected] of Object.entries(expectedI)){
+    assert(JSON.stringify(getSrsKicks('I',...transition.split('>').map(Number)))===JSON.stringify(expected),
+      'I-piece SRS+ kick order mismatch for '+transition);
+  }
+  const expectedHalfJLSTZ={
+    0:[[0,0],[0,-1],[1,-1],[-1,-1],[1,0],[-1,0]],
+    1:[[0,0],[1,0],[1,-2],[1,-1],[0,-2],[0,-1]],
+    2:[[0,0],[0,1],[-1,1],[1,1],[-1,0],[1,0]],
+    3:[[0,0],[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
+  };
+  const expectedHalfI={0:[[0,0],[0,-1]],1:[[0,0],[1,0]],2:[[0,0],[0,1]],3:[[0,0],[-1,0]]};
+  for(let o=0;o<4;o++){
+    assert(JSON.stringify(getTetrio180Kicks('T',o))===JSON.stringify(expectedHalfJLSTZ[o]),
+      'JLSTZ 180 kick order mismatch for orientation '+o);
+    assert(JSON.stringify(getTetrio180Kicks('I',o))===JSON.stringify(expectedHalfI[o]),
+      'I-piece 180 kick table mismatch for orientation '+o);
+  }
+
   // Timing contract: a held direction gets one immediate step, then repeats
   // only at DAS and thereafter on ARR boundaries. These are pure clock cases
   // so the contract can be checked without a browser.
