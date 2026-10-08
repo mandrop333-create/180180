@@ -136,7 +136,8 @@ export function runTrainerSelfTest(){
   assert(FINESSE_PROFILES.SRS_0G_60HZ.hardDropCost===0,'0G profile hard drop must remain outside finesse cost');
   assert(FINESSE_PROFILES.SRS_20G.hardDropCost===0,'20G profile hard drop must remain outside finesse cost');
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
-  assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_0G_60HZ,'0G profile selection failed');
+  assert(profileFor({gravity:0,rotationSystem:'srs',wallFinesse:true})===FINESSE_PROFILES.SRS_20G_WALL,
+    '20G wall-finesse profile selection failed');  assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_0G_60HZ,'0G profile selection failed');
   assert(profileFor({gravity:0,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
   assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_NORMAL,'normal gravity profile selection failed');
 
