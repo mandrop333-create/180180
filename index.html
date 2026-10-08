@@ -60,6 +60,7 @@ body{min-height:100vh}
 @media(max-width:900px){.homepage-game-first .trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side,.rules-column{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
 @media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}.trainer-description{font-size:10px}}
 </style>
+<style>.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>
 <style>
 .mobile-controls{display:none;position:fixed;inset:0;z-index:400;pointer-events:none;touch-action:none}
 .mobile-controls.active{display:block}
@@ -116,9 +117,9 @@ body{min-height:100vh}
           </section>
           <section class="trainer-card rhythm-card" id="rhythmCard" hidden aria-label="Calculate Rhythm results"><h2>Calculate Rhythm</h2><div id="rhythmReport" class="rhythm-report"></div></section>
         </aside>
-        <section class="board-column" aria-label="Tetris trainer board">
+        <section class="board-column" aria-labelledby="trainerBoardTitle"><h2 class="sr-only" id="trainerBoardTitle">Training board</h2>
           <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris board"></div></div>
-          <div class="trainer-actions"><div class="trainer-controls">← → move · ↓ soft drop · Space hard drop · X / Z rotate · A 180 · Shift hold</div></div>
+          <div class="trainer-actions"><div class="trainer-controls" aria-label="Keyboard controls">← → move · ↓ soft drop · Space hard drop · X / Z rotate · A 180 · Shift hold</div></div>
         </section>
         <aside class="trainer-side">
           <section class="trainer-card">
@@ -128,7 +129,7 @@ body{min-height:100vh}
         </aside>
         <aside class="rules-column">
           <section class="trainer-card rules-card" aria-label="Rules">
-            <h2>Rules</h2>
+            <h2 id="rulesTitle">Rules</h2>
             <div class="rules-list">
               <div class="rule-control">
                 <div class="rule-control-head"><label for="mainRuleDepth">3D depth</label><output id="mainRuleDepthOut">55%</output></div>
@@ -141,8 +142,8 @@ body{min-height:100vh}
               <label class="rules-toggle"><input id="mainRuleJolOnly" type="checkbox" aria-label="JOL ONLY"> JOL ONLY</label><label class="rules-toggle"><input id="mainRuleColorOnlyFocal" type="checkbox" aria-label="Color only focal piece"> Color only focal piece</label><label class="rules-toggle"><input id="mainRuleColorOnlyHold" type="checkbox" aria-label="Color only Hold queue"> Color only Hold queue</label><label class="rules-toggle"><input id="mainRuleColorOnlyNext" type="checkbox" aria-label="Color only next queue"> Color only next queue</label><label class="rules-toggle"><input id="mainRuleCalculateRhythm" type="checkbox" aria-label="Calculate Rhythm"> Calculate Rhythm</label><label class="rules-toggle"><input id="mainRuleInvisibleFocal" type="checkbox" aria-label="Invisible focal piece"> Invisible focal piece</label><label class="rules-toggle"><input id="mainRuleInvisibleGhost" type="checkbox" aria-label="Invisible ghost piece"> Invisible ghost piece</label><label class="rules-toggle"><input id="mainRuleColoredGhost" type="checkbox" aria-label="Colored ghost piece"> Colored ghost piece</label>
             </div>
           </section>
-          <section class="trainer-card">
-            <h2>Training signal</h2>
+          <section class="trainer-card" aria-labelledby="trainingSignalTitle">
+            <h2 id="trainingSignalTitle">Training signal</h2>
             <p style="margin:0;color:#91879e;font-size:11px;line-height:1.5">#1 keeps the normal stacker rules, while the training layer measures clean 180° execution and placement quality.</p>
           </section>
         </aside>
