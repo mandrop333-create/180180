@@ -208,11 +208,10 @@ export class Trainer {
     if(left===right)return;
     const action=left?'left':'right',dir=left?-1:1,now=performance.now();
     this.moveState.dir=dir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();
-    const movedImmediately=this.movePiece(dir,0);
-    // The move already happened through the normal engine. Finesse only
-    // observes the deliberate direction input; DAS/ARR repeats below remain
-    // ordinary gameplay and are never re-counted as extra finesse inputs.
-    if(this.finesseEnabled&&movedImmediately)this.recordFinesseObservation(action);
+    // A held key inherited across spawn is existing gameplay state, not a
+    // new deliberate input for the new piece. Let normal DAS/ARR run, but do
+    // not let the visual trainer count it as a fresh finesse step.
+    this.movePiece(dir,0);
   }
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
   hardDrop(){if(this.gameOver||!this.piece)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.rhythm?.hardDrop(performance.now());this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
