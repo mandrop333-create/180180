@@ -19,8 +19,8 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
     {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
     {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
   );
-  if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true){
-    actions.push({action:'half',mode:'tap',cost:Number.isFinite(profile.halfTurnCost)?profile.halfTurnCost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
+  if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true&&Number.isFinite(profile.halfTurnCost)){
+    actions.push({action:'half',mode:'tap',cost:profile.halfTurnCost,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
   }
   const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
     const n=copyPiece(p);let moved=false;
