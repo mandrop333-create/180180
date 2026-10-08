@@ -281,13 +281,12 @@ export function chooseMinimumRoute(routes,targetKey){
   return best;
 }
 
-export function profileFor({gravity=800,rotationSystem='tetrio-srs-plus-180'}={}){
-  // Standard SRS profiles remain available as external references. The
+export function profileFor({gravity=800,rotationSystem='tetrio-srs-plus-180',wallFinesse=false}={}){
+  // Standard SRS profiles remain available as explicit reference cases. The
   // running game uses SRS+ 90° kicks plus a direct 180° system, so its
-  // execution profile is explicit rather than silently calling itself
-  // vanilla SRS.
+  // execution profile is not silently inferred from gravity alone.
   if(rotationSystem==='tetrio-srs-plus-180')return FINESSE_PROFILES.TETRIO_SRS_PLUS_180;
   if(gravity===Infinity)return FINESSE_PROFILES.SRS_0G_60HZ;
-  if(gravity===0)return FINESSE_PROFILES.SRS_20G;
+  if(gravity===0)return wallFinesse?FINESSE_PROFILES.SRS_20G_WALL:FINESSE_PROFILES.SRS_20G;
   return FINESSE_PROFILES.SRS_NORMAL;
 }
