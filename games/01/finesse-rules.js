@@ -156,7 +156,7 @@ export function chooseTrainingTarget(targets,{pieceIndex=0,pieceType='',maxCost=
   if(!list.length)return null;
   const highest=Math.max(...list.map(target=>target.cost));
   const eligible=list.filter(target=>target.cost===highest)
-    .sort((a,b)=>a.normalized.x-b.normalized.x||a.normalized.o-b.normalized.o);
+    .sort((a,b)=>a.normalized.x-b.normalized.x||a.normalized.o-b.normalized.o||((a.normalized.y??-Infinity)-(b.normalized.y??-Infinity)));
   const typeSeed=String(pieceType||'').split('').reduce((sum,ch)=>sum+ch.charCodeAt(0),0);
   const offset=Math.abs((Number(seed)||0)+pieceIndex*7+typeSeed)%eligible.length;
   return Object.freeze({...eligible[offset].normalized,cost:eligible[offset].cost});
@@ -186,7 +186,7 @@ export function minimumFinesseTargets({
     const previous=best.get(key);
     if(!previous||candidate.cost<previous.cost)best.set(key,candidate);
   }
-  return [...best.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o);
+  return [...best.values()].sort((a,b)=>a.cost-b.cost||a.x-b.x||a.o-b.o||(a.y??-Infinity)-(b.y??-Infinity));
 }
 
 export function reachableLandingTargets({
