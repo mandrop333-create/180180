@@ -88,7 +88,7 @@ export class Trainer {
   setColorOnlyFocalPiece(enabled){this.colorOnlyFocalPiece=!!enabled;this.render();}
   setCalculateRhythm(enabled){this.rhythm.enabled=!!enabled;this.rhythm.reset();}
   finishRhythm(){const report=this.rhythm?.report();if(report)this.options.onRhythmReport(report);}
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finessePlacementResolved=false;this.finesseTarget=null;this.emitState();
+  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finessePlacementResolved=false;this.finesseDASPending=null;this.finesseTarget=null;this.emitState();
   }
   finesseFault(){
     if(this.finesseFaulted)return;
@@ -99,12 +99,27 @@ export class Trainer {
     if(!this.finesseEnabled||this.finesseFaulted)return;
     const expected=this.finesseActions[this.finesseProgress];
     const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
+    const expectedMode=expected&&typeof expected==='object'?(expected.mode||'tap'):'tap';
+    if(expectedAction===action&&expectedMode==='das'){
+      this.finesseDASPending=null;
+      this.finesseProgress++;
+      this.emitState();
+      return;
+    }
     if(expectedAction===action){
       this.finesseProgress++;
       this.emitState();
       return;
     }
     this.finesseFault();
+  }
+  observeFinesseDAS(action){
+    if(!this.finesseEnabled||this.finesseFaulted)return;
+    const expected=this.finesseActions[this.finesseProgress];
+    if(!expected||typeof expected!=='object'||expected.action!==action||expected.mode!=='das')return;
+    const dir=action==='left'?-1:1;
+    const wall=this.dasWallX(dir);
+    if(wall!==null&&this.piece?.x===wall)this.recordFinesseObservation(action);
   }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
@@ -113,7 +128,7 @@ export class Trainer {
     return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
   }
   generateFinessePrompt(){
-    this.finesseActions=[];this.finesseProgress=0;this.finesseTarget=null;this.finessePlacementResolved=false;
+    this.finesseActions=[];this.finesseProgress=0;this.finesseTarget=null;this.finessePlacementResolved=false;this.finesseDASPending=null;
     if(!this.finesseEnabled||this.gameOver||!this.piece)return;
     // Real movement finesse is about the final placement, with DAS-to-wall
     // counting as one movement input. Enumerate legal 0G SRS two-step routes:
@@ -348,6 +363,7 @@ export class Trainer {
         this.moveState.elapsed=Math.max(0,t-this.moveState.startedAt);
       }
     }
+    if(this.finesseDASPending)this.observeFinesseDAS(this.finesseDASPending.action);
     if(!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type))this.lockAcc=0;else this.lockAcc+=dt;
     if(this.lockAcc>=this.rules.lockDelay)this.lockPiece(true);this.hook('tick',dt,t);this.flushRender();
   }
@@ -371,7 +387,17 @@ export class Trainer {
       // when the held piece actually reaches the wall.
       this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();
       this.movePiece(nextDir,0);
-      if(this.finesseEnabled)this.recordFinesseObservation(action);
+      if(this.finesseEnabled){
+        const expected=this.finesseActions[this.finesseProgress];
+        const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
+        const expectedMode=expected&&typeof expected==='object'?(expected.mode||'tap'):'tap';
+        if(expectedAction===action&&expectedMode==='das'){
+          this.finesseDASPending={action};
+          this.observeFinesseDAS(action);
+        }else{
+          this.recordFinesseObservation(action);
+        }
+      }
     }else if(action==='soft'){
       // Soft drop is gameplay input, not a horizontal finesse step. Never
       // let Show Finesse alter its vertical clock or block the input.
@@ -396,7 +422,7 @@ export class Trainer {
     }
     else if(action==='hold'){this.hold();}
   }
-  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
+  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if((action==='left'||action==='right')&&this.finesseDASPending?.action===action){this.observeFinesseDAS(action);if(this.finesseDASPending&&!this.finesseFaulted)this.finesseFault();}if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
   handleBlur(){
     this.downKeys.clear();this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;
   }
