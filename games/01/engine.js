@@ -375,15 +375,15 @@ export class Trainer {
     }
     else if(action==='cw'){
       this.pieceInputCount++;
-      if(!rotate(1&&this.finesseEnabled)this.finesseFault();
+      if(!this.rotate(1)&&this.finesseEnabled)this.finesseFault();
     }
     else if(action==='ccw'){
       this.pieceInputCount++;
-      if(!rotate(-1&&this.finesseEnabled)this.finesseFault();
+      if(!this.rotate(-1)&&this.finesseEnabled)this.finesseFault();
     }
     else if(action==='half'){
       this.pieceInputCount++;
-      if(!rotate(2&&this.finesseEnabled)this.finesseFault();
+      if(!this.rotate(2)&&this.finesseEnabled)this.finesseFault();
     }
     else if(action==='hold'){this.hold();}
   }
