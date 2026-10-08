@@ -128,9 +128,9 @@ body{min-height:100vh}
           </section>
         </aside>
         <aside class="rules-column">
-          <section class="trainer-card rules-card" aria-label="Rules">
+          <section class="trainer-card rules-card" aria-labelledby="rulesTitle" aria-label="Rules">
             <h2 id="rulesTitle">Rules</h2>
-            <div class="rules-list">
+            <div class="rules-list" id="trainingRules" data-rule-system="180436">
               <div class="rule-control">
                 <div class="rule-control-head"><label for="mainRuleDepth">3D depth</label><output id="mainRuleDepthOut">55%</output></div>
                 <input class="settings-range" id="mainRuleDepth" type="range" min="0" max="100" value="55" aria-label="3D depth">
@@ -139,10 +139,10 @@ body{min-height:100vh}
                 <div class="rule-control-head"><label for="mainRuleNextSize">Next queue size</label><output id="mainRuleNextSizeOut">100%</output></div>
                 <input class="settings-range" id="mainRuleNextSize" type="range" min="0" max="300" value="100" aria-label="Next queue size">
               </div>
-              <label class="rules-toggle"><input id="mainRuleJolOnly" type="checkbox" aria-label="JOL ONLY"> JOL ONLY</label><label class="rules-toggle"><input id="mainRuleColorOnlyFocal" type="checkbox" aria-label="Color only focal piece"> Color only focal piece</label><label class="rules-toggle"><input id="mainRuleColorOnlyHold" type="checkbox" aria-label="Color only Hold queue"> Color only Hold queue</label><label class="rules-toggle"><input id="mainRuleColorOnlyNext" type="checkbox" aria-label="Color only next queue"> Color only next queue</label><label class="rules-toggle"><input id="mainRuleCalculateRhythm" type="checkbox" aria-label="Calculate Rhythm"> Calculate Rhythm</label><label class="rules-toggle"><input id="mainRuleInvisibleFocal" type="checkbox" aria-label="Invisible focal piece"> Invisible focal piece</label><label class="rules-toggle"><input id="mainRuleInvisibleGhost" type="checkbox" aria-label="Invisible ghost piece"> Invisible ghost piece</label><label class="rules-toggle"><input id="mainRuleColoredGhost" type="checkbox" aria-label="Colored ghost piece"> Colored ghost piece</label>
+              <label class="rules-toggle"><input id="mainRuleJolOnly" data-rule-id="jol-only" type="checkbox" aria-label="JOL ONLY"> JOL ONLY</label><label class="rules-toggle"><input id="mainRuleColorOnlyFocal" data-rule-id="color-only-focal" type="checkbox" aria-label="Color only focal piece"> Color only focal piece</label><label class="rules-toggle"><input id="mainRuleColorOnlyHold" data-rule-id="color-only-hold" type="checkbox" aria-label="Color only Hold queue"> Color only Hold queue</label><label class="rules-toggle"><input id="mainRuleColorOnlyNext" data-rule-id="color-only-next" type="checkbox" aria-label="Color only next queue"> Color only next queue</label><label class="rules-toggle"><input id="mainRuleCalculateRhythm" data-rule-id="calculate-rhythm" type="checkbox" aria-label="Calculate Rhythm"> Calculate Rhythm</label><label class="rules-toggle"><input id="mainRuleInvisibleFocal" data-rule-id="invisible-focal" type="checkbox" aria-label="Invisible focal piece"> Invisible focal piece</label><label class="rules-toggle"><input id="mainRuleInvisibleGhost" data-rule-id="invisible-ghost" type="checkbox" aria-label="Invisible ghost piece"> Invisible ghost piece</label><label class="rules-toggle"><input id="mainRuleColoredGhost" data-rule-id="colored-ghost" type="checkbox" aria-label="Colored ghost piece"> Colored ghost piece</label>
             </div>
           </section>
-          <section class="trainer-card" aria-labelledby="trainingSignalTitle">
+          <section class="trainer-card" aria-labelledby="trainingSignalTitle" data-content-region="training-signal">
             <h2 id="trainingSignalTitle">Training signal</h2>
             <p style="margin:0;color:#91879e;font-size:11px;line-height:1.5">#1 keeps the normal stacker rules, while the training layer measures clean 180° execution and placement quality.</p>
           </section>
