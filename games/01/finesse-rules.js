@@ -144,10 +144,11 @@ export function selectFinesseTarget(targets,selector){
 // rotated deterministically so the trainer covers the available placements
 // without depending on object/map insertion order or randomness.
 export function chooseTrainingTarget(targets,{pieceIndex=0,pieceType='',maxCost=2,seed=0}={}){
-  const list=(targets||[]).map(target=>({
-    ...target,
-    normalized:normalizeFinesseTarget(target)
-  })).filter(target=>target.normalized&&Number.isFinite(target.cost)&&target.cost<=maxCost);
+  const list=(targets||[]).map(target=>{
+    const orientation=Number.isInteger(target?.o)?((target.o%4)+4)%4:null;
+    const allowNegativeX=pieceType==='I'&&(orientation===1||orientation===3);
+    return {...target,normalized:normalizeFinesseTarget(target,10,{allowNegativeX})};
+  }).filter(target=>target.normalized&&Number.isFinite(target.cost)&&target.cost<=maxCost);
   if(!list.length)return null;
   const highest=Math.max(...list.map(target=>target.cost));
   const eligible=list.filter(target=>target.cost===highest)
