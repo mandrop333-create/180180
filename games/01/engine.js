@@ -77,20 +77,7 @@ export class Trainer {
     else{this.holdType=current;this.ensureQueue();this.spawn();}
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
-  setFinesseEnabled(enabled){this.finesseEnabled=!!enabled;this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;if(this.finesseEnabled)this.generateFinessePrompt();else this.finesseActions=[];this.emitState();}
-  finesseInput(action,phase='press'){
-    if(!this.finesseEnabled||!this.finesseActions.length||this.finesseFaulted)return false;
-    const expected=this.finesseActions[this.finesseProgress];
-    if(!expected)return false;
-    const expectedAction=typeof expected==='string'?expected:expected.action;
-    const expectedMode=typeof expected==='string'?'tap':expected.mode;
-    if(action!==expectedAction)return this.finesseFault();
-    if(expectedMode==='das'&&phase!=='dasComplete'){if(phase==='press'){this.finesseDASPending=true;this.emitState();}return true;}
-    if(expectedMode==='tap'&&phase!=='press')return true;
-    this.finesseProgress++;this.finesseDASPending=false;
-    if(this.finesseProgress>=this.finesseActions.length)this.say('Finesse complete');
-    this.emitState();
-    return true;
+  setFinesseEnabled(enabled){this.finesseEnabled=false;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;this.finesseDASPending=false;this.emitState();
   }
   finesseFault(){
     if(this.finesseFaulted)return;
