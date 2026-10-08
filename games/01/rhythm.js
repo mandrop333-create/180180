@@ -66,12 +66,15 @@ export class RhythmTracker {
     const counts={};
     for(const e of events)counts[e.action]=(counts[e.action]||0)+1;
     const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-    let pattern='No clear input pattern';
+    const horizontal=(counts.left||0)+(counts.right||0); const rotations=(counts['rotate cw']||0)+(counts['rotate ccw']||0);
+    let pattern='No tracked input activity during the slowdown';
     if(counts['180'])pattern='180° rotation during placement';
-    else if(counts['rotate cw']||counts['rotate ccw'])pattern='rotation + movement during placement';
-    else if((counts.left||0)+(counts.right||0)>=5)pattern='repeated horizontal corrections';
+    else if(horizontal>=5)pattern='repeated horizontal corrections';
+    else if(rotations>=2)pattern='multiple rotation corrections';
+    else if(rotations)pattern='rotation during placement';
     else if(counts.hold)pattern='Hold followed by placement';
     else if(counts.soft)pattern='soft-drop activity';
+    else if(counts['hard drop']||counts.hard)pattern='hard drop with no other tracked input';
     const timeline=events.map(e=>e.t).filter(Number.isFinite);
     let longestGap=0;
     if(timeline.length){
