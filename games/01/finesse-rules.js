@@ -81,6 +81,13 @@ export function stateKey(piece){
   return piece.x+','+piece.y+','+piece.o;
 }
 
+export function wallX(piece,dir,moveHorizontal){
+  if(!piece||dir!==-1&&dir!==1||typeof moveHorizontal!=='function')return null;
+  const p={...piece};
+  while(moveHorizontal(p,dir)){}
+  return p.x;
+}
+
 export function routeCost(route=[]){
   let cost=0;
   for(const step of route)cost+=finesseInputCost(typeof step==='string'?step:step?.action);
