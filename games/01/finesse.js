@@ -11,15 +11,15 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
   const start=copyPiece(piece);
   const actions=[
-    {action:'left',mode:'tap',apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
-    {action:'right',mode:'tap',apply:p=>{const n=copyPiece(p);return move(n,1,0,board,W,H,cellsFor)?n:null;}},
-    {action:'cw',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
-    {action:'ccw',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
+    {action:'left',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
+    {action:'right',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,1,0,board,W,H,cellsFor)?n:null;}},
+    {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
+    {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
   ];
-  if(profile?.supportsDirectHalfTurn!==false){
-    actions.push({action:'half',mode:'tap',apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
+  if(profile?.supportsDirectHalfTurn===true){
+    actions.push({action:'half',mode:'tap',cost:Number.isFinite(profile.halfTurnCost)?profile.halfTurnCost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
   }
-  const wallAction=(dir,action)=>({action,mode:'das',apply:p=>{
+  const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
     const n=copyPiece(p);let moved=false;
     while(move(n,dir,0,board,W,H,cellsFor))moved=true;
     return moved?n:null;
@@ -45,7 +45,9 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
     if(current.cost>=maxCost)continue;
     for(const step of actions){
       const next=step.apply(current.piece);if(!next)continue;
-      const cost=current.cost+1,key=stateKey(next);
+      const stepCost=Number.isFinite(step.cost)?step.cost:Infinity;
+      if(!Number.isFinite(stepCost)||current.cost+stepCost>maxCost)continue;
+      const cost=current.cost+stepCost,key=stateKey(next);
       if(best.has(key)&&best.get(key)<=cost)continue;
       best.set(key,cost);
       queue.push({piece:next,cost,route:[...current.route,{action:step.action,mode:step.mode}]});
