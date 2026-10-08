@@ -72,7 +72,7 @@ body{min-height:100vh}
 .mini-home{text-align:center;margin-bottom:12px}.mini-home-number{color:#8e7fa6;font:800 10px ui-monospace,monospace;letter-spacing:.18em}.mini-home-title{margin:5px 0 4px;color:#e8ddfa;font:900 20px/1 ui-monospace,monospace}.mini-home-description{margin:0;color:#81778b;font-size:11px}
 .homepage-game-first .board-column{display:flex;flex-direction:column;align-items:center}
 .board-wrap{box-shadow:0 24px 60px #0008}
-.board{--cell:28px;width:300px;height:600px}
+.board{--cell:28px;width:300px;height:600px;position:relative}
 .trainer-actions{margin-top:12px}
 .trainer-controls{max-width:300px}
 .settings-checks{display:grid;gap:7px}.settings-checks label{display:flex;align-items:center;gap:8px;color:#cfc6dc;font-size:11px}.settings-checks input{accent-color:#a78bfa}.action-button{border:1px solid #51446e;border-radius:7px;background:#17151d;color:#eee8fa;padding:7px 12px;font:800 11px ui-monospace,monospace;cursor:pointer}
@@ -139,7 +139,7 @@ body{min-height:100vh}
           <section class="trainer-card rhythm-card" id="rhythmCard" hidden aria-label="Calculate Rhythm results"><h2>Calculate Rhythm</h2><div id="rhythmReport" class="rhythm-report"></div></section>
         </aside>
         <section class="board-column" aria-labelledby="trainerBoardTitle"><h2 class="sr-only" id="trainerBoardTitle">Tetris training board</h2>
-          <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris training board"></div></div>
+          <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris training board"><div class="finesse-prompt" id="finessePrompt" hidden aria-live="polite" aria-label="Finesse Trainer required inputs"></div></div></div>
           <div class="trainer-actions"><div class="trainer-controls" aria-label="Keyboard controls">← → move · ↓ soft drop · Space hard drop · X / Z rotate · A 180 · Shift hold</div></div>
         </section>
         <aside class="trainer-side">
