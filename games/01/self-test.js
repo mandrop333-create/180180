@@ -53,6 +53,14 @@ export function runTrainerSelfTest(){
     assert(repeats===test.repeats,test.name+' timing contract failed');
   }
 
+  // Gravity contract: falling is state evolution, never a deliberate finesse input.
+  assert(finesseInputCost('gravity')===1,'unknown actions must not silently become free');
+  assert(routeCost([{action:'left'},{action:'right'}])===2,'gravity-independent input cost baseline failed');
+  assert(FINESSE_PROFILES.SRS_0G_60HZ.hardDropCost===0,'0G profile hard drop must remain outside finesse cost');
+  assert(FINESSE_PROFILES.SRS_20G.hardDropCost===0,'20G profile hard drop must remain outside finesse cost');
+  assert(profileFor({gravity:Infinity,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_20G,'20G profile selection failed');
+  assert(profileFor({gravity:800,rotationSystem:'srs'})===FINESSE_PROFILES.SRS_0G_60HZ,'0G/normal profile selection failed');
+
   // Horizontal finesse contract: tap/DAS are one deliberate input each;
   // wall completion requires an active hold; extra repeats are not new inputs.
   const horizontalCases=[
