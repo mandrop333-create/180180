@@ -118,6 +118,8 @@ export function runTrainerSelfTest(){
   assert(finesseActionCost('left','tap')===1,'tap movement must cost one input');
   assert(finesseActionCost('right','das')===1,'DAS movement must cost one deliberate input');
   assert(finesseActionCost('hard','das')===0,'hard drop must remain outside finesse cost');
+  assert(routeCost([{action:'hard'}],{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,hardDropCost:1})===1,
+    'route cost must honor the active profile hard-drop cost');
   assert(finesseActionCost('left','invalid')===Infinity,'invalid finesse mode must be rejected');
   assert(finesseActionCost('left','DAS',FINESSE_PROFILES.SRS_NORMAL)===1,'input modes must normalize case before profile checks');
   assert(finesseActionCost('left','das',{...FINESSE_PROFILES.SRS_NORMAL,dasCountsAsOneInput:false})===Infinity,
