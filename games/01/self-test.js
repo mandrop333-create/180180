@@ -2,6 +2,7 @@ import { PIECE_TYPES, cellsFor, spawnFor } from './pieces.js';
 import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
+import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
 
 function assert(condition,message){if(!condition)throw new Error('180180 self-test: '+message);}
 
@@ -48,6 +49,16 @@ export function runTrainerSelfTest(){
     const elapsed=Math.max(0,test.at-test.das);
     const repeats=test.arr===0?(test.at>=test.das?1:0):(test.at<test.das?0:1+Math.floor(elapsed/test.arr));
     assert(repeats===test.repeats,test.name+' timing contract failed');
+  }
+
+  // Training-rule contract: every implemented UI rule has a complete methodology record.
+  const requiredRuleFields = new Set(TRAINING_RULE_SCHEMA);
+  for (const trainingRule of listTrainingRules()) {
+    for (const field of requiredRuleFields) {
+      assert(trainingRule[field] !== undefined, trainingRule.id + ' is missing rule field ' + field);
+    }
+    assert(trainingRule.status === 'implemented', trainingRule.id + ' is not marked implemented');
+    assert(trainingRule.pillars.length > 0, trainingRule.id + ' has no training pillar');
   }
 
   // Spawn/hold movement contract: a physically held horizontal key gets exactly
