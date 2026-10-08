@@ -118,7 +118,15 @@ export function runTrainerSelfTest(){
   assert(finesseActionCost('right','das')===1,'DAS movement must cost one deliberate input');
   assert(finesseActionCost('hard','das')===0,'hard drop must remain outside finesse cost');
   assert(finesseActionCost('left','invalid')===Infinity,'invalid finesse mode must be rejected');
-
+  assert(finesseActionCost('left','DAS',FINESSE_PROFILES.SRS_NORMAL)===1,'input modes must normalize case before profile checks');
+  assert(finesseActionCost('left','das',{...FINESSE_PROFILES.SRS_NORMAL,dasCountsAsOneInput:false})===Infinity,
+    'profiles without DAS-as-one-input must reject DAS routes');
+  assert(finesseActionCost('half','tap',FINESSE_PROFILES.SRS_NORMAL)===Infinity,
+    'profiles without direct 180 support must reject half-turn inputs');
+  assert(routeCost([{action:'half'}],FINESSE_PROFILES.SRS_NORMAL)===Infinity,
+    'profile-aware route cost must reject unsupported direct 180 inputs');
+  assert(routeCost([{action:'half'}],FINESSE_PROFILES.TETRIO_SRS_PLUS_180)===1,
+    'TETR.IO direct 180 must cost one input');
   // Gravity contract: falling is state evolution, never a deliberate finesse input.
   assert(finesseInputCost('gravity')===0,'gravity must be finesse-neutral');
   assert(finesseInputCost('soft')===0,'soft drop must be finesse-neutral');
