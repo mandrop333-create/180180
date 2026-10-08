@@ -44,7 +44,8 @@ export const FINESSE_ACTIONS=Object.freeze({
 });
 
 export function finesseInputCost(action){
-  return action ? 1 : Infinity;
+  if(!action)return Infinity;
+  return action==='hard'?0:1;
 }
 
 export function landingState(piece,moveDown){
