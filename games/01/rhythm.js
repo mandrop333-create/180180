@@ -26,34 +26,32 @@ export class RhythmTracker {
     if(items.length<3)return {ready:false,reason:'Not enough placements'};
     const sorted=items.map(x=>x.intervalMs).sort((a,b)=>a-b);
     const median=sorted[Math.floor(sorted.length/2)];
-    const inputStats={};
+    const labels={left:'Left',right:'Right','rotate cw':'CW rotation','rotate ccw':'CCW rotation','180':'180° rotation',hold:'Hold',soft:'Soft drop',hard:'Hard drop'};
+    const gaps=[];
     for(const item of items){
       const events=(item.events||[]).filter(e=>Number.isFinite(e.t)).sort((a,b)=>a.t-b.t);
-      for(let i=0;i<events.length;i++){
-        const e=events[i];
-        const prev=i===0?item._start:events[i-1].t;
-        const gap=Math.max(0,e.t-prev);
-        const action=e.action;
-        if(!inputStats[action])inputStats[action]={sum:0,count:0,pieces:{}};
-        inputStats[action].sum+=gap;inputStats[action].count++;
-        inputStats[action].pieces[item.piece]=(inputStats[action].pieces[item.piece]||0)+1;
+      for(let i=1;i<events.length;i++){
+        gaps.push({
+          action:events[i].action,
+          gapMs:events[i].t-events[i-1].t,
+          piece:item.piece||'?',
+          previousAction:events[i-1].action
+        });
       }
     }
-    const labels={left:'Left',right:'Right','rotate cw':'CW rotation','rotate ccw':'CCW rotation','180':'180° rotation',hold:'Hold',soft:'Soft drop','hard drop':'Hard drop'};
-    const inputCandidates=Object.entries(inputStats)
-      .filter(([,s])=>s.count>=2)
-      .map(([action,s])=>{
-        const pieceEntry=Object.entries(s.pieces).sort((a,b)=>b[1]-a[1])[0];
-        return {action,label:labels[action]||action,piece:pieceEntry&&pieceEntry[1]>=2?pieceEntry[0]:'',avgMs:s.sum/s.count,count:s.count};
-      })
-      .sort((a,b)=>b.avgMs-a.avgMs);
-    const slow=inputCandidates[0]||null;
+    gaps.sort((a,b)=>b.gapMs-a.gapMs);
+    const slow=gaps[0]||null;
     return {
       ready:true,
       averageMs:Math.round(items.reduce((s,x)=>s+x.intervalMs,0)/items.length),
       medianMs:Math.round(median),
       pps:Math.round(1000/median*100)/100,
-      slowestInput:slow?{label:slow.label,piece:slow.piece,avgMs:Math.round(slow.avgMs),count:slow.count}:null,
+      slowestInput:slow?{
+        label:labels[slow.action]||slow.action,
+        piece:slow.piece,
+        gapMs:Math.round(slow.gapMs),
+        previous:labels[slow.previousAction]||slow.previousAction
+      }:null,
       outliers:[]
     };
   }
