@@ -206,8 +206,37 @@ export class Trainer {
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
     if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
-    const softHeld=this.downKeys.has(this.binds.soft);if(softHeld){const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;}else{const interval=Math.max(8,this.rules.gravity/factor);this.softAcc+=dt;while(this.softAcc>=interval){this.softAcc-=interval;if(!this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;break;}}}this.gravityAcc=0;}
-    else if(this.rules.gravity!==Infinity){this.softAcc=0;this.gravityAcc+=dt;while(this.gravityAcc>=this.rules.gravity){this.gravityAcc-=this.rules.gravity;if(!this.movePiece(0,1))break;}}
+    // Soft drop owns the vertical clock while held. Horizontal input/DAS
+    // must never reset or suppress that clock, so moving sideways while
+    // holding soft drop cannot make the piece appear to float.
+    const softHeld=this.downKeys.has(this.binds.soft);
+    if(softHeld){
+      const factor=this.rules.softFactors[this.softScale]??1;
+      if(factor===Infinity){
+        while(this.movePiece(0,1,{countSoftDrop:true})){}
+        this.softAcc=0;
+      }else{
+        const interval=Math.max(8,this.rules.gravity/factor);
+        this.softAcc+=dt;
+        while(this.softAcc>=interval){
+          this.softAcc-=interval;
+          if(!this.movePiece(0,1,{countSoftDrop:true})){
+            // We are on the floor. Keep the timer alive for lock-delay
+            // handling instead of treating a blocked soft step as a pause.
+            this.softAcc=0;
+            break;
+          }
+        }
+      }
+      this.gravityAcc=0;
+    }else if(this.rules.gravity!==Infinity){
+      this.softAcc=0;
+      this.gravityAcc+=dt;
+      while(this.gravityAcc>=this.rules.gravity){
+        this.gravityAcc-=this.rules.gravity;
+        if(!this.movePiece(0,1))break;
+      }
+    }
     // Soft drop never suppresses horizontal handling. TETR.IO keeps
     // left/right DAS/ARR active while soft drop is held, including during
     // lock delay after the piece reaches the floor.
