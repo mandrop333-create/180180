@@ -397,7 +397,16 @@ export function runTrainerSelfTest(){
       }
     }
   }
-  assert(checkedPlans>100,'planner regression matrix did not cover enough states');
+  const oneInputTargets=enumerateFinesseTargets({
+    piece:{type:'T',x:3,y:0,o:0},board:emptyBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),
+    profile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxCost:1}
+  });
+  assert(oneInputTargets.length>0&&oneInputTargets.every(target=>target.cost<=1),
+    'planner must honor the active profile maximum input cost');
+
+    assert(checkedPlans>100,'planner regression matrix did not cover enough states');
 
   // Independent bounded-route oracle. Enumerate every legal action ordering
   // through two deliberate inputs and compare each target's minimum cost with
