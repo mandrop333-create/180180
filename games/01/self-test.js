@@ -238,6 +238,12 @@ export function runTrainerSelfTest(){
   });
   assert(allRegressionRoutes.length===routeRegressionTargets.length,
     'minimumRoutesForTargets must return every reachable physical target, not just one selected plan');
+  assert(allRegressionRoutes.every(target=>Array.isArray(target.routes)&&target.routes.length>=1),
+    'every reachable target must expose at least one minimum-cost route');
+  assert(allRegressionRoutes.every(target=>target.routes.every(route=>route.length===target.cost)),
+    'every retained route must match the target minimum cost');
+  assert(allRegressionRoutes.every(target=>new Set(target.routes.map(route=>route.map(step=>step.action+':'+step.mode).join('|'))).size===target.routes.length),
+    'equal-cost route candidates must be distinct by action and input mode');
 
   // O-piece regression: a square has no meaningful rotation. Even when the
   // supplied rotation transition would mutate orientation metadata, the
