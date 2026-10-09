@@ -429,37 +429,60 @@ try {
           });
           result.push({ type, boardKind, ...before, ...replay, ...placed });
 
-          // Re-run one distinct equal-cost route for the same physical target.
-          // This specifically proves the runtime accepts alternate optimal
-          // routes instead of only accepting the planner's canonical route.
-          const canonicalKey = route => route.map(step => step.action + ':' + (step.mode || 'tap')).join('|');
-          const alternateRoute = before.routes.find(route => canonicalKey(route) !== canonicalKey(before.actions));
-          if (alternateRoute) {
-            await page.evaluate(({ boardKind, type }) => {
-              const t = window.trainer;
-              t.reset();
-              t.emptyBoard();
-              if (boardKind === 'split-well') {
-                for (let x = 0; x < t.W; x++) if (x !== 4 && x !== 5) t.board[t.H - 1][x] = 1;
-                for (let x = 0; x < t.W; x++) if (![3, 4, 5, 6].includes(x)) t.board[t.H - 2][x] = 1;
-              } else if (boardKind === 'side-towers') {
-                for (let y = t.H - 4; y < t.H; y++) t.board[y][0] = 1;
-                for (let y = t.H - 2; y < t.H; y++) t.board[y][1] = 1;
-                for (let y = t.H - 3; y < t.H; y++) t.board[y][8] = 1;
-                for (let y = t.H - 5; y < t.H; y++) t.board[y][9] = 1;
-              }
-              t.gameOver = false;
-              t.piece = { type, x: 4, y: 0, o: 0 };
-              t.generateFinessePrompt();
-              t.render();
-              const toggle = document.querySelector('#mainRuleFinesse');
-              toggle.checked = true;
-              toggle.dispatchEvent(new Event('change', { bubbles: true }));
-            }, { boardKind, type });
-            const alternateReplay = await page.evaluate(route => {
+          // Select a target with multiple minimum-cost routes across the
+          // complete reachable target set, not only the currently chosen
+          // training target (which may have a single optimal route).
+          const alternatePlan = await page.evaluate(async ({ boardKind, type }) => {
+            const t = window.trainer;
+            t.reset();
+            t.emptyBoard();
+            if (boardKind === 'split-well') {
+              for (let x = 0; x < t.W; x++) if (x !== 4 && x !== 5) t.board[t.H - 1][x] = 1;
+              for (let x = 0; x < t.W; x++) if (![3, 4, 5, 6].includes(x)) t.board[t.H - 2][x] = 1;
+            } else if (boardKind === 'side-towers') {
+              for (let y = t.H - 4; y < t.H; y++) t.board[y][0] = 1;
+              for (let y = t.H - 2; y < t.H; y++) t.board[y][1] = 1;
+              for (let y = t.H - 3; y < t.H; y++) t.board[y][8] = 1;
+              for (let y = t.H - 5; y < t.H; y++) t.board[y][9] = 1;
+            }
+            t.gameOver = false;
+            t.piece = { type, x: 4, y: 0, o: 0 };
+            const [{ enumerateFinesseTargets }, { move }, { tryRotate }] = await Promise.all([
+              import('/games/01/finesse.js'),
+              import('/games/01/collision.js'),
+              import('/games/01/rotation.js')
+            ]);
+            const profile = t.mode.rules?.finesseProfile;
+            const candidates = enumerateFinesseTargets({
+              piece: { ...t.piece }, board: t.board, W: t.W, H: t.H, cellsFor: t.cellsFor,
+              move, tryRotate, maxCost: profile?.maxCost ?? 2, profile
+            });
+            const candidate = candidates.find(item => item.routes.length > 1);
+            if (!candidate) return null;
+            const routeKey = route => route.map(step => step.action + ':' + (step.mode || 'tap')).join('|');
+            const alternateRoute = candidate.routes.find(route => routeKey(route) !== routeKey(candidate.route));
+            if (!alternateRoute) return null;
+            // Install the real planner's equal-cost route candidates for this
+            // physical target so the normal input observer and lock verifier
+            // are exercised, rather than bypassed by a test-only acceptance.
+            t.finesseTarget = { ...candidate.target };
+            t.finesseActions = candidate.route.map(step => ({ ...step }));
+            t.finesseRouteCandidates = candidate.routes.map(route => ({
+              route: route.map(step => ({ ...step })), progress: 0, pendingDasAction: null
+            }));
+            t.finesseProgress = 0;
+            t.finesseFaulted = false;
+            t.finesseMistakes = 0;
+            t.finessePlacementResolved = false;
+            t.finesseDASPending = null;
+            t.emitState();
+            t.render();
+            return { target: { ...candidate.target }, route: alternateRoute, canonical: candidate.route, cost: candidate.cost };
+          }, { boardKind, type });
+          if (alternatePlan) {
+            const alternateReplay = await page.evaluate(({ route, target }) => {
               const t = window.trainer;
               const keyEvent = code => ({ code, preventDefault() {} });
-              const target = { ...t.finesseTarget };
               for (const step of route) {
                 const code = t.binds[step.action];
                 t.handleKeydown(keyEvent(code));
@@ -471,27 +494,25 @@ try {
               const actualBeforeDrop = { ...t.piece };
               t.handleKeydown(keyEvent(t.binds.hard));
               return {
-                target,
-                progress,
-                actionCount: route.length,
-                faulted,
-                finessePerfect: t.stats.finessePerfect,
-                finesseFaults: t.stats.finesseFaults,
+                target, progress, actionCount: route.length, faulted,
+                finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults,
                 actualBeforeDrop
               };
-            }, alternateRoute);
-            const targetMatches = alternateReplay.target.x === before.target.x &&
-              alternateReplay.target.o === before.target.o &&
-              alternateReplay.target.y === before.target.y;
-            assertCheck('finesse-alternate-optimal-route-' + label,
-              targetMatches && alternateReplay.progress === alternateReplay.actionCount &&
+            }, alternatePlan);
+            const targetMatches = alternateReplay.target.x === alternatePlan.target.x &&
+              alternateReplay.target.o === alternatePlan.target.o &&
+              alternateReplay.target.y === alternatePlan.target.y;
+            const alternateRoutePassed = targetMatches &&
+              alternateReplay.progress === alternateReplay.actionCount &&
               !alternateReplay.faulted && alternateReplay.finessePerfect === 1 &&
-              alternateReplay.finesseFaults === 0,
-              JSON.stringify({targetMatches, route:alternateRoute, result:alternateReplay}));
-            result[result.length - 1] = { ...result[result.length - 1], alternateRoute,
-              alternateRoutePassed: targetMatches && alternateReplay.progress === alternateReplay.actionCount &&
-                !alternateReplay.faulted && alternateReplay.finessePerfect === 1 &&
-                alternateReplay.finesseFaults === 0 };
+              alternateReplay.finesseFaults === 0;
+            assertCheck('finesse-alternate-optimal-route-' + label, alternateRoutePassed,
+              JSON.stringify({targetMatches, plan:alternatePlan, result:alternateReplay}));
+            result[result.length - 1] = { ...result[result.length - 1],
+              alternateRoute: alternatePlan.route, alternateRoutePassed };
+          } else {
+            result[result.length - 1] = { ...result[result.length - 1],
+              alternateRoute: null, alternateRoutePassed: false };
           }
         }
         assertCheck('finesse-alternate-optimal-route-coverage',
