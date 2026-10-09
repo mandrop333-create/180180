@@ -246,6 +246,7 @@ try {
     t.stats.finesseFaults=0;
     t.stats.piecesPlaced=0;
     t.stats.linesCleared=0;
+    t.mode.rules.finesseProfile={...t.mode.rules.finesseProfile,maxCost:2};
     t.generateFinessePrompt();
     t.lockAcc=800;
     t.emitState();
