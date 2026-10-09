@@ -518,6 +518,86 @@ try {
         assertCheck('finesse-alternate-optimal-route-coverage',
           result.some(r => r.alternateRoute) && result.filter(r => r.alternateRoute).every(r => r.alternateRoutePassed),
           'At least one distinct equal-cost route must be replayed, and every tested alternative must lock the same target without a finesse fault');
+
+        // The same one-cell wall landing can be reached either by a tap or by
+        // holding the horizontal key through DAS. Prove the observer resolves
+        // both input interpretations as perfect for the identical target.
+        const tapDasResult = await page.evaluate(async () => {
+          const t = window.trainer;
+          const [{ enumerateFinesseTargets }, { move }, { tryRotate }] = await Promise.all([
+            import('/games/01/finesse.js'),
+            import('/games/01/collision.js'),
+            import('/games/01/rotation.js')
+          ]);
+          const keyEvent = code => ({ code, preventDefault() {} });
+          const profile = { ...(t.mode.rules?.finesseProfile || {}), maxCost: 1 };
+          const prepare = () => {
+            t.reset();
+            t.emptyBoard();
+            t.gameOver = false;
+            t.piece = { type: 'O', x: 7, y: 0, o: 0 };
+            t.finesseEnabled = true;
+            t.generateFinessePrompt();
+            const candidates = enumerateFinesseTargets({
+              piece: { ...t.piece }, board: t.board, W: t.W, H: t.H, cellsFor: t.cellsFor,
+              move, tryRotate, maxCost: 1, profile
+            });
+            const candidate = candidates.find(item => item.target.x === 8 && item.target.o === 0 &&
+              item.routes.some(route => route.length === 1 && route[0].action === 'right' && route[0].mode === 'tap') &&
+              item.routes.some(route => route.length === 1 && route[0].action === 'right' && route[0].mode === 'das'));
+            if (!candidate) return null;
+            t.finesseTarget = { ...candidate.target };
+            t.finesseActions = candidate.route.map(step => ({ ...step }));
+            t.finesseRouteCandidates = candidate.routes.map(route => ({
+              route: route.map(step => ({ ...step })), progress: 0, pendingDasAction: null
+            }));
+            t.finesseProgress = 0;
+            t.finesseFaulted = false;
+            t.finessePlacementResolved = false;
+            t.finesseDASPending = null;
+            t.finesseMistakes = 0;
+            t.stats.finessePerfect = 0;
+            t.stats.finesseFaults = 0;
+            t.moveState = { dir: 0, elapsed: 0, repeatElapsed: 0, startedAt: 0, nextRepeatAt: Infinity };
+            t.render();
+            return { target: { ...candidate.target }, modes: candidate.routes.map(route => route[0].mode) };
+          };
+          const runTap = () => {
+            const plan = prepare();
+            if (!plan) return { available: false };
+            t.handleKeydown(keyEvent(t.binds.right));
+            t.handleKeyup(keyEvent(t.binds.right));
+            const progress = t.finesseProgress;
+            const faulted = t.finesseFaulted;
+            t.handleKeydown(keyEvent(t.binds.hard));
+            return { available: true, ...plan, progress, faulted,
+              perfect: t.stats.finessePerfect, faults: t.stats.finesseFaults };
+          };
+          const tap = runTap();
+          const dasPlan = prepare();
+          let das = { available: false };
+          if (dasPlan) {
+            t.handleKeydown(keyEvent(t.binds.right));
+            t.tick(t.moveState.startedAt + t.das() + 5);
+            const progress = t.finesseProgress;
+            const faulted = t.finesseFaulted;
+            t.handleKeyup(keyEvent(t.binds.right));
+            t.handleKeydown(keyEvent(t.binds.hard));
+            das = { available: true, ...dasPlan, progress, faulted,
+              perfect: t.stats.finessePerfect, faults: t.stats.finesseFaults };
+          }
+          return { tap, das };
+        });
+        const tapDasPassed = tapDasResult.tap.available && tapDasResult.das.available &&
+          tapDasResult.tap.target.x === tapDasResult.das.target.x &&
+          tapDasResult.tap.target.o === tapDasResult.das.target.o &&
+          tapDasResult.tap.target.y === tapDasResult.das.target.y &&
+          tapDasResult.tap.progress === 1 && tapDasResult.das.progress === 1 &&
+          !tapDasResult.tap.faulted && !tapDasResult.das.faulted &&
+          tapDasResult.tap.perfect === 1 && tapDasResult.tap.faults === 0 &&
+          tapDasResult.das.perfect === 1 && tapDasResult.das.faults === 0;
+        assertCheck('finesse-tap-vs-das-same-target', tapDasPassed,
+          JSON.stringify(tapDasResult));
         assertCheck('finesse-route-present', result.every(r => r.target !== null && Array.isArray(r.actions)), 'Each piece on each test board must receive an explicit route and landing target');
         assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.filter(step => step.action !== 'hard').length && !r.faultedAfterInputs), 'Every deliberate movement/rotation action must advance without a fault; hard drop is verified separately and is not part of the finesse cost');
         assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for all piece/board combinations');
