@@ -7,7 +7,7 @@ workers_dev = true
 # before deploying. This Worker is intentionally separate from 180trainertool.
 [[kv_namespaces]]
 binding = "REPORTS"
-id = "4029335afe92ac8a52a391ab4eff155"
+id = "4029335afe924ac8a52a391ab4eff155"
 
 [vars]
 ALLOWED_ORIGINS = "https://180436.xyz,https://www.180436.xyz,http://localhost:4173,http://127.0.0.1:4173"
