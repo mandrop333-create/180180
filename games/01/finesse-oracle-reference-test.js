@@ -222,6 +222,27 @@ export function runIndependentFinesseOracleTests() {
       fixtures++;
     }
   }
+  // Weighted-cost regression: the search must not assume every action has
+  // unit cost. A direct half-turn costing 3 must lose to two quarter-turns
+  // costing 1 each for the same physical landing.
+  const weightedProfile = Object.freeze({...PROFILE,halfTurnCost:3});
+  const weightedPiece = {type:'T',x:3,y:0,o:0};
+  const weightedCells = () => [[0,0]];
+  const weightedMove = (p,dx,dy) => {
+    if(p.x+dx<0||p.x+dx>=W||p.y+dy<0||p.y+dy>=H)return false;
+    p.x+=dx;p.y+=dy;return true;
+  };
+  const weightedRotate = (p,delta) => {p.o=((p.o+delta)%4+4)%4;return true;};
+  const weighted = enumerateFinesseTargets({
+    piece:weightedPiece,board:empty,W,H,cellsFor:weightedCells,
+    move:weightedMove,tryRotate:weightedRotate,maxCost:3,profile:weightedProfile
+  });
+  const weightedHalfTarget = weighted.find(item=>item.target.x===3&&item.target.o===2&&item.target.y===19);
+  assert(weightedHalfTarget&&weightedHalfTarget.cost===2,
+    'cost-ordered search failed: two quarter-turns should beat a cost-3 direct half-turn');
+  assert(weightedHalfTarget.routes.some(route=>route.length===2&&route.every(step=>step.action==='cw'||step.action==='ccw')),
+    'weighted shortest route did not preserve the two-quarter-turn solution');
+
   // Extend beyond the trainer's default two-input envelope to validate the
   // shortest-path formula itself, including route and target determinism.
   let extendedFixtures = 0;
