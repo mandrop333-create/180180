@@ -467,6 +467,8 @@ export function runTrainerSelfTest(){
   gatedDASRuntime.moveState.startedAt=1000;
   gatedDASRuntime.moveState.nextRepeatAt=1100;
   gatedDASRuntime.lastTime=1000;
+  // This unit test exercises the engine clock without constructing DOM nodes.
+  gatedDASRuntime.flushRender=()=>{};
   gatedDASRuntime.tick(1050);
   assert(gatedDASRuntime.finesseRouteCandidates.some(candidate=>
     candidate.pendingDasAction==='right'&&candidate.progress===0),
