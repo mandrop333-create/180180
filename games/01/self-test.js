@@ -121,6 +121,19 @@ export function runTrainerSelfTest(){
   assert(routeCost([{action:'hard'}],{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,hardDropCost:1})===1,
     'route cost must honor the active profile hard-drop cost');
   assert(finesseActionCost('left','invalid')===Infinity,'invalid finesse mode must be rejected');
+  assert(finesseActionCost('left','')===Infinity,'empty explicit input modes must be rejected');
+  assert(finesseActionCost('left',null)===Infinity,'null explicit input modes must be rejected');
+  assert(routeCost([{action:'left'}])===1,'omitted input mode must retain the documented tap default');
+  assert(routeCost([{action:'left',mode:''}])===Infinity,'an explicitly empty route mode must not be silently treated as tap');
+  assert(routeCost([{action:'left',mode:null}])===Infinity,'an explicitly null route mode must not be silently treated as tap');
+  assert(finesseActionCost('half','tap',{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,halfTurnCost:0})===Infinity,
+    'zero-cost direct 180 profiles must be rejected');
+  assert(finesseActionCost('half','tap',{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,halfTurnCost:-1})===Infinity,
+    'negative-cost direct 180 profiles must be rejected');
+  assert(finesseActionCost('hard','tap',{...FINESSE_PROFILES.SRS_NORMAL,hardDropCost:-1})===Infinity,
+    'negative hard-drop profile costs must be rejected');
+  assert(finesseActionCost('hard','tap',{...FINESSE_PROFILES.SRS_NORMAL,hardDropCost:0.5})===Infinity,
+    'fractional hard-drop profile costs must be rejected');
   assert(finesseActionCost('cw','das')===Infinity,'DAS mode must be restricted to horizontal movement');
   assert(finesseActionCost('half','das')===Infinity,'direct 180 must remain a tap, not a DAS input');
   assert(finesseActionCost('hard','das')===0&&finesseActionCost('soft','das')===0,
