@@ -59,7 +59,7 @@ try {
       t.reset();
       t.rules.gravity=100;
       t.rules.lockDelay=250;
-      t.rules.das=0;
+      t.rules.das=80;
       t.rules.arr=0;
       t.rules.dcd=0;
       t.board=board.map(row=>[...row]);
@@ -153,7 +153,7 @@ try {
     t.reset();
     t.rules.gravity=Infinity;
     t.rules.lockDelay=1000;
-    t.rules.das=0;
+    t.rules.das=80;
     t.rules.arr=0;
     t.rules.dcd=0;
     t.board=board.map(row=>[...row]);
