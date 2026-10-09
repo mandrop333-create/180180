@@ -225,3 +225,19 @@ The next investigation found a reproducible extraction of the TETR.IO client’s
 - The extraction also contains other special-piece tables (`i2_kicks`, `i3_kicks`, `l3_kicks`, etc.). They are outside the current seven-standard-tetromino trainer scope unless the game explicitly supports those piece types.
 
 **Decision:** this materially strengthens the source trail but does not yet authorize a table replacement. Before code changes, obtain the current client asset or verify the pinned asset is still the target ruleset; then map each source transition to the trainer's rotation convention and test collision/first-success order against controlled cases. The current static fixtures may be self-consistent but are not yet proven equivalent to the client. Merge/deploy remains blocked.
+
+
+## Rotation algorithm audit — client pivot and baseline attempt — 2026-10-09
+
+The version-pinned movement-snapshot generator exposes a crucial detail that a raw kick-array comparison misses: TETR.IO does not simply add a listed kick to the trainer's `(x,y)` origin.
+
+- The generator parses both `tetrominoes` and `kicksets` from the same client bundle and models the piece matrix's `dx/dy`, orientation-specific `additional_offsets`, and source-to-destination offset delta.
+- For every rotation, it first tests the destination after applying the `additional_offsets` delta **without a kick**. Only if that baseline candidate collides does it enumerate the transition's kick offsets in order.
+- The kick candidate is computed from the client-space position plus the kick offset plus the source/destination `additional_offsets` delta. Its vertical coordinate also passes through the client generator's floor/0.1 handling before collision testing. The generator then converts the result back to native piece coordinates.
+- The independent snapshot generator emits empty-board and randomized-board cases across every extracted kickset, all seven standard pieces, four starting orientations, and CCW/CW/direct-180 actions. Its companion test compares exact success/failure, resulting orientation and coordinates, and kick index. This is a more suitable validation shape than only forcing our own static candidate arrays.
+- Source inspected: `EdamAme-x/tetris-analyzes/scripts/generate-tetrio-movement-snapshots.ts`, pinned at commit `712dc10be43d5a6c54a35b62608ab9f4a2eaa324`: https://github.com/EdamAme-x/tetris-analyzes/blob/712dc10be43d5a6c54a35b62608ab9f4a2eaa324/scripts/generate-tetrio-movement-snapshots.ts
+- Its generated oracle test is at https://github.com/EdamAme-x/tetris-analyzes/blob/712dc10be43d5a6c54a35b62608ab9f4a2eaa324/tests/tetrio-movement-snapshot.test.ts.
+
+**Implication for this rebuild:** our current `tryRotate` applies each table offset directly to our piece origin and has no per-orientation `additional_offsets` adjustment or separate un-kicked baseline candidate. That may be correct only if `pieces.js`'s chosen local geometry and the selected offsets have already absorbed those semantics. Existing tests do not prove that equivalence. We must explicitly derive and test the coordinate transform against client snapshots before changing kick arrays; otherwise we risk fixing a table while leaving the rotation origin wrong.
+
+**Next gate:** reproduce a small, pinned set of client movement cases (at minimum every piece × orientation × direction on an empty board, plus kick-required and failed rotations), map client matrix coordinates to trainer world cells, and compare the complete resulting state. Expand to the randomized-board corpus only after the coordinate transform is demonstrated. No production table change is authorized by this audit alone.
