@@ -175,3 +175,13 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - Independent Playwright route fixtures, planner-oracle comparison, and active-gravity timing checks passed: [run 38000877165](https://github.com/mandrop333-create/180180/actions/runs/38000877165).
 - The prompt-requested duplicate Playwright workflow remained queued; the independent Playwright workflow above completed successfully and is the verification evidence used here.
 - No merge or deployment. The remaining structural work is external verification of all kick/pivot conventions and the full legacy-import audit.
+
+## Rotation-transition contract — 2026-10-09 (commit `98f162ba8b5d3ba3fc51cf78b41d2eae4c728192`)
+
+- The planner now validates a successful rotation adapter call before admitting an edge: the result must retain the piece type, use integer coordinates/orientation, and reach the requested orientation. A callback that returns success without rotating is rejected as a phantom transition.
+- Added an independent-oracle regression fixture for a successful-but-no-op rotation callback.
+- Planner regression tests passed: [run 38001241671](https://github.com/mandrop333-create/180180/actions/runs/38001241671).
+- Independent geometry/kick/weighted-cost oracle passed: [run 38001241614](https://github.com/mandrop333-create/180180/actions/runs/38001241614).
+- Independent Playwright route fixtures, planner-prompt oracle comparison, and active-gravity/DAS timing checks passed: [run 38001241618](https://github.com/mandrop333-create/180180/actions/runs/38001241618).
+- The separate prompt-requested workflow is trigger-gated to manual dispatch, pull requests, or an authorized `/playwright` PR comment; it is not the branch-push verification gate.
+- The comprehensive legacy-import audit is not yet certified complete, so `finesse.js` remains as a compatibility facade. No merge or deployment.
