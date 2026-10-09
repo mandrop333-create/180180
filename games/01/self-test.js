@@ -230,12 +230,19 @@ export function runTrainerSelfTest(){
     piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,seed:0,
     move:(p,dx,dy)=>{if(dx&& (p.x+dx<0||p.x+dx>9))return false;p.x+=dx;p.y+=dy;return p.y<20;},
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
-    cellsFor:()=>[]
+    cellsFor:()=>[[0,0]]
   });
   assert(planned&&planned.cost===planned.actions.length,'planner cost must equal deliberate route length');
   assert(planned.actions.every(step=>['left','right','cw','ccw','half'].includes(step.action)),'planner must not count gravity or hard drop as finesse input');
   assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
+  const invalidLockPlan=planFinesse({
+    piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,
+    move:(p,dx,dy)=>{p.x+=dx;p.y+=dy;return p.y<20;},
+    tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
+    cellsFor:()=>[]
+  });
+  assert(invalidLockPlan===null,'planner must fail closed when no landing can be locked');
 
   // Minimum-route regression: a longer route must never replace a shorter
   // route merely because its action labels sort earlier alphabetically.
