@@ -5,7 +5,10 @@ import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { collides } from './collision.js';
 
 export function tryRotate(piece, delta, board, W, H, cellsFor, onHalfTurn, halfTurnKicks = null) {
-  if (!piece) return false;
+  // The public action vocabulary is quarter-turn CW/CCW or a direct 180.
+  // Reject zero and arbitrary deltas rather than treating them as a zero-kick
+  // rotation; this keeps the transition graph aligned with actual inputs.
+  if (!piece || ![1, -1, 2, -2].includes(delta)) return false;
 
   const from = piece.o;
   const to = targetOrientation(from, delta);
