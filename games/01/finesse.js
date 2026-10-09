@@ -5,11 +5,19 @@ import { placementIdentity,normalizeFinesseTarget,FINESSE_PROFILES } from './fin
 // to the real collision/rotation functions.
 function copyPiece(piece){return {...piece};}
 function routeKey(route){return route.map(step=>step.action+':'+(step.mode||'tap')).join('|');}
-function costLimit(maxCost,profile){return Number.isFinite(maxCost)?maxCost:(Number.isFinite(profile?.maxCost)?profile.maxCost:2);}
+function costLimit(maxCost,profile){
+  // An omitted limit may use the active profile/default. An explicitly
+  // malformed limit must not silently widen or narrow the finesse envelope.
+  const requested=maxCost!==undefined
+    ?maxCost
+    :(profile&&Object.prototype.hasOwnProperty.call(profile,'maxCost')?profile.maxCost:2);
+  return Number.isInteger(requested)&&requested>=0?requested:null;
+}
 
 export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
   if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return [];
   const limit=costLimit(maxCost,profile);
+  if(limit===null)return [];
   const start=copyPiece(piece);
   const actions=[
     {action:'left',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
@@ -95,6 +103,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
 export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
   if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
   const limit=costLimit(maxCost,profile);
+  if(limit===null)return null;
   const candidates=enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile});
   if(!candidates.length){
     const land=copyPiece(piece);
