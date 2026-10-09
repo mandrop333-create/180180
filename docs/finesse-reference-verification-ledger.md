@@ -72,3 +72,15 @@ This ledger records what has been checked and what remains unproven. An in-repos
 5. Preserve the UI and unrelated systems. No merge or production deploy without explicit authorization.
 
 Do not treat current `self-test.js` expectations as independent evidence, because those expectations live beside the implementation. Do not merge or deploy without explicit authorization.
+
+## Formula specification checkpoint — 2026-10-09
+
+- Added `docs/finesse-math-spec.md`, which freezes the first replacement's mathematical contract: state/coordinate convention, collision predicate, move transition, orientation arithmetic, ordered kick selection, landing calculation, physical target identity, unit-cost action model, minimum-finesse objective, BFS assumptions, and separation of planner from runtime observer.
+- The contract deliberately scopes the first implementation to the TETR.IO default SRS+ plus default direct-180 rules, not optional SRS-X. It explicitly separates minimum deliberate-input count from DAS/ARR/DCD timing.
+- Added `games/01/finesse-t-rotation-reference-test.js` to compare unobstructed T-piece clockwise/counterclockwise cell geometry and a CW→CCW round trip against static reference cells. Added it to the independent reference workflow.
+- Verified the independent reference workflow on commit `82fcba95b9065fe1f93fd9467e76ee8ad6fc0af1`: [run 37996375632](https://github.com/mandrop333-create/180180/actions/runs/37996375632) passed, including the new T rotation fixture and all pre-existing independent reference tests.
+- Verified the planner regression workflow on the same commit: [run 37996375543](https://github.com/mandrop333-create/180180/actions/runs/37996375543) passed.
+- The math-spec documentation commit `250347c1ca7eca8cf9449eff8a584c869fb60352` has passing independent reference and planner regression runs: [reference run 37996583256](https://github.com/mandrop333-create/180180/actions/runs/37996583256) and [planner run 37996583257](https://github.com/mandrop333-create/180180/actions/runs/37996583257).
+- The two Playwright workflows for commit `250347c1ca7eca8cf9449eff8a584c869fb60352` were still running at the time of this ledger update. Do not claim their result until queried.
+- Remaining formula-adjacent uncertainties are source/pivot compatibility of external kick fixtures and the full runtime input observer matrix. These are recorded in `docs/finesse-math-spec.md`; they are not silently treated as complete.
+- No production finesse implementation was changed, no merge to `main` was made, and no deployment was triggered.
