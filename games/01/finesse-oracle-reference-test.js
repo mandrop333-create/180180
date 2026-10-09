@@ -165,6 +165,53 @@ export function referenceTargets({ type, start, board, maxCost = 2 }) {
   return bestTarget;
 }
 
+function referenceWeightedTargets({type,start,board,maxCost,halfTurnCost=1}) {
+  const actions = [
+    {action:'left',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,-1,0,board)?n:null;}},
+    {action:'right',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,1,0,board)?n:null;}}
+  ];
+  if(type!=='O')actions.push(
+    {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceRotate(n,1,board)?n:null;}},
+    {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceRotate(n,-1,board)?n:null;}},
+    {action:'half',mode:'tap',cost:halfTurnCost,apply:p=>{const n=copy(p);return referenceRotate(n,2,board)?n:null;}}
+  );
+  const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
+    const n=copy(p);let moved=false;
+    for(let i=0;i<W+4;i++){if(!referenceMove(n,dir,0,board))break;moved=true;}
+    return moved?n:null;
+  }});
+  actions.push(wallAction(-1,'left'),wallAction(1,'right'));
+  const queue=[{piece:copy(start),cost:0}];
+  const bestState=new Map([[stateKey(start),0]]);
+  const bestTarget=new Map();
+  while(queue.length){
+    // Deliberately use a sorted list rather than the production binary heap.
+    queue.sort((a,b)=>a.cost-b.cost);
+    const current=queue.shift();
+    if(current.cost!==bestState.get(stateKey(current.piece)))continue;
+    const landing=referenceLanding(current.piece,board);
+    const lockCells=REFERENCE_PIECES[type].orientations[landing.o];
+    if(lockCells.every(([cx,cy])=>landing.y+cy>=0&&landing.y+cy<H)){
+      const target={x:landing.x,o:landing.o,y:landing.y};
+      const key=targetKey(target);
+      if(!bestTarget.has(key)||current.cost<bestTarget.get(key))bestTarget.set(key,current.cost);
+    }
+    if(current.cost>=maxCost)continue;
+    for(const action of actions){
+      const next=action.apply(current.piece);
+      if(!next)continue;
+      const cost=current.cost+action.cost;
+      if(cost>maxCost)continue;
+      const key=stateKey(next);
+      const prior=bestState.get(key);
+      if(prior!==undefined&&prior<=cost)continue;
+      bestState.set(key,cost);
+      queue.push({piece:next,cost});
+    }
+  }
+  return bestTarget;
+}
+
 export function runIndependentFinesseOracleTests() {
   let fixtures = 0;
   let comparedTargets = 0;
@@ -242,6 +289,22 @@ export function runIndependentFinesseOracleTests() {
     'cost-ordered search failed: two quarter-turns should beat a cost-3 direct half-turn');
   assert(weightedHalfTarget.routes.some(route=>route.length===2&&route.every(step=>step.action==='cw'||step.action==='ccw')),
     'weighted shortest route did not preserve the two-quarter-turn solution');
+  const weightedExpected=referenceWeightedTargets({
+    type:'T',start:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
+    board:empty,maxCost:3,halfTurnCost:3
+  });
+  const weightedActual=enumerateFinesseTargets({
+    piece:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
+    board:empty,W,H,cellsFor:productionCellsFor,move:productionMove,
+    tryRotate:productionTryRotate,maxCost:3,profile:weightedProfile
+  });
+  const weightedActualMap=new Map(weightedActual.map(item=>[targetKey(item.target),item.cost]));
+  assert(weightedActualMap.size===weightedExpected.size,
+    'weighted Dijkstra target-set differs from independent sorted-list oracle');
+  for(const [key,cost] of weightedExpected){
+    assert(weightedActualMap.get(key)===cost,
+      'weighted minimum cost differs from independent oracle at '+key+': expected '+cost+', got '+weightedActualMap.get(key));
+  }
 
   // Extend beyond the trainer's default two-input envelope to validate the
   // shortest-path formula itself, including route and target determinism.
