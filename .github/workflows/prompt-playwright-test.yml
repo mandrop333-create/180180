@@ -87,6 +87,10 @@ jobs:
         run: |
           case "$PLAYWRIGHT_TEST_REQUEST" in /playwright\ *) export PLAYWRIGHT_TEST_REQUEST="${PLAYWRIGHT_TEST_REQUEST#/playwright }" ;; esac
           node --experimental-default-type=module diagnostics-harness/tests/runtime-diagnostics.browser.js
+      - name: Run independent finesse route fixtures in Playwright
+        env:
+          FINESSE_BROWSER_BASE_URL: http://127.0.0.1:4173/
+        run: node --experimental-default-type=module games/01/finesse-browser-reference-test.js
       - name: Add requested test results to summary
         if: always()
         run: |
