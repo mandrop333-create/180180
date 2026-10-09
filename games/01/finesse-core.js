@@ -6,6 +6,7 @@
 // of truth for the replacement planner.
 
 import { placementIdentity,normalizeFinesseTarget,FINESSE_PROFILES } from './finesse-rules.js';
+import { getSrsKicks,getTetrio180Kicks } from './kicks.js';
 
 // Exact minimum-cost search over the supplied game transitions. This module
 // never mutates the live piece: every transition operates on a clone supplied
@@ -86,6 +87,15 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
     // than allowing zero-change or malformed transitions into the search.
     if(!Number.isInteger(next.x)||!Number.isInteger(next.y)||
       !Number.isInteger(next.o)||next.o!==expected||next.type!==piece.type)return null;
+    // Rotation adapters must use one of the engine's documented kick offsets.
+    // Otherwise a buggy callback could teleport a piece and fabricate a route
+    // even while returning the correct orientation. Validate the actual delta
+    // against the same ordered kick table used by rotation.js.
+    const dx=next.x-piece.x,dy=next.y-piece.y;
+    const kicks=(delta===2||delta===-2)
+      ?getTetrio180Kicks(piece.type,piece.o)
+      :getSrsKicks(piece.type,piece.o,expected);
+    if(!kicks.some(([kickX,kickY])=>kickX===dx&&kickY===dy))return null;
     return next;
   };
   const actions=[
