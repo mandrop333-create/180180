@@ -109,3 +109,11 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - The spawn-DCD, post-rotation-DCD, and short-tap/key-release checks are browser-tested. The official TETR.IO mechanics FAQ describes DCD as pausing active DAS after either a rotation or a spawn: https://github.com/tetrio/faq/blob/main/mechanics.html
 - Rotation-profile provenance remains bounded rather than absolute: the SRS+ I-kick fixture is independently sourced from the S-Finder implementation at https://gist.github.com/torchlight/1832786cf053daa51bf188110b764090; the TETR.IO mechanics overview describes SRS+ as the default I-piece kick-table modification and distinguishes SRS-X as optional: https://tetrio.wiki.gg/wiki/Mechanics. These sources support the selected table family, but the exact pivot/local-frame compatibility still needs stronger direct-game or authoritative fixture validation before production approval.
 - The latest successful tests do not authorize merging or deployment. No production branch was changed.
+
+## Input observer matrix expansion — 2026-10-09
+
+- Added Playwright checks for focus-loss cleanup and simultaneous opposite directions in `games/01/finesse-timing-browser-test.js`.
+- Focus-loss test confirms `handleBlur()` clears the held-key set and horizontal repeat state; no movement continues after focus cleanup without a new keydown.
+- Opposite-direction test confirms last-pressed direction wins, releasing it restores the still-held opposite direction with a fresh DAS delay, and repeats resume only after that delay.
+- Both the independent reference suite and browser route/timing suite passed on commit `c186e93f8dd9184b4c23ac0a08daca8c3d4e7fdb`: [reference run 37997361937](https://github.com/mandrop333-create/180180/actions/runs/37997361937); [Playwright run 37997361908](https://github.com/mandrop333-create/180180/actions/runs/37997361908).
+- This improves coverage but is not yet the full input observer matrix. Remaining work includes hold/swaps, rebinds, rotation with held DAS across DCD, repeated key events, browser visibility/focus behavior in a real event loop, and comparison against TETR.IO's precise input timing rather than only this trainer's intended contract.
