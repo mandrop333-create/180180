@@ -55,7 +55,15 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
     if(current.cost>best.get(currentStateKey)||
       !stateRoutes.get(currentStateKey)?.has(currentRouteKey))continue;
     const land=landing(current.piece);
-    const target=normalizeFinesseTarget({x:land.x,o:land.o,y:land.y},W,{allowNegativeX:true});
+    // A resting piece with any mino above row zero cannot be locked: the
+    // engine top-outs before writing its cells to the board. Such a state is
+    // reachable as a rotation intermediate but is not a valid finesse target.
+    const lockCells=typeof cellsFor==='function'?cellsFor(land.type,land.o):null;
+    const lockable=Array.isArray(lockCells)&&lockCells.length>0&&
+      lockCells.every(([cx,cy])=>land.y+cy>=0&&land.y+cy<H);
+    const target=lockable
+      ?normalizeFinesseTarget({x:land.x,o:land.o,y:land.y},W,{allowNegativeX:true})
+      :null;
     if(target){
       const key=placementIdentity(target);
       const candidate={route:current.route,target,cost:current.cost,landingY:land.y,routeKey:currentRouteKey};
