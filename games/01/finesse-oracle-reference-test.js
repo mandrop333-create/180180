@@ -151,7 +151,7 @@ export function runIndependentFinesseOracleTests() {
   for (const boardKind of ['empty','split-well','side-towers','overhang']) {
     const board = boardFor(boardKind);
     for (const type of TYPES) {
-      const start = { type, x:4, y:0, o:0 };
+      const start = { type, x:REFERENCE_PIECES[type].spawn.x, y:REFERENCE_PIECES[type].spawn.y, o:0 };
       assert(!referenceCollides(start.x,start.y,start.o,board,type),
         'invalid reference spawn state for ' + boardKind + '/' + type);
       const expected = referenceTargets({ type, start, board, maxCost:2 });
