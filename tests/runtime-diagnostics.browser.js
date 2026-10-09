@@ -339,38 +339,41 @@ try {
       run: async () => {
         const result = await page.evaluate(() => {
           const t = window.trainer;
-          t.reset();
-          t.emptyBoard();
-          t.gameOver = false;
-          t.piece = { type: 'O', x: 4, y: 0, o: 0 };
-          t.setFinesseEnabled(true);
-          const target = t.finesseTarget ? { ...t.finesseTarget } : null;
-          const actions = t.finesseActions.map(step => ({ ...step }));
-          const initialProgress = t.finesseProgress;
-          const initialStates = t.finesseActions.map((step, i) => i < t.finesseProgress ? 'done' : i === t.finesseProgress ? 'next' : 'pending');
           const keyEvent = code => ({ code, preventDefault() {} });
-          for (const step of actions) {
-            const code = t.binds[step.action];
-            t.handleKeydown(keyEvent(code));
-            // A DAS route is a held direction, not a tap. Advance the game's
-            // own input clock while the key remains down so the piece reaches
-            // the wall before keyup; otherwise this regression would test the
-            // harness's incorrect tap simulation rather than the trainer.
-            if (step.mode === 'das') t.tick(performance.now() + t.das() + 5);
-            t.handleKeyup(keyEvent(code));
+          const cases = [];
+          for (const type of ['I', 'J', 'L', 'O', 'S', 'T', 'Z']) {
+            t.reset();
+            t.emptyBoard();
+            t.gameOver = false;
+            t.piece = { type, x: 4, y: 0, o: 0 };
+            t.setFinesseEnabled(true);
+            const target = t.finesseTarget ? { ...t.finesseTarget } : null;
+            const actions = t.finesseActions.map(step => ({ ...step }));
+            const initialProgress = t.finesseProgress;
+            const initialStates = t.finesseActions.map((step, i) => i < t.finesseProgress ? 'done' : i === t.finesseProgress ? 'next' : 'pending');
+            for (const step of actions) {
+              const code = t.binds[step.action];
+              t.handleKeydown(keyEvent(code));
+              // DAS is a held direction, so advance the game's own input clock
+              // before keyup instead of incorrectly simulating it as a tap.
+              if (step.mode === 'das') t.tick(performance.now() + t.das() + 5);
+              t.handleKeyup(keyEvent(code));
+            }
+            const progressAfterInputs = t.finesseProgress;
+            const faultedAfterInputs = t.finesseFaulted;
+            const actualBeforeDrop = { ...t.piece };
+            t.hardDrop();
+            cases.push({
+              type, target, actions, initialProgress, initialStates, progressAfterInputs,
+              faultedAfterInputs, actualBeforeDrop,
+              finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults
+            });
           }
-          const progressAfterInputs = t.finesseProgress;
-          const faultedAfterInputs = t.finesseFaulted;
-          const actualBeforeDrop = { ...t.piece };
-          t.hardDrop();
-          return {
-            target, actions, initialProgress, initialStates, progressAfterInputs, faultedAfterInputs,
-            actualBeforeDrop, finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults
-          };
+          return cases;
         });
-        assertCheck('finesse-route-present', result.actions.length > 0 && result.target !== null, 'Enabling Finesse must produce an explicit route and landing target');
-        assertCheck('finesse-progress', result.progressAfterInputs === result.actions.length && !result.faultedAfterInputs, 'Each displayed input must advance the matching route step without a fault');
-        assertCheck('finesse-physical-target', result.finessePerfect === 1 && result.finesseFaults === 0, 'Following the displayed route and hard-dropping must lock on the advertised target and count one clean placement');
+        assertCheck('finesse-route-present', result.every(r => r.actions.length > 0 && r.target !== null), 'Each of the seven tetrominoes must receive an explicit route and landing target');
+        assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.length && !r.faultedAfterInputs), 'Each displayed route must advance all steps without a fault for every tetromino');
+        assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for every tetromino');
       }
     },
     {
