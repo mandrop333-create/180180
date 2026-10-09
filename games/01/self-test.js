@@ -360,6 +360,10 @@ export function runTrainerSelfTest(){
   assert(routeCost([{action:'left',mode:'das'}])===1,'DAS must count as one deliberate input');
   assert(placementKey({x:3,o:1,y:17})==='3,1,17','finesse placement key must include landing position');
   assert(isFinessePerfect([{action:'left'},{action:'cw'}],2),'minimum-cost route equality failed');
+  assert(!isFinessePerfect([{action:'invalid'}],Infinity),
+    'an invalid infinite-cost route must never be marked finesse-perfect');
+  assert(!isFinessePerfect([{action:'left'}],-1)&&!isFinessePerfect([{action:'left'}],NaN),
+    'finesse-perfect comparisons require a finite nonnegative target cost');
   const direct180Profile=profileFor();
   assert(direct180Profile===FINESSE_PROFILES.TETRIO_SRS_PLUS_180,'default finesse profile must match the game rotation system');
   assert(direct180Profile.supportsDirectHalfTurn===true,'direct 180 must be explicit in the game finesse profile');
