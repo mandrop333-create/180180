@@ -141,9 +141,15 @@ export function referenceTargets({ type, start, board, maxCost = 2 }) {
   for (let head=0; head<queue.length; head++) {
     const current = queue[head];
     const landing = referenceLanding(current.piece,board);
-    const target = { x:landing.x, o:landing.o, y:landing.y };
-    const key = targetKey(target);
-    if (!bestTarget.has(key) || current.cost < bestTarget.get(key)) bestTarget.set(key,current.cost);
+    // Independent lockability check: TETR.IO top-outs instead of locking when
+    // any mino remains above the visible field.
+    const lockCells = REFERENCE_PIECES[type].orientations[landing.o];
+    const lockable = lockCells.every(([cx,cy]) => landing.y + cy >= 0 && landing.y + cy < H);
+    if (lockable) {
+      const target = { x:landing.x, o:landing.o, y:landing.y };
+      const key = targetKey(target);
+      if (!bestTarget.has(key) || current.cost < bestTarget.get(key)) bestTarget.set(key,current.cost);
+    }
     if (current.cost >= maxCost) continue;
     for (const action of actions) {
       const next = action.apply(current.piece);
@@ -172,6 +178,25 @@ export function runIndependentFinesseOracleTests() {
       collisionStates++;
     }
   }
+  // Regression: a rotation can kick a T piece above the ceiling and leave it
+  // resting there against a stack. That state is reachable but cannot lock,
+  // so it must not be exposed as a finesse target.
+  const ceilingBoard = boardFor('empty');
+  ceilingBoard[2][3] = 1;
+  ceilingBoard[2][4] = 1;
+  const ceilingStart = { type:'T', x:3, y:0, o:0 };
+  assert(!referenceCollides(ceilingStart.x,ceilingStart.y,ceilingStart.o,ceilingBoard,'T'),
+    'ceiling regression spawn must be legal');
+  const ceilingTargets = referenceTargets({type:'T',start:ceilingStart,board:ceilingBoard,maxCost:2});
+  assert(!ceilingTargets.has('2,1,-1'),
+    'independent oracle included a top-out landing as a legal target');
+  const ceilingProduction = enumerateFinesseTargets({
+    piece:{...ceilingStart},board:ceilingBoard,W,H,cellsFor:productionCellsFor,
+    move:productionMove,tryRotate:productionTryRotate,maxCost:2,profile:PROFILE
+  });
+  assert(!ceilingProduction.some(item=>targetKey(item.target)==='2,1,-1'),
+    'production planner included a top-out landing as a legal target');
+
   const boardKinds = ['empty','split-well','side-towers','overhang', ...Array.from({length:8}, (_,i) => 'generated-' + i)];
   for (const boardKind of boardKinds) {
     const board = boardFor(boardKind);
