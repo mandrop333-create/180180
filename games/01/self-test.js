@@ -222,8 +222,8 @@ export function runTrainerSelfTest(){
   assert(placementIdentity({x:4,o:2,y:18})!==placementIdentity({x:4,o:2,y:7}),'distinct landing heights must remain distinct placements');
   assert(placementKey({x:4,o:2,y:7})!==placementKey({x:4,o:2,y:18}),'physical landing key must retain y');
 
-  // Exact planner contract: BFS cost must equal the number of deliberate
-  // movement/rotation inputs, and hard drop remains outside the route.
+  // Exact planner contract: reported cost must equal the profile-weighted
+  // deliberate input cost; hard drop remains outside the route.
   assert(FINESSE_PROFILES.SRS_0G_60HZ.supportsDirectHalfTurn===false,'standard SRS must not advertise direct 180');
   assert(FINESSE_PROFILES.TETRIO_SRS_PLUS_180.supportsDirectHalfTurn===true&&FINESSE_PROFILES.TETRIO_SRS_PLUS_180.halfTurnCost===1,'TETR.IO profile must explicitly define direct 180 cost');
   const planned=planFinesse({
@@ -232,7 +232,7 @@ export function runTrainerSelfTest(){
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
     cellsFor:()=>[[0,0]]
   });
-  assert(planned&&planned.cost===planned.actions.length,'planner cost must equal deliberate route length');
+  assert(planned&&planned.cost===routeCost(planned.actions,FINESSE_PROFILES.TETRIO_SRS_PLUS_180),'planner cost must equal profile-weighted deliberate route cost');
   assert(planned.actions.every(step=>['left','right','cw','ccw','half'].includes(step.action)),'planner must not count gravity or hard drop as finesse input');
   assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
