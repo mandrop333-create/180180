@@ -173,7 +173,7 @@ try {
   };
   const actionRules = [
     {
-      name: 'move-left', terms: ['move left', 'left movement', 'left arrow'],
+      name: 'move-left', terms: ['move left', 'left movement', 'left arrow', 'to the left', 'left and right'],
       run: async () => {
         await page.evaluate(() => window.trainer.reset());
         const before = await snapshotGame();
@@ -183,7 +183,7 @@ try {
       }
     },
     {
-      name: 'move-right', terms: ['move right', 'right movement', 'right arrow'],
+      name: 'move-right', terms: ['move right', 'right movement', 'right arrow', 'to the right', 'left and right'],
       run: async () => {
         await page.evaluate(() => window.trainer.reset());
         const before = await snapshotGame();
