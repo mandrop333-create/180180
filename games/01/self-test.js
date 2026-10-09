@@ -399,6 +399,7 @@ export function runTrainerSelfTest(){
   const alternateRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
   alternateRuntime.emptyBoard();
   alternateRuntime.piece={...equivalentStart};
+  alternateRuntime.placed=alternativeTargetIndex;
   alternateRuntime.generateFinessePrompt();
   assert(alternateRuntime.finesseTarget.x===equivalentPlan.target.x&&
     alternateRuntime.finesseTarget.o===equivalentPlan.target.o&&
