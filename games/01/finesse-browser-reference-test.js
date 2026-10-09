@@ -45,6 +45,9 @@ const scenarios = [
   }
 ];
 
+const failures = [];
+const liveMode = baseURL.startsWith('https://180436.xyz/');
+
 try {
   await page.goto(baseURL + (baseURL.includes('?') ? '&' : '?') + 'finesseReference=1', {
     waitUntil: 'domcontentloaded', timeout: 30000
@@ -52,6 +55,7 @@ try {
   await page.waitForFunction(() => !!window.trainer, null, { timeout: 15000 });
 
   for (const scenario of scenarios) {
+    try {
     await page.evaluate(({ scenario }) => {
       const t = window.trainer;
       t.reset();
@@ -134,10 +138,15 @@ try {
       assert(Boolean(locked.board[y][x]), scenario.name + ': expected locked mino missing at ' + x + ',' + y);
     }
     console.log(JSON.stringify({ scenario:scenario.name, passed:true, target:scenario.target, perfect:locked.perfect, faults:locked.faults }));
+    } catch (error) {
+      failures.push({ scenario:scenario.name, error:error.message });
+      console.error(JSON.stringify({ scenario:scenario.name, passed:false, error:error.message, liveMode }));
+    }
   }
 
   assert(pageErrors.length === 0, 'browser page errors: ' + JSON.stringify(pageErrors));
-  console.log(JSON.stringify({ ok:true, scenarios:scenarios.length, pageErrors:pageErrors.length }));
+  console.log(JSON.stringify({ ok:failures.length===0, scenarios:scenarios.length, failures, pageErrors:pageErrors.length }));
+  if (failures.length) throw new Error('finesse route mismatches: ' + JSON.stringify(failures));
 } finally {
   await browser.close();
 }
