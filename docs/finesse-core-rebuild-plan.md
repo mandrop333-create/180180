@@ -91,21 +91,48 @@ Required coverage:
 
 For each failure, report the first divergent layer: expected geometry, legal transition, target enumeration, minimum route, observed input, locked placement, or score.
 
-## Implementation sequence
+## Implementation sequence and gates
 
-1. Freeze the selected rule profile and write its contract.
-2. Build independent reference fixtures for piece geometry and rotation/kick behavior.
-3. Implement the smallest planner and verify it against those fixtures.
-4. Test the runtime observer and lock-time verifier independently.
-5. Integrate the replacement behind the existing UI without changing presentation.
-6. Run unit tests, regression tests, and browser tests on the isolated branch.
-7. Only then request review for merge/deployment. A successful build alone is not acceptance; the original live failure must be reproduced and shown fixed.
+### Gate 0 — Freeze the contract
+- Lock down the exact profile: TETR.IO-style SRS+, separate direct 180° rotation, one finesse input for a direct half-turn, hard drop excluded from finesse cost, and the explicit treatment of soft drop and DAS.
+- Document what "minimum" means for this trainer. Do not silently mix 0G, finite-gravity, 20G, and wall-finesse assumptions.
+- Keep the current UI and all unrelated modes out of scope.
+
+### Gate 1 — Prove the rules layer
+- Compare piece geometry and spawn origins against static fixtures.
+- Verify all ordered kick arrays against a documented reference, including coordinate/pivot normalization.
+- Force every reachable kick candidate through production rotation/collision; document candidates that cannot be first-valid by geometry.
+- **No-go:** a third-party table is not treated as authoritative solely because its own fixture test passes. Confirm the pivot/origin convention and exact offsets against a second independent source before freezing the table.
+
+### Gate 2 — Prove the planner
+- Use a separate shortest-path oracle that imports no production geometry, kick logic, collision, or planner for its expected answers.
+- Compare all target identities, minimum costs, and equal-cost routes across curated edge cases and a deterministic generated board corpus.
+- Expand beyond the current max-cost-2 test envelope if the selected profile or UI can present targets/routes outside that envelope.
+- Report the first divergent layer rather than adjusting expected values to make tests pass.
+
+### Gate 3 — Prove execution
+- Test keydown/keyup edges, taps, holds, DAS/ARR and DCD assumptions, gravity, lock delay, and wall/tunnel behavior under the chosen profile.
+- Playwright must begin from the actual spawn state, independently check the displayed target against the oracle, press real keys, and verify the active state, final locked cells, and exactly-once score.
+- Keep isolated input/lock tests with frozen gravity, but do not confuse them with end-to-end timing validation.
+
+### Gate 4 — Prove the live regression is fixed
+- Reproduce the live discrepancy with a read-only browser test.
+- Run the same independent fixture against the isolated candidate and compare expected target, actual active state, and final locked cells.
+- Confirm the original user-visible failure is absent; a successful build or an internally consistent planner is not enough.
+
+### Gate 5 — Review and integrate
+- Preserve the existing UI, other training modes, and the separate diagnostics branch.
+- Run all unit, oracle, regression, and Playwright suites on the final candidate commit.
+- Only then request review for merge/deployment. Do not merge or deploy without explicit authorization.
 
 ## Acceptance criteria
 
-- Every curated fixture has an independently specified expected result.
-- Planner and oracle agree on all fixture placements and minimum costs.
-- No route is marked perfect when the locked piece differs from the target.
-- The same action sequence produces the same result deterministically.
+- The selected rule profile and its input-cost assumptions are explicit and tested.
+- Geometry, spawn origins, 90° kicks, and direct-180 kicks are independently sourced and normalized.
+- Planner and oracle agree on target identities, minimum costs, and equal-cost routes for all fixtures.
+- Every route is replayed from actual spawn using real key events and checked against independent target/lock expectations.
+- No route is marked perfect when its measured input cost is above the independently computed minimum or its locked placement differs from the target.
+- Timing-sensitive behavior matches the declared gravity, DAS/ARR, and lock-delay model.
 - Existing unrelated modes and UI regression tests remain green.
-- The original user-visible failure is reproduced before the fix and demonstrably absent after integration.
+- The observed live failure is reproduced before the fix and demonstrably absent on the isolated candidate before integration.
+- No merge or production deployment occurs without explicit authorization.
