@@ -70,6 +70,36 @@ export default {
       return json(request, env, 503, { error: "storage_not_configured", message: "Bind a Cloudflare KV namespace as REPORTS." });
     }
 
+    // Isolated smoke-test route: never changes the production "latest" report pointer.
+    if (path === "/api/test/reports" && request.method === "POST") {
+      const contentType = request.headers.get("Content-Type") || "";
+      if (!contentType.toLowerCase().includes("application/json")) {
+        return json(request, env, 415, { error: "content_type_must_be_json" });
+      }
+      const body = await request.text();
+      if (new TextEncoder().encode(body).byteLength > MAX_BODY_BYTES) {
+        return json(request, env, 413, { error: "report_too_large" });
+      }
+      let report;
+      try { report = JSON.parse(body); }
+      catch { return json(request, env, 400, { error: "invalid_json" }); }
+      if (!validReport(report)) return json(request, env, 400, { error: "invalid_report_schema" });
+      const now = Date.now();
+      const stored = JSON.stringify({ ...report, receivedAt: new Date(now).toISOString(), smokeTest: true });
+      await env.REPORTS.put("test/session/" + report.sessionId, stored, { expirationTtl: 60 * 60 });
+      return json(request, env, 201, { ok: true, sessionId: report.sessionId, smokeTest: true });
+    }
+
+    const testSingle = path.match(/^\\/api\\/test\\/reports\\/([a-zA-Z0-9_-]{1,100})$/);
+    if (testSingle && request.method === "GET") {
+      const report = await env.REPORTS.get("test/session/" + testSingle[1]);
+      if (!report) return json(request, env, 404, { error: "test_report_not_found" });
+      return new Response(report, {
+        status: 200,
+        headers: { ...corsHeaders(request, env), "Content-Type": "application/json; charset=utf-8" }
+      });
+    }
+
     if (path === "/api/reports" && request.method === "POST") {
       const contentType = request.headers.get("Content-Type") || "";
       if (!contentType.toLowerCase().includes("application/json")) {
