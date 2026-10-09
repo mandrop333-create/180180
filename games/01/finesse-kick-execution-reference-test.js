@@ -77,6 +77,21 @@ function tryOrigin({type, from, to, delta, kicks, index, x, y}) {
   return {blockers:blockerCells.length, origin:{x,y}};
 }
 function makeCase(spec) {
+  // If an earlier kick's occupied cells are entirely covered by the initial
+  // piece and the requested target, no board can block that earlier kick while
+  // leaving both states legal. Later candidates are therefore unreachable as
+  // first-valid kicks for this transition; record the proof rather than trying
+  // to manufacture an impossible board.
+  const [targetDx,targetDy] = spec.kicks[spec.index];
+  const currentAtOrigin = new Set(worldCells(spec.type, spec.from, 4, 6).map(([cx,cy]) => key(cx,cy)));
+  const expectedAtOrigin = new Set(worldCells(spec.type, spec.to, 4 + targetDx, 6 + targetDy).map(([cx,cy]) => key(cx,cy)));
+  for (let earlier=0; earlier<spec.index; earlier++) {
+    const [priorDx,priorDy] = spec.kicks[earlier];
+    const prior = worldCells(spec.type, spec.to, 4 + priorDx, 6 + priorDy).map(([cx,cy]) => key(cx,cy));
+    if (prior.every(cell => currentAtOrigin.has(cell) || expectedAtOrigin.has(cell))) {
+      return {unreachable:true, reason:'earlier kick ' + earlier + ' is necessarily collision-free whenever start and target are legal'};
+    }
+  }
   const positions = [];
   for (let y of [0,1,2,3,4,6,12,14,15,16,17]) {
     for (let x=0; x<W; x++) positions.push({x,y});
@@ -91,9 +106,16 @@ function makeCase(spec) {
 
 export function runFinesseKickExecutionReferenceTests() {
   let checked = 0;
+  let structurallyUnreachable = 0;
   let blockerCount = 0;
+  const unreachableReasons = [];
   const run = (spec) => {
     const result = makeCase(spec);
+    if (result.unreachable) {
+      structurallyUnreachable++;
+      unreachableReasons.push(spec.label + ' candidate ' + spec.index + ': ' + result.reason);
+      return;
+    }
     checked++;
     blockerCount += result.blockers;
   };
@@ -128,7 +150,10 @@ export function runFinesseKickExecutionReferenceTests() {
       }
     }
   }
-  return {ok:true,checked,blockerCount,coverage:'every ordered kick candidate forced through real production rotation/collision',originsSearched:'10 columns × 11 spawn heights as needed'};
+  assert(checked + structurallyUnreachable > 0, 'no kick candidates were exercised');
+  return {ok:true,checked,structurallyUnreachable,blockerCount,
+    coverage:'all reachable ordered kick candidates forced through production rotation/collision; unreachable candidates have a cell-set proof',
+    originsSearched:'10 columns × 11 spawn heights as needed',unreachableReasons};
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
