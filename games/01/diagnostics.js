@@ -58,8 +58,8 @@ export class RuntimeDiagnostics {
       this.originalConsoleError.apply(console, args);
     };
     console.error = this.onConsoleError;
-    window.addEventListener('keydown', this.onKeyDown, true);
-    window.addEventListener('keyup', this.onKeyUp, true);
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('error', this.onError);
     window.addEventListener('unhandledrejection', this.onRejection);
     window.addEventListener('pagehide', this.onPageHide);
@@ -133,7 +133,7 @@ export class RuntimeDiagnostics {
 
   recordReset(reason) {
     if (!this.enabled) return;
-    this.record('reset', { reason: reason || 'unknown', before: this.snapshot() });
+    this.record('reset', { reason: reason || 'unknown', state: this.snapshot() });
   }
 
   report() {
@@ -207,8 +207,8 @@ export class RuntimeDiagnostics {
     if (!this.enabled || this.closed) return;
     this.flush();
     this.closed = true;
-    window.removeEventListener('keydown', this.onKeyDown, true);
-    window.removeEventListener('keyup', this.onKeyUp, true);
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('error', this.onError);
     window.removeEventListener('unhandledrejection', this.onRejection);
     window.removeEventListener('pagehide', this.onPageHide);
