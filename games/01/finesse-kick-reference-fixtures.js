@@ -19,10 +19,12 @@ export const REFERENCE_I_SRS_PLUS = Object.freeze({
 });
 
 export const REFERENCE_I_180_SRS_PLUS = Object.freeze({
-  0: [[1,1],[1,0]],
-  1: [[-1,1],[0,1]],
-  2: [[-1,-1],[-1,0]],
-  3: [[1,-1],[0,-1]]
+  // The zero-offset baseline is attempted before explicit kicks by the
+  // pinned TETR.IO movement algorithm. Non-zero offsets remain under audit.
+  0: [[0,0],[1,1],[1,0]],
+  1: [[0,0],[-1,1],[0,1]],
+  2: [[0,0],[-1,-1],[-1,0]],
+  3: [[0,0],[1,-1],[0,-1]]
 });
 
  
