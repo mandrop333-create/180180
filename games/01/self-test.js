@@ -1,4 +1,5 @@
 import { PIECE_TYPES, cellsFor, spawnFor } from './pieces.js';
+import { W, H } from './state.js';
 import { Trainer } from './engine.js';
 import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
