@@ -147,9 +147,9 @@ export class Trainer {
     this.finesseDASPending=null;
     if(!this.finesseEnabled||this.gameOver||!this.piece)return;
 
-    // The shared planner uses the same collision and rotation transitions as
-    // gameplay. It returns the minimum-input route for the chosen reachable
-    // placement; hard drop and gravity are deliberately outside finesse cost.
+    // The shared planner uses gameplay collision/rotation transitions. Its
+    // route minimizes deliberate movement inputs; hard drop is appended as the
+    // final visible step at zero finesse cost so the complete path can turn green.
     const plan=planFinesse({
       piece:{...this.piece},
       board:this.board,
@@ -164,7 +164,7 @@ export class Trainer {
     });
     if(!plan)return;
     this.finesseTarget={...plan.target};
-    this.finesseActions=plan.actions.map(step=>({...step}));
+    this.finesseActions=[...plan.actions.map(step=>({...step})),{action:'hard',mode:'tap'}];
   }
   reapplyHeldHorizontalInput(){
     if(this.gameOver||!this.piece)return;
@@ -369,8 +369,9 @@ export class Trainer {
       this.applySoftDrop();
     }
     else if(action==='hard'){
-      // Hard drop is a gameplay action, not a finesse input. The lock that it
-      // causes resolves the already-observed movement/rotation sequence.
+      // Hard drop has zero finesse cost, but it is the final visible step in
+      // the recommended path and must be observed before lock-time resolution.
+      if(this.finesseEnabled)this.recordFinesseObservation('hard');
       this.hardDrop();
     }
     else if(action==='cw'){

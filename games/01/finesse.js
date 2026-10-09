@@ -77,13 +77,12 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
     while(move(land,0,1,board,W,H,cellsFor)){}
     return {actions:[],target:{x:land.x,o:land.o,y:land.y},cost:0,landingY:land.y};
   }
-  // Teach the most demanding placement that is still inside the active
-  // finesse envelope. Every target already carries its shortest route, so
-  // this maximizes training value without ever recommending a longer route.
-  const highestCost=candidates[0].cost;
-  const hardest=candidates.filter(candidate=>candidate.cost===highestCost);
-  const offset=Math.abs(Number(seed)||0)%hardest.length;
-  const chosen=hardest[offset];
+  // Optimize for the fewest deliberate inputs. Hard drop and gravity are
+  // outside this cost, so the current spawn position wins when it is legal.
+  const lowestCost=Math.min(...candidates.map(candidate=>candidate.cost));
+  const easiest=candidates.filter(candidate=>candidate.cost===lowestCost);
+  const offset=Math.abs(Number(seed)||0)%easiest.length;
+  const chosen=easiest[offset];
   return {actions:chosen.route,target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
 }
 

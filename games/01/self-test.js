@@ -154,10 +154,10 @@ export function runTrainerSelfTest(){
   assert(selectFinesseTarget(declaredTargets)===null,'target selection must not invent a selector');
   const trainingTargets=[{x:2,o:0,cost:1},{x:4,o:1,cost:2},{x:7,o:0,cost:2}];
   const chosenTraining=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
-  assert(chosenTraining&&chosenTraining.cost===2,'training target policy must prefer the highest finesse cost inside the envelope');
+  assert(chosenTraining&&chosenTraining.cost===1,'fastest-placement policy must prefer the lowest finesse cost inside the envelope');
   const chosenAgain=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
   assert(chosenTraining.x===chosenAgain.x&&chosenTraining.o===chosenAgain.o,'training target policy must be deterministic');
-  assert(chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T',maxCost:1}).cost===1,'training target policy must respect max cost');
+  assert(chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T',maxCost:1}).cost===1,'fastest-placement policy must respect max cost');
   const verticalITarget=chooseTrainingTarget([{x:-2,o:1,cost:2}],{pieceType:'I',maxCost:2});
   assert(verticalITarget&&verticalITarget.x===-2&&verticalITarget.o===1,
     'generic training-target selection must preserve legal negative-origin vertical I placements');
@@ -338,19 +338,15 @@ export function runTrainerSelfTest(){
   const testGenerator={next:()=> 'O'};
   const runtime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
   runtime.emptyBoard();
-  runtime.piece={type:'O',x:4,y:0,o:0};
+  runtime.piece={type:'T',x:3,y:0,o:0};
   runtime.generateFinessePrompt();
-  assert(runtime.finesseTarget&&runtime.finesseTarget.x===2&&runtime.finesseTarget.y===18,
-    'runtime prompt must retain the exact physical landing target');
-  assert(runtime.finesseActions.length===2&&runtime.finesseActions.every(step=>step.action==='left'&&step.mode==='tap'),
-    'runtime should expose the minimum two-tap route to the selected O placement');
+  assert(runtime.finesseTarget&&runtime.finesseTarget.x===3&&runtime.finesseTarget.y===18,
+    'first-spawn T-piece fastest-placement prompt must retain the physical landing directly below spawn');
+  assert(runtime.finesseActions.length===1&&runtime.finesseActions[0].action==='hard',
+    'runtime should recommend Space as the only step when hard-dropping from spawn is fastest');
   const keyEvent=code=>({code,preventDefault(){}});
-  for(let i=0;i<2;i++){
-    runtime.handleKeydown(keyEvent('ArrowLeft'));
-    runtime.handleKeyup(keyEvent('ArrowLeft'));
-  }
-  assert(runtime.finesseProgress===2&&!runtime.finesseFaulted,'runtime observer must accept the displayed route');
-  runtime.hardDrop();
+  assert(runtime.finesseProgress===0&&!runtime.finesseFaulted,'fastest route should start with Space pending and no faults');
+  runtime.handleKeydown(keyEvent('Space'));
   assert(runtime.stats.finessePerfect===1&&runtime.stats.finesseFaults===0,
     'correct route and physical landing must score exactly one clean finesse placement');
 
@@ -366,6 +362,15 @@ export function runTrainerSelfTest(){
   // across all seven pieces, every recommended action must execute through the
   // game's actual collision and kick functions and land on the advertised target.
   const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
+  const firstSpawnT={type:'T',x:3,y:0,o:0};
+  const firstSpawnPlan=planFinesse({
+    piece:firstSpawnT,board:emptyBoard,W:10,H:20,cellsFor,maxCost:2,seed:0,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,delta,b,W,H,cf)=>tryRotate(p,delta,b,W,H,cf)
+  });
+  assert(firstSpawnPlan&&firstSpawnPlan.cost===0&&firstSpawnPlan.actions.length===0&&
+    firstSpawnPlan.target.x===firstSpawnT.x&&firstSpawnPlan.target.o===firstSpawnT.o,
+    'fastest-placement regression: a first-spawn T-piece on an empty board should need no movement inputs before hard drop');
   let checkedPlans=0;
   for(const type of PIECE_TYPES){
     for(let o=0;o<(type==='O'?1:4);o++){
