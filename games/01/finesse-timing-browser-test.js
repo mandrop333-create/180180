@@ -330,14 +330,22 @@ try {
   }));
   assert(duringDcd.x===4&&duringDcd.remaining>0&&duringDcd.dir===1,
     'held horizontal input repeated during DCD: '+JSON.stringify(duringDcd));
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(90);
+  const justAfterDcd=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    remaining:window.trainer.dasCutRemaining,
+    dir:window.trainer.moveState.dir
+  }));
+  assert(justAfterDcd.x===4&&justAfterDcd.remaining===0&&justAfterDcd.dir===1,
+    'DAS clock was not paused for the full DCD window: '+JSON.stringify(justAfterDcd));
+  await page.waitForTimeout(70);
   const afterDcd=await page.evaluate(()=>({
     x:window.trainer.piece?.x,
     remaining:window.trainer.dasCutRemaining,
     dir:window.trainer.moveState.dir
   }));
   assert(afterDcd.x>4&&afterDcd.remaining===0&&afterDcd.dir===1,
-    'held horizontal input did not resume after DCD expired: '+JSON.stringify(afterDcd));
+    'held horizontal input did not resume after its remaining DAS delay: '+JSON.stringify(afterDcd));
   await page.keyboard.up('ArrowRight');
   console.log(JSON.stringify({dcdAfterRotation:true,passed:true,duringDcdX:duringDcd.x,afterDcdX:afterDcd.x}));
 
@@ -384,14 +392,22 @@ try {
   }));
   assert(duringSpawnDcd.x===afterSpawn.x&&duringSpawnDcd.remaining>0&&duringSpawnDcd.elapsed===0,
     'spawn DCD did not pause the inherited held-key repeat timer: '+JSON.stringify(duringSpawnDcd));
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(90);
+  const justAfterSpawnDcd=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    remaining:window.trainer.dasCutRemaining,
+    elapsed:window.trainer.moveState.elapsed
+  }));
+  assert(justAfterSpawnDcd.remaining===0&&justAfterSpawnDcd.x===afterSpawn.x,
+    'inherited DAS repeated immediately when spawn DCD expired: '+JSON.stringify(justAfterSpawnDcd));
+  await page.waitForTimeout(100);
   const afterSpawnDcd=await page.evaluate(()=>({
     x:window.trainer.piece?.x,
     remaining:window.trainer.dasCutRemaining,
     elapsed:window.trainer.moveState.elapsed
   }));
   assert(afterSpawnDcd.remaining===0&&afterSpawnDcd.x>afterSpawn.x,
-    'inherited horizontal input did not resume after spawn DCD expired: '+JSON.stringify(afterSpawnDcd));
+    'inherited horizontal input did not resume after its remaining DAS delay: '+JSON.stringify(afterSpawnDcd));
   await page.keyboard.up('ArrowRight');
   console.log(JSON.stringify({dcdAfterSpawn:true,inheritedHeldInput:true,passed:true,duringDcdX:duringSpawnDcd.x,afterDcdX:afterSpawnDcd.x}));
 
