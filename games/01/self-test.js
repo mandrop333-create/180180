@@ -414,6 +414,35 @@ export function runTrainerSelfTest(){
   assert(alternateRuntime.stats.finessePerfect===1&&alternateRuntime.stats.finesseFaults===0,
     'runtime must accept an alternate equal-cost route and confirm its physical landing');
 
+  // DAS runtime regression: a held horizontal input must remain pending until
+  // the piece reaches the wall, then count as one deliberate finesse input.
+  const dasProfile={...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxCost:1};
+  const dasOptions={
+    piece:{type:'O',x:4,y:0,o:0},board:emptyBoard,W:10,H:20,cellsFor,maxCost:1,profile:dasProfile,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
+  };
+  const dasTargets=enumerateFinesseTargets(dasOptions);
+  const hardestDAS=dasTargets.filter(target=>target.cost===dasTargets[0]?.cost);
+  const rightWallIndex=hardestDAS.findIndex(target=>target.target.x===8&&target.route.length===1&&target.route[0].mode==='das');
+  assert(rightWallIndex>=0,'DAS regression must identify the one-input right-wall target');
+  const dasRuntime=new Trainer(null,{mode:{id:'self-test-das',rules:{finesseProfile:dasProfile},hooks:{}},
+    generator:testGenerator,deferInit:true,finesseEnabled:true});
+  dasRuntime.emptyBoard();
+  dasRuntime.piece={type:'O',x:4,y:0,o:0};
+  dasRuntime.placed=rightWallIndex;
+  dasRuntime.rules.das=0;
+  dasRuntime.rules.arr=0;
+  dasRuntime.generateFinessePrompt();
+  assert(dasRuntime.finesseTarget.x===8&&dasRuntime.finesseActions[0]?.mode==='das',
+    'runtime must display the intended DAS wall route');
+  dasRuntime.handleKeydown(keyEvent(dasRuntime.binds.right));
+  dasRuntime.tick(performance.now()+1);
+  dasRuntime.handleKeyup(keyEvent(dasRuntime.binds.right));
+  dasRuntime.hardDrop();
+  assert(dasRuntime.stats.finessePerfect===1&&dasRuntime.stats.finesseFaults===0,
+    'runtime must accept held-to-wall DAS as one deliberate input');
+
 
   let checkedPlans=0;
   for(const type of PIECE_TYPES){
