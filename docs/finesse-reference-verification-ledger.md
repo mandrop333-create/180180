@@ -149,3 +149,9 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - The separate prompt-requested diagnostics run was cancelled when a newer commit superseded it; it is not counted as a pass.
 - Targeted import audit confirms `games/01/engine.js` uses `finesse-core.js`, and the inspected finesse reference tests import the core directly or exercise the browser. `games/01/finesse.js` remains a compatibility facade; a full repository-wide caller audit is still required before removal.
 - These results validate the current bounded search and selected fixtures, not full external authority for every pivot/kick convention. No merge or production deployment.
+
+## Independent weighted-cost oracle — 2026-10-09
+
+- Expanded `games/01/finesse-oracle-reference-test.js` beyond the single half-turn regression with an independent weighted shortest-path reference using a sorted open list (not the production binary heap). With direct 180 cost raised to 3, the test compares the complete reachable target set and minimum costs against the production Dijkstra planner through cost 3.
+- The weighted reference suite passed on `8642c5256572520d76bd3ab5bd2a59e6c2c1d4f3`: [run 38000060396](https://github.com/mandrop333-create/180180/actions/runs/38000060396).
+- This validates weighted shortest-path behavior for the tested profile/board, but does not resolve the separately documented external kick/pivot convention uncertainty. No merge or production deployment.
