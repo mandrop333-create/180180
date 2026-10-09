@@ -265,6 +265,7 @@ export function wallX(piece,dir,moveHorizontal){
 }
 
 export function routeCost(route=[],profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
+  if(!Array.isArray(route))return Infinity;
   let cost=0;
   for(const step of route){
     const action=typeof step==='string'?step:step?.action;
