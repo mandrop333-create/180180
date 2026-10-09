@@ -1,0 +1,37 @@
+name: Test live diagnostics Worker
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy diagnostics Worker"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check Worker health and storage
+        run: |
+          curl --fail-with-body --silent --show-error https://180180-diagnostics.mandrop333.workers.dev/health -o health.json
+          node -e "const h=require('./health.json'); if(!h.ok || !h.storageConfigured) process.exit(1); console.log('Worker health and storage configuration: OK')"
+
+      - name: Upload isolated sample report
+        env:
+          SESSION_ID: smoke-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          node -e "const fs=require('fs'); fs.writeFileSync('sample.json', JSON.stringify({schema:'180180-runtime-diagnostics/v1',sessionId:process.env.SESSION_ID,startedAt:new Date().toISOString(),durationMs:25,mode:'smoke-test',eventCount:2,events:[{t:0,type:'session-start',data:{source:'github-actions-smoke-test'}},{t:25,type:'state-change',data:{smokeTest:true}}]}))"
+          status=$(curl --silent --show-error --output post.json --write-out "%{http_code}" -H 'Content-Type: application/json' --data-binary @sample.json https://180180-diagnostics.mandrop333.workers.dev/api/test/reports)
+          test "$status" = "201"
+          node -e "const r=require('./post.json'); if(!r.ok || !r.smokeTest || r.sessionId!==process.env.SESSION_ID) process.exit(1); console.log('Sample report accepted')"
+
+      - name: Retrieve and validate saved sample report
+        env:
+          SESSION_ID: smoke-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          curl --fail-with-body --silent --show-error "https://180180-diagnostics.mandrop333.workers.dev/api/test/reports/$SESSION_ID" -o retrieved.json
+          node -e "const r=require('./retrieved.json'); if(!r.smokeTest || r.sessionId!==process.env.SESSION_ID || !Array.isArray(r.events) || r.events.length!==2) process.exit(1); console.log('Saved sample report retrieved and validated')"
