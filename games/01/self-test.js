@@ -123,8 +123,8 @@ export function runTrainerSelfTest(){
   assert(finesseActionCost('left','invalid')===Infinity,'invalid finesse mode must be rejected');
   assert(finesseActionCost('cw','das')===Infinity,'DAS mode must be restricted to horizontal movement');
   assert(finesseActionCost('half','das')===Infinity,'direct 180 must remain a tap, not a DAS input');
-  assert(finesseActionCost('hard','das')===Infinity&&finesseActionCost('soft','das')===Infinity,
-    'vertical/drop actions must not accept a horizontal DAS mode');
+  assert(finesseActionCost('hard','das')===0&&finesseActionCost('soft','das')===0,
+    'drop and vertical events must remain finesse-neutral regardless of input-mode annotation');
   assert(finesseActionCost('left','DAS',FINESSE_PROFILES.SRS_NORMAL)===1,'input modes must normalize case before profile checks');
   assert(finesseActionCost('left','das',{...FINESSE_PROFILES.SRS_NORMAL,dasCountsAsOneInput:false})===Infinity,
     'profiles without DAS-as-one-input must reject DAS routes');
