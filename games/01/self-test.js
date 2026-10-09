@@ -314,9 +314,9 @@ export function runTrainerSelfTest(){
   // planner must never include rotation in its recommended route.
   const squarePlan=planFinesse({
     piece:{x:4,y:0,o:0,type:'O'},W:10,H:20,maxCost:2,seed:0,
-    move:(p,dx,dy)=>{if(dx&&(p.x+dx<0||p.x+dx>8))return false;p.x+=dx;p.y+=dy;return p.y<20;},
+    move:(p,dx,dy)=>{if(p.x+dx<0||p.x+dx>8||p.y+dy<0||p.y+dy>=20)return false;p.x+=dx;p.y+=dy;return true;},
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
-    cellsFor:()=>[]
+    cellsFor:()=>[[0,0],[1,0],[0,1],[1,1]]
   });
   assert(squarePlan&&squarePlan.actions.every(step=>!['cw','ccw','half'].includes(step.action)),'O-piece finesse must never recommend rotation');
   assert(squarePlan.target&&squarePlan.target.o===0,'O-piece target orientation must be canonicalized');
