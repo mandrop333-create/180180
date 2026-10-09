@@ -165,3 +165,13 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - The preceding browser failure was traced to a post-lock test-fixture issue: synthetic blocker cells used to force an ordered I-piece kick were left on the board and affected the next spawn. The fixture now clears those synthetic cells after checking the intended rotation.
 - A separate frame-sensitive DAS test was corrected to validate a fresh DAS deadline rather than assume the browser had not advanced a frame.
 - No merge/deploy. Kick/pivot compatibility and repository-wide legacy-import audit remain open.
+
+## Rotation API guard — 2026-10-09
+
+- `games/01/rotation.js` now rejects unsupported deltas instead of accidentally treating values such as `0` or `3` as legal rotations with a fallback zero-kick. Only `1`, `-1`, `2`, and `-2` are accepted.
+- `games/01/self-test.js` verifies rejected zero/270-degree rotations return false and leave the piece unchanged.
+- Planner regression suite passed on `91bcc98a86e790ee605f22f4c29b70ed8598c6fd`: [run 38000877170](https://github.com/mandrop333-create/180180/actions/runs/38000877170).
+- Independent geometry/kick/oracle suite passed: [run 38000877189](https://github.com/mandrop333-create/180180/actions/runs/38000877189).
+- Independent Playwright route fixtures, planner-oracle comparison, and active-gravity timing checks passed: [run 38000877165](https://github.com/mandrop333-create/180180/actions/runs/38000877165).
+- The prompt-requested duplicate Playwright workflow remained queued; the independent Playwright workflow above completed successfully and is the verification evidence used here.
+- No merge or deployment. The remaining structural work is external verification of all kick/pivot conventions and the full legacy-import audit.
