@@ -5,17 +5,35 @@ on:
     branches: ["rebuild/finesse-core"]
   pull_request:
     branches: ["main"]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   finesse-browser-reference:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && github.event.issue.pull_request && startsWith(github.event.comment.body, '/playwright-live'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Resolve pull request head for live-test comments
+        id: pr-head
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            core.setOutput('sha', pr.head.sha);
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || (github.event_name == 'issue_comment' && steps.pr-head.outputs.sha) || github.sha }}
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -25,6 +43,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Start isolated local game server
+        if: github.event_name != 'issue_comment'
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-browser.log 2>&1 &
           for i in $(seq 1 30); do
@@ -35,5 +54,9 @@ jobs:
           exit 1
       - name: Run independent finesse route fixtures in Playwright
         env:
-          FINESSE_BROWSER_BASE_URL: http://127.0.0.1:4173/
-        run: node --experimental-default-type=module games/01/finesse-browser-reference-test.js
+          FINESSE_BROWSER_BASE_URL: ${{ github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/playwright-live') && 'https://180436.xyz/' || 'http://127.0.0.1:4173/' }}
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            echo "Testing the live site read-only; no production files are modified."
+          fi
+          node --experimental-default-type=module games/01/finesse-browser-reference-test.js
