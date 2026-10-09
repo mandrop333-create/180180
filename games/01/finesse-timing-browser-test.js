@@ -141,8 +141,86 @@ try {
     console.log(JSON.stringify({type,boardKind,passed:true,gravityMs:100,route:planned.actions,target:planned.target,minimumCost:minimum,linesCleared:locked.linesCleared}));
   }
 
+  // Lock-delay reset acceptance case: start a grounded O piece at 80% of
+  // lock delay, then require the planner's DAS-plus-tap route to keep it alive.
+  const lockType='O';
+  const lockSpawn={x:4,y:18};
+  const lockStart={type:lockType,x:lockSpawn.x,y:lockSpawn.y,o:0};
+  const lockBoard=boardFor('empty');
+  const lockOracle=referenceTargets({type:lockType,start:lockStart,board:lockBoard,maxCost:2});
+  await page.evaluate(({type,spawn,board})=>{
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=Infinity;
+    t.rules.lockDelay=1000;
+    t.rules.das=0;
+    t.rules.arr=0;
+    t.rules.dcd=0;
+    t.board=board.map(row=>[...row]);
+    t.gameOver=false;
+    t.piece={type,x:spawn.x,y:spawn.y,o:0};
+    t.gravityAcc=0;
+    t.lockAcc=0;
+    t.lastRotation=false;
+    t.finesseEnabled=true;
+    t.finessePlacementResolved=false;
+    t.finesseMistakes=0;
+    t.finesseFaulted=false;
+    t.finesseProgress=0;
+    t.finesseDASPending=null;
+    t.stats.finessePerfect=0;
+    t.stats.finesseFaults=0;
+    t.stats.piecesPlaced=0;
+    t.stats.linesCleared=0;
+    t.generateFinessePrompt();
+    t.lockAcc=800;
+    t.emitState();
+    t.render();
+  },{type:lockType,spawn:lockSpawn,board:lockBoard});
+  const lockPlan=await page.evaluate(()=>{
+    const t=window.trainer;
+    return {target:t.finesseTarget?{...t.finesseTarget}:null,actions:t.finesseActions.map(step=>({...step}))};
+  });
+  assert(lockPlan.target&&lockOracle.get(keyOf(lockPlan.target))===lockPlan.actions.length,
+    'grounded route does not match the independent minimum: '+JSON.stringify(lockPlan));
+  assert(lockPlan.actions[0]?.action==='left'&&lockPlan.actions[0]?.mode==='das',
+    'grounded lock-delay case did not select the intended DAS route: '+JSON.stringify(lockPlan.actions));
+  for(let index=0;index<lockPlan.actions.length;index++){
+    const step=lockPlan.actions[index];
+    const key=keyFor(step.action);
+    if(step.mode==='das'){
+      await page.keyboard.down(key);
+      await page.waitForTimeout(100);
+      await page.keyboard.up(key);
+    }else{
+      await page.keyboard.press(key);
+    }
+    if(index===0)await page.waitForTimeout(250);
+  }
+  const afterLockReset=await page.evaluate(()=>{
+    const t=window.trainer;
+    return {piece:t.piece?{...t.piece}:null,lockAcc:t.lockAcc,lockDelay:t.rules.lockDelay,
+      placed:t.stats.piecesPlaced,progress:t.finesseProgress,count:t.finesseActions.length,faulted:t.finesseFaulted};
+  });
+  assert(afterLockReset.piece&&afterLockReset.placed===0&&afterLockReset.lockAcc<afterLockReset.lockDelay,
+    'movement failed to reset near-expired lock delay: '+JSON.stringify(afterLockReset));
+  assert(!afterLockReset.faulted&&afterLockReset.progress===afterLockReset.count,
+    'grounded route was not accepted by the finesse observer: '+JSON.stringify(afterLockReset));
+  await page.keyboard.press('Space');
+  await page.waitForFunction(()=>window.trainer.stats.piecesPlaced===1,null,{timeout:5000});
+  const lockResult=await page.evaluate(()=>{
+    const t=window.trainer;
+    return {board:t.board.map(row=>[...row]),perfect:t.stats.finessePerfect,faults:t.stats.finesseFaults,placed:t.stats.piecesPlaced};
+  });
+  const lockExpected=expectedBoardAfterLock(lockBoard,lockType,lockPlan.target);
+  assert(JSON.stringify(lockResult.board)===JSON.stringify(lockExpected.board),
+    'grounded lock-delay case locked an unexpected board');
+  assert(lockResult.perfect===1&&lockResult.faults===0&&lockResult.placed===1,
+    'grounded lock-delay case did not score exactly once: '+JSON.stringify(lockResult));
+  console.log(JSON.stringify({lockDelayReset:true,passed:true,initialLockAcc:800,lockDelay:1000,route:lockPlan.actions}));
+
   assert(pageErrors.length===0,'browser page errors: '+JSON.stringify(pageErrors));
-  console.log(JSON.stringify({ok:true,scenarios:scenarios.length,finiteGravity:true,stackBoards:3,pageErrors:pageErrors.length}));
+  console.log(JSON.stringify({ok:true,scenarios:scenarios.length,finiteGravity:true,stackBoards:3,lockDelayReset:true,pageErrors:pageErrors.length}));
 } finally {
   await browser.close();
 }
