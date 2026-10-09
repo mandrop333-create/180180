@@ -238,7 +238,7 @@ export function runTrainerSelfTest(){
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
   const invalidLockPlan=planFinesse({
     piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,
-    move:(p,dx,dy)=>{p.x+=dx;p.y+=dy;return p.y<20;},
+    move:(p,dx,dy)=>{if(p.x+dx<0||p.x+dx>9||p.y+dy<0||p.y+dy>=20)return false;p.x+=dx;p.y+=dy;return true;},
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
     cellsFor:()=>[]
   });
