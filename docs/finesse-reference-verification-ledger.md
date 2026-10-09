@@ -93,3 +93,12 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - On commit `1393855aa9e004b83f59cc6b7564843f591c2f38`, the independent reference workflow passed: [run 37996902496](https://github.com/mandrop333-create/180180/actions/runs/37996902496), and the full independent Playwright route workflow passed, including the active-gravity timing suite with the new DCD and tap-release cases: [run 37996902615](https://github.com/mandrop333-create/180180/actions/runs/37996902615).
 - These tests support the implemented runtime's tested DAS/DCD behavior. They do not establish that all possible TETR.IO timing configurations, simultaneous-input combinations, or every official kick fixture have been exhaustively proven.
 - No production code was changed in this checkpoint; `main` and deployment remain untouched.
+
+## Lockability and full DCD checkpoint — 2026-10-09
+
+- Found and fixed a target-validity edge case: a rotation may legally kick a piece above the ceiling, where it can rest against a high stack, but the game's lock handler top-outs instead of placing minos if any mino remains above row zero. `games/01/finesse.js` now only emits targets whose four minos can be locked inside the visible field.
+- Added an independent ceiling regression to `games/01/finesse-oracle-reference-test.js`. The fixture starts from a legal T spawn, blocks the first two CW rotation candidates, and proves the upward-kicked `(x=2,o=1,y=-1)` state is not offered as a target by either the independent oracle or the production planner.
+- The independent reference workflow passed after this change: [run 37997092343](https://github.com/mandrop333-create/180180/actions/runs/37997092343). Planner regression passed: [run 37997098280](https://github.com/mandrop333-create/180180/actions/runs/37997098280).
+- Extended the browser timing suite with a spawn-DCD case in addition to post-rotation DCD and short-tap/key-release behavior. The suite passed: [run 37997092349](https://github.com/mandrop333-create/180180/actions/runs/37997092349) and [run 37997098257](https://github.com/mandrop333-create/180180/actions/runs/37997098257).
+- The source for TETR.IO mechanics confirms DCD cuts active DAS after a rotation or spawn; this aligns with the runtime behaviors now covered by browser tests. The suite still does not claim exhaustive coverage of every possible simultaneous-input/focus-loss combination.
+- Mathematical spec updated to make lockability an explicit target precondition. No deployment or merge to `main` was performed.
