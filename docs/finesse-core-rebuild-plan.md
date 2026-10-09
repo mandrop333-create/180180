@@ -1,6 +1,6 @@
 # Finesse Core Rebuild: Rules and Verification Plan
 
-Status: investigation/specification only. This document does not change production behavior.
+Status: implementation and verification in progress on `rebuild/finesse-core`. The isolated candidate now uses cost-ordered Dijkstra search and has passing planner, independent-reference, and Playwright route/oracle/timing suites on commit `746f8717cd448bc20f64a4cf033c553477a90d85`. This is not yet a complete ground-up rewrite: kick/pivot source compatibility and a full repository-wide legacy-import audit remain open. Do not merge or deploy without explicit authorization.
 
 ## Objective
 
