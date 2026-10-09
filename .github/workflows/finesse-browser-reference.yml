@@ -2,7 +2,7 @@ name: Finesse independent Playwright route fixtures
 
 on:
   push:
-    branches: ["rebuild/finesse-core"]
+    branches: ["rebuild/finesse-core", "test/live-finesse"]
   pull_request:
     branches: ["main"]
   issue_comment:
@@ -43,7 +43,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Start isolated local game server
-        if: github.event_name != 'issue_comment'
+        if: github.event_name != 'issue_comment' && github.ref_name != 'test/live-finesse'
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-browser.log 2>&1 &
           for i in $(seq 1 30); do
@@ -54,7 +54,7 @@ jobs:
           exit 1
       - name: Run independent finesse route fixtures in Playwright
         env:
-          FINESSE_BROWSER_BASE_URL: ${{ github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/playwright-live') && 'https://180436.xyz/' || 'http://127.0.0.1:4173/' }}
+          FINESSE_BROWSER_BASE_URL: ${{ (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/playwright-live') || github.ref_name == 'test/live-finesse') && 'https://180436.xyz/' || 'http://127.0.0.1:4173/' }}
         run: |
           if [ "${{ github.event_name }}" = "issue_comment" ]; then
             echo "Testing the live site read-only; no production files are modified."
