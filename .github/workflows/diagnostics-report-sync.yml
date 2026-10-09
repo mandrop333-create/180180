@@ -3,7 +3,7 @@ name: Sync latest gameplay diagnostics report
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "17 */4 * * *"
 
 permissions:
   contents: read
