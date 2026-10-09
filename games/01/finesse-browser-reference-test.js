@@ -37,6 +37,15 @@ const scenarios = [
     lockedCells: [[7,16],[7,17],[7,18],[7,19]]
   },
   {
+    name: 'I SRS+ counter-clockwise kick',
+    type: 'I', start: { x:4, y:0, o:0 },
+    blockers: [[5,0]],
+    route: [{ action:'ccw', mode:'tap' }],
+    target: { x:3, o:3, y:16 },
+    afterInput: { x:3, y:0, o:3 },
+    lockedCells: [[4,16],[4,17],[4,18],[4,19]]
+  },
+  {
     name: 'I direct 180 kick',
     type: 'I', start: { x:4, y:0, o:0 },
     route: [{ action:'half', mode:'tap' }],
@@ -99,7 +108,8 @@ try {
     assert(promptVisible, scenario.name + ': finesse prompt should be visible');
 
     const key = scenario.route[0].action === 'right' ? 'ArrowRight'
-      : scenario.route[0].action === 'cw' ? 'x' : 'a';
+      : scenario.route[0].action === 'cw' ? 'x'
+      : scenario.route[0].action === 'ccw' ? 'z' : 'a';
     await page.keyboard.press(key);
 
     const after = await page.evaluate(() => {
