@@ -38,13 +38,15 @@ const HALF_JLSTZ = {
  3: [[0,0],[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
 };
 
-// TETR.IO's I-piece 180 table has only one non-zero kick per direction.
+// Always test the unshifted destination first. The pinned TETR.IO snapshot
+// runner does this baseline attempt before iterating the non-zero kick data.
+// The two local non-zero offsets are retained temporarily until their anchor
+// transform is proven against the pinned client movement snapshots.
 const HALF_I = {
- // TETR.IO SRS+ direct-180 I-piece kicks, normalized to screen-y-down.
- 0: [[1,1],[1,0]],
- 1: [[-1,1],[0,1]],
- 2: [[-1,-1],[-1,0]],
- 3: [[1,-1],[0,-1]]
+ 0: [[0,0],[1,1],[1,0]],
+ 1: [[0,0],[-1,1],[0,1]],
+ 2: [[0,0],[-1,-1],[-1,0]],
+ 3: [[0,0],[1,-1],[0,-1]]
 };
 
 export function getSrsKicks(type, from, to) {
