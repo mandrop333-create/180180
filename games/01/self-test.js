@@ -31,6 +31,18 @@ export function runTrainerSelfTest(){
   // Rotation invariant: CW+CCW returns to the original orientation.
   for(let o=0;o<4;o++)assert(targetOrientation(targetOrientation(o,1),-1)===o,'rotation orientation cycle failed');
 
+  // Unsupported deltas must not create transitions in the runtime graph.
+  const invalidRotationPiece={type:'T',x:3,y:0,o:0};
+  const invalidRotationBefore=JSON.stringify(invalidRotationPiece);
+  assert(!tryRotate(invalidRotationPiece,0,Array.from({length:H},()=>Array(W).fill(0)),W,H,cellsFor),
+    'zero-degree rotation should be rejected');
+  assert(JSON.stringify(invalidRotationPiece)===invalidRotationBefore,
+    'rejected rotation mutated the piece');
+  assert(!tryRotate(invalidRotationPiece,3,Array.from({length:H},()=>Array(W).fill(0)),W,H,cellsFor),
+    'unsupported 270-degree delta should be rejected');
+  assert(JSON.stringify(invalidRotationPiece)===invalidRotationBefore,
+    'unsupported rotation delta mutated the piece');
+
   // TETR.IO-style direct 180 exists independently of two 90 turns.
   for(const type of ['I','T','J','L','S','Z']){
     for(let o=0;o<4;o++)assert(getTetrio180Kicks(type,o).length>0,type+' 180 kick table missing state '+o);
