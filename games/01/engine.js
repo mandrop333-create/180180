@@ -33,7 +33,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.rhythm=new RhythmTracker(options.calculateRhythm===true);this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -91,6 +91,7 @@ export class Trainer {
   setFinesseEnabled(enabled){
     this.finesseEnabled=!!enabled;
     this.finesseActions=[];
+    this.finesseRouteCandidates=[];
     this.finesseProgress=0;
     this.finesseMistakes=0;
     this.finesseFaulted=false;
@@ -107,31 +108,70 @@ export class Trainer {
     this.finesseMistakes++;this.stats.finesseFaults++;this.finesseFaulted=true;
     this.emitState();
   }
-  recordFinesseObservation(action){
+  syncFinesseDisplay(){
+    if(!this.finesseRouteCandidates.length)return;
+    const ranked=[...this.finesseRouteCandidates].sort((a,b)=>b.progress-a.progress||
+      a.route.map(step=>step.action+':'+step.mode).join('|').localeCompare(b.route.map(step=>step.action+':'+step.mode).join('|')));
+    const chosen=ranked[0];
+    this.finesseActions=chosen.route.map(step=>({...step}));
+    this.finesseProgress=chosen.progress;
+    this.finesseDASPending=chosen.pendingDasAction?{action:chosen.pendingDasAction}:null;
+  }
+  recordFinesseObservation(action,{mode='tap'}={}){
     if(!this.finesseEnabled||this.finesseFaulted)return;
-    const expected=this.finesseActions[this.finesseProgress];
-    const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
-    const expectedMode=expected&&typeof expected==='object'?(expected.mode||'tap'):'tap';
-    if(expectedAction===action&&expectedMode==='das'){
-      this.finesseDASPending=null;
-      this.finesseProgress++;
-      this.emitState();
-      return;
+    if(!this.finesseRouteCandidates.length){
+      const expected=this.finesseActions[this.finesseProgress];
+      const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
+      if(expectedAction===action){this.finesseProgress++;this.emitState();return;}
+      this.finesseFault();return;
     }
-    if(expectedAction===action){
-      this.finesseProgress++;
-      this.emitState();
-      return;
+    const next=[];
+    for(const candidate of this.finesseRouteCandidates){
+      const expected=candidate.route[candidate.progress];
+      if(!expected||expected.action!==action)continue;
+      if(mode==='horizontal'){
+        if(expected.mode==='das'){
+          next.push({...candidate,pendingDasAction:action});
+        }else{
+          next.push({...candidate,progress:candidate.progress+1,pendingDasAction:null});
+        }
+      }else if((expected.mode||'tap')==='tap'){
+        next.push({...candidate,progress:candidate.progress+1,pendingDasAction:null});
+      }
     }
-    this.finesseFault();
+    this.finesseRouteCandidates=next;
+    if(!next.length){this.finesseFault();return;}
+    this.syncFinesseDisplay();
+    this.emitState();
   }
   observeFinesseDAS(action){
-    if(!this.finesseEnabled||this.finesseFaulted)return;
-    const expected=this.finesseActions[this.finesseProgress];
-    if(!expected||typeof expected!=='object'||expected.action!==action||expected.mode!=='das')return;
+    if(!this.finesseEnabled||this.finesseFaulted||!this.finesseRouteCandidates.length)return;
     const dir=action==='left'?-1:1;
     const wall=this.dasWallX(dir);
-    if(wall!==null&&this.piece?.x===wall)this.recordFinesseObservation(action);
+    if(wall===null||this.piece?.x!==wall)return;
+    const next=[];
+    for(const candidate of this.finesseRouteCandidates){
+      if(candidate.pendingDasAction===action){
+        next.push({...candidate,progress:candidate.progress+1,pendingDasAction:null});
+      }else{
+        next.push(candidate);
+      }
+    }
+    if(next.some(candidate=>candidate!==this.finesseRouteCandidates.find(old=>old===candidate))){}
+    const advanced=next.some(candidate=>candidate.pendingDasAction===null&&
+      this.finesseRouteCandidates.some(old=>old.pendingDasAction===action&&old.route===candidate.route&&old.progress+1===candidate.progress));
+    if(!advanced)return;
+    this.finesseRouteCandidates=next;
+    this.syncFinesseDisplay();
+    this.emitState();
+  }
+  finishFinesseHorizontalInput(action){
+    if(!this.finesseEnabled||this.finesseFaulted||!this.finesseRouteCandidates.length)return;
+    const next=this.finesseRouteCandidates.filter(candidate=>candidate.pendingDasAction!==action);
+    this.finesseRouteCandidates=next;
+    if(!next.length){this.finesseFault();return;}
+    this.syncFinesseDisplay();
+    this.emitState();
   }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
@@ -141,6 +181,7 @@ export class Trainer {
   }
   generateFinessePrompt(){
     this.finesseActions=[];
+    this.finesseRouteCandidates=[];
     this.finesseProgress=0;
     this.finesseTarget=null;
     this.finessePlacementResolved=false;
@@ -165,6 +206,9 @@ export class Trainer {
     if(!plan)return;
     this.finesseTarget={...plan.target};
     this.finesseActions=plan.actions.map(step=>({...step}));
+    this.finesseRouteCandidates=(plan.routes?.length?plan.routes:[plan.actions]).map(route=>({
+      route:route.map(step=>({...step})),progress:0,pendingDasAction:null
+    }));
   }
   reapplyHeldHorizontalInput(){
     if(this.gameOver||!this.piece)return;
@@ -212,7 +256,9 @@ export class Trainer {
     if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
       const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&(!Number.isInteger(target.y)||lockedPiece.y===target.y));
-      const sequenceComplete=this.finesseProgress>=this.finesseActions.length;
+      const sequenceComplete=this.finesseRouteCandidates.length
+        ?this.finesseRouteCandidates.some(candidate=>candidate.progress>=candidate.route.length&&!candidate.pendingDasAction)
+        :this.finesseProgress>=this.finesseActions.length;
       this.finessePlacementResolved=true;
       if(!this.finesseFaulted&&sequenceComplete&&targetOk)this.stats.finessePerfect++;
       else if(!this.finesseFaulted){
@@ -360,7 +406,7 @@ export class Trainer {
           this.finesseDASPending={action};
           this.observeFinesseDAS(action);
         }else{
-          this.recordFinesseObservation(action);
+          this.recordFinesseObservation(action,{mode:'horizontal'});
         }
       }
     }else if(action==='soft'){
@@ -387,7 +433,7 @@ export class Trainer {
     }
     else if(action==='hold'){this.hold();}
   }
-  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if((action==='left'||action==='right')&&this.finesseDASPending?.action===action){this.observeFinesseDAS(action);if(this.finesseDASPending&&!this.finesseFaulted)this.finesseFault();}if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
+  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action==='left'||action==='right'){this.observeFinesseDAS(action);this.finishFinesseHorizontalInput(action);}if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
   handleBlur(){
     this.downKeys.clear();this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;
   }
