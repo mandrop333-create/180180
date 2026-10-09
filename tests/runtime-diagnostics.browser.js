@@ -154,16 +154,107 @@ try {
   // never silently treated as if they were tested.
   const requestedText = process.env.PLAYWRIGHT_TEST_REQUEST || '';
   const requestedActions = [];
+  const actionChecks = [];
   const requestLower = requestedText.toLowerCase();
+  const snapshotGame = () => page.evaluate(() => {
+    const t = window.trainer;
+    return {
+      piece: t.piece ? { type: t.piece.type, x: t.piece.x, y: t.piece.y, o: t.piece.o } : null,
+      holdType: t.holdType,
+      gameOver: t.gameOver,
+      score: t.stats?.score,
+      hardDropRows: t.stats?.hardDropRows,
+      board: JSON.stringify(t.board)
+    };
+  });
+  const assertCheck = (name, ok, detail) => {
+    actionChecks.push({ action: name, passed: Boolean(ok), detail });
+    if (!ok) throw new Error('Requested action assertion failed (' + name + '): ' + detail);
+  };
   const actionRules = [
-    { name: 'move-left', terms: ['move left', 'left movement', 'left arrow'], run: async () => { await page.keyboard.press('ArrowLeft'); } },
-    { name: 'move-right', terms: ['move right', 'right movement', 'right arrow'], run: async () => { await page.keyboard.press('ArrowRight'); } },
-    { name: 'soft-drop', terms: ['soft drop', 'drop down'], run: async () => { await page.keyboard.press('ArrowDown'); } },
-    { name: 'rotate', terms: ['rotate', 'rotation'], run: async () => { await page.keyboard.press('x'); } },
-    { name: 'hold', terms: ['hold'], run: async () => { await page.keyboard.press('Shift'); } },
-    { name: 'hard-drop', terms: ['hard drop', 'hard-drop'], run: async () => { await page.keyboard.press('Space'); } },
-    { name: 'reset', terms: ['reset', 'restart'], run: async () => { await page.evaluate(() => window.trainer.reset()); } },
-    { name: 'mobile-layout', terms: ['mobile', 'phone', 'responsive'], run: async () => { await page.setViewportSize({ width: 390, height: 844 }); await capturePageState(page, 'requested-mobile-layout'); await page.setViewportSize({ width: 1440, height: 1000 }); } }
+    {
+      name: 'move-left', terms: ['move left', 'left movement', 'left arrow'],
+      run: async () => {
+        await page.evaluate(() => window.trainer.reset());
+        const before = await snapshotGame();
+        await page.keyboard.press('ArrowLeft');
+        const after = await snapshotGame();
+        assertCheck('move-left', after.piece && before.piece && after.piece.x < before.piece.x, 'Active piece x should decrease after ArrowLeft');
+      }
+    },
+    {
+      name: 'move-right', terms: ['move right', 'right movement', 'right arrow'],
+      run: async () => {
+        await page.evaluate(() => window.trainer.reset());
+        const before = await snapshotGame();
+        await page.keyboard.press('ArrowRight');
+        const after = await snapshotGame();
+        assertCheck('move-right', after.piece && before.piece && after.piece.x > before.piece.x, 'Active piece x should increase after ArrowRight');
+      }
+    },
+    {
+      name: 'soft-drop', terms: ['soft drop', 'drop down'],
+      run: async () => {
+        await page.evaluate(() => window.trainer.reset());
+        const before = await snapshotGame();
+        await page.keyboard.press('ArrowDown');
+        const after = await snapshotGame();
+        assertCheck('soft-drop', after.piece && before.piece && (after.piece.y > before.piece.y || after.score > before.score), 'Piece should descend or score should increase after soft drop');
+      }
+    },
+    {
+      name: 'rotate', terms: ['rotate', 'rotation'],
+      run: async () => {
+        await page.evaluate(() => window.trainer.reset());
+        const before = await snapshotGame();
+        await page.keyboard.press('x');
+        const after = await snapshotGame();
+        assertCheck('rotate', after.piece && before.piece && after.piece.o !== before.piece.o, 'Piece orientation should change after clockwise rotation');
+      }
+    },
+    {
+      name: 'hold', terms: ['hold'],
+      run: async () => {
+        await page.evaluate(() => window.trainer.reset());
+        const before = await snapshotGame();
+        await page.keyboard.press('Shift');
+        const after = await snapshotGame();
+        assertCheck('hold', Boolean(after.holdType) && Boolean(after.piece) && after.holdType === before.piece?.type, 'Hold slot should contain the previously active piece');
+      }
+    },
+    {
+      name: 'hard-drop', terms: ['hard drop', 'hard-drop'],
+      run: async () => {
+        await page.evaluate(() => window.trainer.reset());
+        const before = await snapshotGame();
+        await page.keyboard.press('Space');
+        const after = await snapshotGame();
+        assertCheck('hard-drop', after.board !== before.board || after.hardDropRows > before.hardDropRows || after.gameOver, 'Hard drop should lock a piece, change the board, score rows, or end the game');
+      }
+    },
+    {
+      name: 'reset', terms: ['reset', 'restart'],
+      run: async () => {
+        await page.keyboard.press('Space');
+        await page.evaluate(() => window.trainer.reset());
+        const after = await snapshotGame();
+        assertCheck('reset', Boolean(after.piece) && !after.gameOver && after.holdType === null, 'Reset should spawn an active piece and clear game-over/hold state');
+      }
+    },
+    {
+      name: 'mobile-layout', terms: ['mobile', 'phone', 'responsive'],
+      run: async () => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        const result = await page.evaluate(() => ({
+          viewportWidth: innerWidth,
+          boardExists: Boolean(document.querySelector('#board')),
+          boardWidth: document.querySelector('#board')?.getBoundingClientRect().width || 0
+        }));
+        assertCheck('mobile-layout', result.viewportWidth === 390 && result.boardExists && result.boardWidth > 0, 'Board should remain rendered at 390px viewport width');
+        await capturePageState(page, 'requested-mobile-layout');
+        await page.setViewportSize({ width: 1440, height: 1000 });
+      }
+    }
   ];
   if (requestedText.trim()) {
     for (const rule of actionRules) {
@@ -179,6 +270,9 @@ try {
       request: requestedText,
       executedActions: requestedActions,
       recognized: recognizedTerms.length > 0,
+      assertions: actionChecks,
+      passedAssertions: actionChecks.filter(check => check.passed).length,
+      failedAssertions: actionChecks.filter(check => !check.passed).length,
       note: recognizedTerms.length ? null : 'No supported action keywords matched. Standard diagnostics ran, but the requested scenario was not interpreted.'
     };
     if (!recognizedTerms.length) throw new Error('No supported actions recognized in PLAYWRIGHT_TEST_REQUEST. Supported examples: move left, move right, soft drop, rotate, hold, hard drop, reset, mobile layout.');
