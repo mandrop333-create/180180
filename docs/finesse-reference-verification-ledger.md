@@ -241,3 +241,15 @@ The version-pinned movement-snapshot generator exposes a crucial detail that a r
 **Implication for this rebuild:** our current `tryRotate` applies each table offset directly to our piece origin and has no per-orientation `additional_offsets` adjustment or separate un-kicked baseline candidate. That may be correct only if `pieces.js`'s chosen local geometry and the selected offsets have already absorbed those semantics. Existing tests do not prove that equivalence. We must explicitly derive and test the coordinate transform against client snapshots before changing kick arrays; otherwise we risk fixing a table while leaving the rotation origin wrong.
 
 **Next gate:** reproduce a small, pinned set of client movement cases (at minimum every piece × orientation × direction on an empty board, plus kick-required and failed rotations), map client matrix coordinates to trainer world cells, and compare the complete resulting state. Expand to the randomized-board corpus only after the coordinate transform is demonstrated. No production table change is authorized by this audit alone.
+
+
+## Audit correction — raw client kick arrays omit the baseline attempt — 2026-10-09
+
+A closer read of the pinned movement-snapshot generator refines the earlier raw-array comparison:
+
+- TETR.IO tests the no-kick destination first. The arrays under `kicksets.SRS+.kicks` and `kicksets.SRS+.i_kicks` contain only subsequent kick offsets; they do not include an explicit `[0,0]` entry.
+- Therefore, the earlier example comparing the client I-piece `01` array `[[1,0],[-2,0],[-2,1],[1,-2]]` to our five-entry table was **not itself evidence of a 90-degree kick-order mismatch**. Adding the implicit baseline candidate yields the same five candidates as the trainer's `0>1` table after coordinate normalization.
+- The real unresolved question is the full coordinate mapping and direct-180 behavior. The client generator applies a no-kick baseline, uses the client matrix/position convention, and converts results back to its native state; those semantics must be normalized before deciding equivalence. The earlier audit's claim that the 90-degree table differs structurally should not be used as a basis for changing it.
+- This correction does not clear the no-go gate: the current direct-180 I table still needs transition-by-transition equivalence testing, and no pinned client snapshot corpus has yet been run against this repository's `tryRotate`.
+
+**Next action:** build a differential adapter for a small set of generated client movement cases, with expected results derived from the pinned client snapshot fixtures rather than comparing raw offset arrays. Preserve this distinction in future review: source arrays are kick-only offsets; the baseline rotation test is a separate first attempt.
