@@ -1,0 +1,99 @@
+name: Prompt-requested Playwright test
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      test_request:
+        description: "Describe actions to test: move left/right, soft drop, rotate, hold, hard drop, reset, mobile layout"
+        required: true
+        type: string
+        default: "Test movement, rotation, hold, hard drop, reset, and game over"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prompt-playwright-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prompt-playwright:
+    if: github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/playwright '))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostics branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/runtime-diagnostics
+      - name: Record requested test
+        env:
+          TEST_REQUEST: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.test_request }}
+        run: |
+          mkdir -p artifacts
+          case "$TEST_REQUEST" in /playwright\ *) TEST_REQUEST="${TEST_REQUEST#/playwright }" ;; esac
+          printf '%s\n' "$TEST_REQUEST" > artifacts/requested-test.txt
+          {
+            echo '## Prompt-requested Playwright run'
+            echo
+            echo "**Requested test:** $TEST_REQUEST"
+            echo
+            echo "Supported request keywords: move left, move right, soft drop, rotate, hold, hard drop, reset, mobile layout. Unsupported requests fail clearly instead of claiming success."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm init -y && npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Worker API tests
+        run: node --experimental-default-type=module --test tests/worker-api.test.js
+      - name: Start isolated local game server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/180180-http.log
+          exit 1
+      - name: Run Playwright gameplay diagnostics
+        env:
+          PLAYWRIGHT_TEST_REQUEST: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.test_request }}
+        run: |
+          case "$PLAYWRIGHT_TEST_REQUEST" in /playwright\ *) export PLAYWRIGHT_TEST_REQUEST="${PLAYWRIGHT_TEST_REQUEST#/playwright }" ;; esac
+          node --experimental-default-type=module tests/runtime-diagnostics.browser.js
+      - name: Add requested test results to summary
+        if: always()
+        run: |
+          if [ -f artifacts/requested-test-results.json ]; then
+            echo '## Interpreted test actions' >> "$GITHUB_STEP_SUMMARY"
+            cat artifacts/requested-test-results.json >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Add runner metadata
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo
+            echo '## Runner metadata'
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Ref: ${GITHUB_REF}"
+            echo "- UTC time: $(date -u +%FT%TZ)"
+            echo
+            echo 'Static server log:'
+            cat /tmp/180180-http.log 2>/dev/null || true
+          } >> artifacts/requested-test.txt
+      - name: Upload diagnostics bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-playwright-diagnostics
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 6
