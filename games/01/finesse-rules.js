@@ -277,7 +277,9 @@ export function routeCost(route=[],profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180)
 }
 
 export function isFinessePerfect(route,targetCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180){
-  return routeCost(route,profile)===targetCost;
+  if(!Number.isFinite(targetCost)||targetCost<0)return false;
+  const cost=routeCost(route,profile);
+  return Number.isFinite(cost)&&cost===targetCost;
 }
 
 export function chooseMinimumRoute(routes,targetKey){
