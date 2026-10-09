@@ -30,6 +30,7 @@ const scenarios = [
   {
     name: 'I SRS+ clockwise kick',
     type: 'I', start: { x:4, y:0, o:0 },
+    blockers: [[6,0]],
     route: [{ action:'cw', mode:'tap' }],
     target: { x:5, o:1, y:16 },
     afterInput: { x:5, y:0, o:1 },
@@ -60,6 +61,7 @@ try {
       t.rules.gravity = Infinity;
       t.rules.lockDelay = 100000;
       t.emptyBoard();
+      for (const [x,y] of (scenario.blockers || [])) t.board[y][x] = 1;
       t.gameOver = false;
       t.piece = { type: scenario.type, ...scenario.start };
       t.lastRotation = false;
