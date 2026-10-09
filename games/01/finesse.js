@@ -35,37 +35,61 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   const stateKey=p=>p.x+','+p.y+','+p.o;
   const queue=[{piece:start,cost:0,route:[]}];
   const best=new Map([[stateKey(start),0]]);
+  // Retain distinct equal-cost histories for a state. Positive action costs
+  // and the finite cost envelope bound this search; route keys prevent repeats.
+  const stateRoutes=new Map([[stateKey(start),new Set([''])]]);
   const targets=new Map();
 
   while(queue.length){
     const current=queue.shift();
+    const currentStateKey=stateKey(current.piece);
+    const currentRouteKey=routeKey(current.route);
+    if(current.cost>best.get(currentStateKey)||
+      !stateRoutes.get(currentStateKey)?.has(currentRouteKey))continue;
     const land=landing(current.piece);
     const target=normalizeFinesseTarget({x:land.x,o:land.o,y:land.y},W,{allowNegativeX:true});
     if(target){
       const key=placementIdentity(target);
-      const candidate={route:current.route,target,cost:current.cost,landingY:land.y,routeKey:routeKey(current.route)};
+      const candidate={route:current.route,target,cost:current.cost,landingY:land.y,routeKey:currentRouteKey};
       const previous=targets.get(key);
-      // Cost must dominate route ordering. A lexicographically earlier route
-      // is only a tie-breaker between equally short routes, never permission
-      // to replace a minimum route with a longer one.
-      if(!previous||candidate.cost<previous.cost||
-        (candidate.cost===previous.cost&&candidate.routeKey<previous.routeKey)){
-        targets.set(key,candidate);
+      // Preserve every distinct minimum-cost route to this physical landing.
+      // route remains a deterministic canonical route for existing callers.
+      if(!previous||candidate.cost<previous.cost){
+        targets.set(key,{...candidate,routes:[current.route]});
+      }else if(candidate.cost===previous.cost&&!previous.routes.some(route=>routeKey(route)===candidate.routeKey)){
+        previous.routes.push(current.route);
+        previous.routes.sort((a,b)=>routeKey(a).localeCompare(routeKey(b)));
+        previous.route=previous.routes[0];
+        previous.routeKey=routeKey(previous.route);
       }
     }
     if(current.cost>=limit)continue;
     for(const step of actions){
       const next=step.apply(current.piece);if(!next)continue;
       const stepCost=Number.isFinite(step.cost)?step.cost:Infinity;
-      if(!Number.isFinite(stepCost)||current.cost+stepCost>limit)continue;
+      if(!Number.isFinite(stepCost)||stepCost<=0||current.cost+stepCost>limit)continue;
       const cost=current.cost+stepCost,key=stateKey(next);
-      if(best.has(key)&&best.get(key)<=cost)continue;
-      best.set(key,cost);
-      queue.push({piece:next,cost,route:[...current.route,{action:step.action,mode:step.mode}]});
+      const nextRoute=[...current.route,{action:step.action,mode:step.mode}];
+      const nextRouteKey=routeKey(nextRoute);
+      const priorCost=best.get(key);
+      if(priorCost!==undefined&&priorCost<cost)continue;
+      if(priorCost===undefined||cost<priorCost){
+        best.set(key,cost);
+        stateRoutes.set(key,new Set([nextRouteKey]));
+      }else{
+        const knownRoutes=stateRoutes.get(key)||new Set();
+        if(knownRoutes.has(nextRouteKey))continue;
+        knownRoutes.add(nextRouteKey);
+        stateRoutes.set(key,knownRoutes);
+      }
+      queue.push({piece:next,cost,route:nextRoute});
     }
   }
 
-  return [...targets.values()].sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.target.y-b.target.y||a.routeKey.localeCompare(b.routeKey));
+  return [...targets.values()].map(candidate=>({
+    ...candidate,
+    routes:candidate.routes.sort((a,b)=>routeKey(a).localeCompare(routeKey(b)))
+  })).sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.target.y-b.target.y||a.routeKey.localeCompare(b.routeKey));
 }
 
 export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
@@ -90,6 +114,7 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
 export function minimumRoutesForTargets(options={}){
   return enumerateFinesseTargets(options).map(candidate=>({
     actions:candidate.route,
+    routes:candidate.routes,
     target:candidate.target,
     cost:candidate.cost,
     landingY:candidate.landingY
