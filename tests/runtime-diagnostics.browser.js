@@ -18,12 +18,28 @@ try {
   await page.keyboard.down('ArrowLeft');
   await page.waitForTimeout(80);
   await page.keyboard.up('ArrowLeft');
+  await page.keyboard.press('KeyX');
+  await page.keyboard.press('ShiftLeft');
   await page.keyboard.press('Space');
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(250);
+  await page.locator('#restartButton').click();
+  await page.waitForTimeout(100);
+
+  // Deterministically exercise the game-over handler after the real input sequence.
+  await page.evaluate(() => {
+    const trainer = window.trainer;
+    trainer.board[0].fill(1);
+    trainer.spawn('O');
+  });
+  await page.waitForTimeout(100);
 
   report = await page.evaluate(() => window.__180180Diagnostics.report());
   const types = new Set(report.events.map(event => event.type));
-  const required = ['session-start', 'initial-state', 'input-keydown', 'input-keyup', 'state-change', 'board-change'];
+  const required = [
+    'session-start', 'initial-state', 'input-keydown', 'input-keyup',
+    'state-change', 'board-change', 'game-rotate', 'game-hold',
+    'game-hardDrop', 'game-gameOver', 'reset'
+  ];
   const missing = required.filter(type => !types.has(type));
   if (missing.length) throw new Error('Missing diagnostic event types: ' + missing.join(', '));
   if (report.schema !== '180180-runtime-diagnostics/v1') throw new Error('Unexpected diagnostics schema');
