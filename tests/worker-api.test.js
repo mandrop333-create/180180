@@ -7,9 +7,17 @@ function makeKV() {
   return {
     async put(key, value, options) { data.set(key, { value: String(value), options }); },
     async get(key) { return data.get(key)?.value ?? null; },
-    async list({ prefix = '', limit = 100 } = {}) {
-      const keys = [...data.keys()].filter(key => key.startsWith(prefix)).sort().slice(0, limit);
-      return { keys: keys.map(name => ({ name })) };
+    async list({ prefix = '', limit = 1000, cursor } = {}) {
+      const all = [...data.keys()].filter(key => key.startsWith(prefix)).sort();
+      // The fake cursor is a page offset; production KV cursors are opaque.
+      const start = cursor ? Number.parseInt(cursor, 10) : 0;
+      const page = all.slice(start, start + limit);
+      const next = start + page.length;
+      return {
+        keys: page.map(name => ({ name })),
+        list_complete: next >= all.length,
+        cursor: next < all.length ? String(next) : undefined
+      };
     }
   };
 }
@@ -66,6 +74,22 @@ test('a report can be retrieved by session ID and listed', async () => {
   const list = await call(envObj, '/api/reports?limit=5');
   assert.equal(list.status, 200);
   assert.equal((await list.json()).reports[0].sessionId, 'run_abc');
+});
+
+test('report listing paginates before selecting the newest reports', async () => {
+  const envObj = env();
+  for (let i = 0; i < 1005; i++) {
+    const id = 'session_' + String(i).padStart(4, '0');
+    const key = 'reports/' + String(1_800_000_000_000 + i).padStart(13, '0') + '/' + id;
+    await envObj.REPORTS.put(key, JSON.stringify({
+      ...report(id),
+      receivedAt: new Date(1_800_000_000_000 + i).toISOString()
+    }), { expirationTtl: 60 * 60 * 24 * 30 });
+  }
+  const response = await call(envObj, '/api/reports?limit=5');
+  assert.equal(response.status, 200);
+  const ids = (await response.json()).reports.map(item => item.sessionId);
+  assert.deepEqual(ids, ['session_1004', 'session_1003', 'session_1002', 'session_1001', 'session_1000']);
 });
 
 test('rejects invalid report schemas', async () => {
