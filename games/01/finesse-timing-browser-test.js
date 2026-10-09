@@ -330,7 +330,7 @@ try {
   }));
   assert(duringDcd.x===4&&duringDcd.remaining>0&&duringDcd.dir===1,
     'held horizontal input repeated during DCD: '+JSON.stringify(duringDcd));
-  await page.waitForTimeout(90);
+  await page.waitForTimeout(120);
   const justAfterDcd=await page.evaluate(()=>({
     x:window.trainer.piece?.x,
     remaining:window.trainer.dasCutRemaining,
@@ -338,7 +338,7 @@ try {
   }));
   assert(justAfterDcd.x===4&&justAfterDcd.remaining===0&&justAfterDcd.dir===1,
     'DAS clock was not paused for the full DCD window: '+JSON.stringify(justAfterDcd));
-  await page.waitForTimeout(70);
+  await page.waitForTimeout(60);
   const afterDcd=await page.evaluate(()=>({
     x:window.trainer.piece?.x,
     remaining:window.trainer.dasCutRemaining,
@@ -392,7 +392,7 @@ try {
   }));
   assert(duringSpawnDcd.x===afterSpawn.x&&duringSpawnDcd.remaining>0&&duringSpawnDcd.elapsed===0,
     'spawn DCD did not pause the inherited held-key repeat timer: '+JSON.stringify(duringSpawnDcd));
-  await page.waitForTimeout(90);
+  await page.waitForTimeout(120);
   const justAfterSpawnDcd=await page.evaluate(()=>({
     x:window.trainer.piece?.x,
     remaining:window.trainer.dasCutRemaining,
