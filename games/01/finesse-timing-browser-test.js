@@ -141,6 +141,80 @@ try {
     console.log(JSON.stringify({type,boardKind,passed:true,gravityMs:100,route:planned.actions,target:planned.target,minimumCost:minimum,linesCleared:locked.linesCleared}));
   }
 
+  // Explicit direct-180 acceptance case under active gravity on a high stack.
+  // Lower the target cost only for this isolated scenario so the planner must
+  // select a one-input route, then choose a deterministic seed whose route is
+  // the half-turn rather than a horizontal tap.
+  const halfType='I';
+  const halfBoard=boardFor('generated-0');
+  const halfSpawn=REFERENCE_PIECES[halfType].spawn;
+  const halfStart={type:halfType,x:halfSpawn.x,y:halfSpawn.y,o:0};
+  const halfOracle=referenceTargets({type:halfType,start:halfStart,board:halfBoard,maxCost:1});
+  const halfSetup=await page.evaluate(({type,spawn,board})=>{
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=100;
+    t.rules.lockDelay=250;
+    t.rules.das=80;
+    t.rules.arr=0;
+    t.rules.dcd=0;
+    t.board=board.map(row=>[...row]);
+    t.gameOver=false;
+    t.piece={type,x:spawn.x,y:spawn.y,o:0};
+    t.gravityAcc=0;
+    t.lockAcc=0;
+    t.lastRotation=false;
+    t.finesseEnabled=true;
+    t.finessePlacementResolved=false;
+    t.finesseMistakes=0;
+    t.finesseFaulted=false;
+    t.finesseProgress=0;
+    t.finesseDASPending=null;
+    t.stats.finessePerfect=0;
+    t.stats.finesseFaults=0;
+    t.stats.piecesPlaced=0;
+    t.stats.linesCleared=0;
+    t.mode.rules.finesseProfile={...t.mode.rules.finesseProfile,maxCost:1};
+    let seed=0;
+    for(;seed<64;seed++){
+      t.placed=seed;
+      t.generateFinessePrompt();
+      if(t.finesseActions.length===1&&t.finesseActions[0].action==='half')break;
+    }
+    t.emitState();
+    t.render();
+    return {seed,target:t.finesseTarget?{...t.finesseTarget}:null,actions:t.finesseActions.map(step=>({...step}))};
+  },{type:halfType,spawn:halfSpawn,board:halfBoard});
+  assert(halfSetup.seed<64&&halfSetup.target&&halfSetup.actions.length===1&&halfSetup.actions[0].action==='half',
+    'could not select an independent one-input direct-180 route: '+JSON.stringify(halfSetup));
+  assert(halfOracle.get(keyOf(halfSetup.target))===1,
+    'direct-180 target is not a one-input placement in the independent oracle: '+JSON.stringify(halfSetup));
+  await page.keyboard.press('a');
+  await page.waitForTimeout(115);
+  const halfActive=await page.evaluate(()=>{
+    const t=window.trainer;
+    return {piece:t.piece?{...t.piece}:null,progress:t.finesseProgress,count:t.finesseActions.length,faulted:t.finesseFaulted};
+  });
+  assert(halfActive.piece&&halfActive.piece.x===halfSetup.target.x&&halfActive.piece.o===halfSetup.target.o,
+    'direct-180 input under gravity missed target: '+JSON.stringify(halfActive));
+  assert(!halfActive.faulted&&halfActive.progress===halfActive.count,
+    'direct-180 input under gravity was rejected: '+JSON.stringify(halfActive));
+  await page.keyboard.press('Space');
+  await page.waitForFunction(()=>window.trainer.stats.piecesPlaced===1,null,{timeout:5000});
+  const halfLocked=await page.evaluate(()=>{
+    const t=window.trainer;
+    return {board:t.board.map(row=>[...row]),perfect:t.stats.finessePerfect,faults:t.stats.finesseFaults,
+      placed:t.stats.piecesPlaced,linesCleared:t.stats.linesCleared};
+  });
+  const halfExpected=expectedBoardAfterLock(halfBoard,halfType,halfSetup.target);
+  assert(JSON.stringify(halfLocked.board)===JSON.stringify(halfExpected.board),
+    'direct-180 timed route produced an unexpected final board');
+  assert(halfLocked.linesCleared===halfExpected.linesCleared&&halfLocked.perfect===1&&
+    halfLocked.faults===0&&halfLocked.placed===1,
+    'direct-180 timed route did not score exactly once: '+JSON.stringify(halfLocked));
+  console.log(JSON.stringify({direct180UnderGravity:true,passed:true,seed:halfSetup.seed,
+    route:halfSetup.actions,target:halfSetup.target,linesCleared:halfLocked.linesCleared}));
+
   // Lock-delay reset acceptance case: start a grounded O piece at 80% of
   // lock delay, then require the planner's DAS-plus-tap route to keep it alive.
   const lockType='O';
