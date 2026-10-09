@@ -392,7 +392,7 @@ try {
           const replay = await page.evaluate(() => {
             const t = window.trainer;
             const keyEvent = code => ({ code, preventDefault() {} });
-            for (const step of t.finesseActions.map(item => ({ ...item }))) {
+            for (const step of t.finesseActions.filter(item => item.action !== 'hard').map(item => ({ ...item }))) {
               const code = t.binds[step.action];
               t.handleKeydown(keyEvent(code));
               if (step.mode === 'das') t.tick(performance.now() + t.das() + 5);
@@ -416,17 +416,18 @@ try {
           });
           assertCheck('finesse-visible-progress-' + label,
             visibleProgress.visible && visibleProgress.states.filter(state => state === 'done').length === replay.progressAfterInputs &&
-            (replay.progressAfterInputs === before.actions.length || visibleProgress.states.includes('next')),
+            (replay.progressAfterInputs === before.actions.length - 1 || visibleProgress.states.includes('next')),
             JSON.stringify({progress:replay.progressAfterInputs,states:visibleProgress.states,visible:visibleProgress.visible}));
           const placed = await page.evaluate(() => {
             const t = window.trainer;
-            t.hardDrop();
+            const keyEvent = code => ({ code, preventDefault() {} });
+            t.handleKeydown(keyEvent(t.binds.hard));
             return { finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults };
           });
           result.push({ type, boardKind, ...before, ...replay, ...placed });
         }
         assertCheck('finesse-route-present', result.every(r => r.target !== null && Array.isArray(r.actions)), 'Each piece on each test board must receive an explicit route and landing target');
-        assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.length && !r.faultedAfterInputs), 'Each displayed route must advance all steps without a fault across empty and obstructed boards');
+        assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.length - 1 && !r.faultedAfterInputs), 'Each displayed movement route must advance without a fault, leaving Space as the final step across empty and obstructed boards');
         assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for all piece/board combinations');
       }
     },
