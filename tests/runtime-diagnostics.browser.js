@@ -241,6 +241,7 @@ try {
           // Validate the configured 180-degree control path, not an unimplemented gameplay rule.
           window.__halfTurnCalls = [];
           const originalRotate = t.rotate.bind(t);
+          window.__originalTrainerRotate = t.rotate;
           t.rotate = (delta) => {
             window.__halfTurnCalls.push(delta);
             return originalRotate(delta);
@@ -249,7 +250,7 @@ try {
         await page.keyboard.press('a');
         const result = await page.evaluate(() => {
           const calls = window.__halfTurnCalls || [];
-          window.trainer.rotate = window.trainer.rotate.bind(window.trainer);
+          window.trainer.rotate = window.__originalTrainerRotate;
           return { calls, halfBind: window.trainer.binds.half };
         });
         assertCheck('rotate-180-control', result.halfBind === 'KeyA' && result.calls.includes(2), 'The configured 180-degree control should dispatch a half-turn request (delta 2)');
