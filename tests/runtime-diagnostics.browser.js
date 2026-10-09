@@ -356,6 +356,10 @@ try {
             }
             t.gameOver = false;
             t.piece = { type, x: 4, y: 0, o: 0 };
+            // Direct piece injection is test-only; regenerate the route and flush
+            // rendering so the screenshot and visible board match the tested piece.
+            t.generateFinessePrompt();
+            t.render();
             const toggle = document.querySelector('#mainRuleFinesse');
             toggle.checked = true;
             toggle.dispatchEvent(new Event('change', { bubbles: true }));
