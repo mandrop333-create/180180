@@ -18,8 +18,8 @@ try {
   await page.keyboard.down('ArrowLeft');
   await page.waitForTimeout(80);
   await page.keyboard.up('ArrowLeft');
-  await page.keyboard.press('KeyX');
-  await page.keyboard.press('ShiftLeft');
+  await page.keyboard.press('x');
+  await page.keyboard.press('Shift');
   await page.keyboard.press('Space');
   await page.waitForTimeout(250);
   await page.locator('#restartButton').click();
