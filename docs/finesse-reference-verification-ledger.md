@@ -185,3 +185,14 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - Independent Playwright route fixtures, planner-prompt oracle comparison, and active-gravity/DAS timing checks passed: [run 38001241618](https://github.com/mandrop333-create/180180/actions/runs/38001241618).
 - The separate prompt-requested workflow is trigger-gated to manual dispatch, pull requests, or an authorized `/playwright` PR comment; it is not the branch-push verification gate.
 - The comprehensive legacy-import audit is not yet certified complete, so `finesse.js` remains as a compatibility facade. No merge or deployment.
+
+## Fail-closed lock scoring and transition hardening — 2026-10-09 (commit `6f16b52cf3d8393865d1ff2592bf146838d23387`)
+
+- Lock-time finesse scoring previously treated a missing target as automatically target-valid. That could award a perfect placement when prompt generation had failed. Changed the check so a valid generated target is mandatory before a placement can score perfect.
+- Added an end-to-end Playwright regression that deliberately gives the planner a malformed active piece, verifies no target is generated, hard-drops the piece, and requires exactly zero perfect placements and one finesse fault.
+- The regression is deliberately lock-time: it checks the final scoring boundary, not only the planner's failure result.
+- Planner regression workflow passed: [run 38003615792](https://github.com/mandrop333-create/180180/actions/runs/38003615792).
+- Independent geometry/kick/oracle fixtures passed: [run 38003615821](https://github.com/mandrop333-create/180180/actions/runs/38003615821).
+- Independent Playwright workflow passed, including actual planner prompts against the independent oracle and active-gravity route checks: [run 38003615722](https://github.com/mandrop333-create/180180/actions/runs/38003615722).
+- The prompt-requested Playwright workflow also passed on this commit: [run 38003615775](https://github.com/mandrop333-create/180180/actions/runs/38003615775).
+- These checks verify the isolated branch's current tested behavior; they do not close the independent kick/pivot source question or certify the repository-wide legacy import audit. No merge or production deployment.
