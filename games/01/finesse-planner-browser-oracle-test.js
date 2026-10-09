@@ -49,7 +49,7 @@ try {
       t.reset();
       t.rules.gravity = Infinity;
       t.rules.lockDelay = 100000;
-      t.rules.das = 0;
+      t.rules.das = 80;
       t.rules.arr = 0;
       t.rules.dcd = 0;
       t.emptyBoard();
