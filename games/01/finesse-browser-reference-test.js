@@ -127,6 +127,15 @@ try {
     assert(after.progress === 1 && !after.faulted,
       scenario.name + ': runtime observer did not accept the independently specified route ' + JSON.stringify(after));
 
+    // Blockers are only needed to force the ordered kick during rotation.
+    // Clear those synthetic cells afterward so they cannot interfere with the
+    // next spawn or turn a rotation test into a separate top-out test.
+    if (scenario.blockers?.length) {
+      await page.evaluate(({ blockers }) => {
+        for (const [x,y] of blockers) window.trainer.board[y][x] = 0;
+      }, { blockers: scenario.blockers });
+    }
+
     await page.keyboard.press('Space');
     await page.waitForFunction(() => window.trainer.stats.piecesPlaced === 1, null, { timeout: 5000 });
     const locked = await page.evaluate(() => {
