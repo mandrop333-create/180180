@@ -233,6 +233,64 @@ try {
       }
     },
     {
+      name: 'rotate-180', terms: ['rotate 180', '180 rotation', '180-degree', 'half turn', 'half-turn'],
+      run: async () => {
+        await page.evaluate(() => window.trainer.reset());
+        const before = await snapshotGame();
+        await page.keyboard.press('a');
+        const after = await snapshotGame();
+        assertCheck('rotate-180', after.piece && before.piece && ((after.piece.o - before.piece.o + 4) % 4) === 2, 'A/180 action should change orientation by exactly two quarter-turns');
+      }
+    },
+    {
+      name: 'hold-swap', terms: ['hold swap', 'swap hold', 'swap a held piece', 'hold twice'],
+      run: async () => {
+        const result = await page.evaluate(() => {
+          const t = window.trainer;
+          t.reset();
+          const first = t.piece.type;
+          t.hold();
+          const heldFirst = t.holdType;
+          t.hardDrop();
+          const currentBeforeSwap = t.piece?.type;
+          t.hold();
+          return { first, heldFirst, currentBeforeSwap, activeAfterSwap: t.piece?.type, holdAfterSwap: t.holdType };
+        });
+        assertCheck('hold-swap', result.heldFirst === result.first && result.activeAfterSwap === result.first && result.holdAfterSwap === result.currentBeforeSwap, 'After placing one piece, hold should swap the stored piece into play and store the outgoing piece');
+      }
+    },
+    {
+      name: 'line-clear', terms: ['line clear', 'clear a line', 'clear one line', 'single line clear'],
+      run: async () => {
+        const result = await page.evaluate(() => {
+          const t = window.trainer;
+          t.reset();
+          t.board = Array.from({ length: t.H }, () => Array(t.W).fill(0));
+          for (let x = 0; x < t.W; x++) if (x < 3 || x > 6) t.board[t.H - 1][x] = 'J';
+          t.piece = { type: 'I', x: 3, y: t.H - 2, o: 0 };
+          t.holdUsed = false;
+          const beforeLines = t.lines;
+          t.lockPiece(false);
+          return { beforeLines, afterLines: t.lines, linesCleared: t.stats.linesCleared, bottomRowEmpty: t.board[t.H - 1].every(cell => !cell) };
+        });
+        assertCheck('line-clear', result.afterLines === result.beforeLines + 1 && result.linesCleared === 1 && result.bottomRowEmpty, 'Completing the prepared bottom row should clear exactly one line and leave an empty bottom row');
+      }
+    },
+    {
+      name: 'collision-boundary', terms: ['collision', 'wall collision', 'boundary collision', 'blocked movement'],
+      run: async () => {
+        const result = await page.evaluate(() => {
+          const t = window.trainer;
+          t.reset();
+          t.piece = { type: 'O', x: 0, y: 0, o: 0 };
+          const before = { ...t.piece };
+          const moved = t.movePiece(-1, 0);
+          return { moved, beforeX: before.x, afterX: t.piece.x, stillValid: !t.collides(t.piece.x, t.piece.y, t.piece.o, t.piece.type) };
+        });
+        assertCheck('collision-boundary', result.moved === false && result.beforeX === result.afterX && result.stillValid, 'A piece at the left boundary must not move outside the playfield');
+      }
+    },
+    {
       name: 'reset', terms: ['reset', 'restart'],
       run: async () => {
         await page.keyboard.press('Space');
