@@ -173,6 +173,43 @@ test('line-combo and back-to-back counters update on difficult and ordinary clea
   assert.equal(t.b2b, false, 'an ordinary single clear breaks back-to-back');
 });
 
+
+test('gravity advances the active piece at the configured interval', () => {
+  const t = makeTrainer();
+  t.piece = { type: 'O', x: 4, y: 0, o: 0 };
+  t.rules.gravity = 50;
+  t.lastTime = 100;
+  t.flushRender = () => {};
+  t.tick(150);
+  assert.equal(t.piece.y, 1);
+});
+
+test('grounded pieces lock only after the configured lock delay', () => {
+  const t = makeTrainer();
+  t.piece = { type: 'O', x: 4, y: t.H - 2, o: 0 };
+  t.rules.gravity = Infinity;
+  t.rules.lockDelay = 100;
+  t.lastTime = 100;
+  t.flushRender = () => {};
+  t.tick(150);
+  assert.equal(t.stats.piecesPlaced, 0, 'piece must not lock before the delay');
+  t.tick(200);
+  assert.equal(t.stats.piecesPlaced, 1, 'piece should lock when the delay expires');
+});
+
+test('DAS with zero ARR moves a held direction to the wall at the repeat boundary', () => {
+  const t = makeTrainer();
+  t.piece = { type: 'O', x: 4, y: 0, o: 0 };
+  t.rules.das = 50;
+  t.rules.arr = 0;
+  t.downKeys.add(t.binds.left);
+  t.moveState = { dir: -1, elapsed: 0, repeatElapsed: 0, startedAt: 100, nextRepeatAt: 150 };
+  t.lastTime = 100;
+  t.flushRender = () => {};
+  t.tick(150);
+  assert.equal(t.piece.x, 0);
+});
+
 test('hold can be disabled by the active rule set', () => {
   const t = makeTrainer();
   t.rules.hold = false;
