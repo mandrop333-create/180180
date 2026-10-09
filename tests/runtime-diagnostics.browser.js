@@ -335,6 +335,40 @@ try {
       }
     },
     {
+      name: 'finesse-feedback', terms: ['finesse', 'red to green', 'finesse trainer', 'finesse inputs'],
+      run: async () => {
+        const result = await page.evaluate(() => {
+          const t = window.trainer;
+          t.reset();
+          t.emptyBoard();
+          t.gameOver = false;
+          t.piece = { type: 'O', x: 4, y: 0, o: 0 };
+          t.setFinesseEnabled(true);
+          const target = t.finesseTarget ? { ...t.finesseTarget } : null;
+          const actions = t.finesseActions.map(step => ({ ...step }));
+          const initialProgress = t.finesseProgress;
+          const initialStates = t.finesseActions.map((step, i) => i < t.finesseProgress ? 'done' : i === t.finesseProgress ? 'next' : 'pending');
+          const keyEvent = code => ({ code, preventDefault() {} });
+          for (const step of actions) {
+            const code = t.binds[step.action];
+            t.handleKeydown(keyEvent(code));
+            t.handleKeyup(keyEvent(code));
+          }
+          const progressAfterInputs = t.finesseProgress;
+          const faultedAfterInputs = t.finesseFaulted;
+          const actualBeforeDrop = { ...t.piece };
+          t.hardDrop();
+          return {
+            target, actions, initialProgress, initialStates, progressAfterInputs, faultedAfterInputs,
+            actualBeforeDrop, finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults
+          };
+        });
+        assertCheck('finesse-route-present', result.actions.length > 0 && result.target !== null, 'Enabling Finesse must produce an explicit route and landing target');
+        assertCheck('finesse-progress', result.progressAfterInputs === result.actions.length && !result.faultedAfterInputs, 'Each displayed input must advance the matching route step without a fault');
+        assertCheck('finesse-physical-target', result.finessePerfect === 1 && result.finesseFaults === 0, 'Following the displayed route and hard-dropping must lock on the advertised target and count one clean placement');
+      }
+    },
+    {
       name: 'reset', terms: ['reset', 'restart'],
       run: async () => {
         await page.keyboard.press('Space');
