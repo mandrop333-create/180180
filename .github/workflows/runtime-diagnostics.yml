@@ -5,6 +5,7 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,7 +17,7 @@ concurrency:
 jobs:
   runtime-diagnostics:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,11 +42,29 @@ jobs:
           exit 1
       - name: Run browser diagnostics test
         run: node --experimental-default-type=module tests/runtime-diagnostics.browser.js
-      - name: Upload diagnostics report
+      - name: Capture runner and server metadata
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          {
+            echo '## Playwright run metadata'
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Ref: ${GITHUB_REF}"
+            echo "- Runner: ${RUNNER_OS} / ${RUNNER_ARCH}"
+            echo "- Node: $(node --version 2>/dev/null || echo unavailable)"
+            echo "- UTC time: $(date -u +%FT%TZ)"
+            echo
+            echo 'Static server log:'
+            cat /tmp/180180-http.log 2>/dev/null || true
+          } > artifacts/runner-metadata.md
+          cat artifacts/runner-metadata.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload complete diagnostics bundle
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: runtime-diagnostics-report
-          path: artifacts/runtime-diagnostics.json
+          name: runtime-diagnostics-bundle
+          path: artifacts/
           if-no-files-found: warn
           retention-days: 7
+          compression-level: 6
