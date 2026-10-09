@@ -48,6 +48,12 @@ try {
   if (!initialState?.data?.finesse || typeof initialState.data.finesse.progress !== 'number' || typeof initialState.data.finesse.mistakes !== 'number') {
     throw new Error('Initial report is missing Finesse progress/mistake state');
   }
+  const finesseStateEvent = report.events.find(event =>
+    event.type === 'state-change'
+    && typeof event.data.finesseProgress === 'number'
+    && typeof event.data.finesseMistakes === 'number'
+  );
+  if (!finesseStateEvent) throw new Error('State changes are missing live Finesse counters');
   if (pageErrors.length) throw new Error('Browser page errors: ' + pageErrors.join(' | '));
   if (report.events.some(event => event.type === 'runtime-error' || event.type === 'unhandled-rejection')) {
     throw new Error('Runtime error was captured during the browser smoke test');
