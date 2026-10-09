@@ -12,6 +12,39 @@ import { placementIdentity,normalizeFinesseTarget,FINESSE_PROFILES } from './fin
 // to the real collision/rotation functions.
 function copyPiece(piece){return {...piece};}
 function routeKey(route){return route.map(step=>step.action+':'+(step.mode||'tap')).join('|');}
+
+// Binary min-heap ordered by cumulative cost. Dijkstra is required here rather
+// than FIFO BFS because profiles may assign different positive costs to actions.
+function heapPush(heap,item){
+  let index=heap.length;
+  heap.push(item);
+  while(index>0){
+    const parent=(index-1)>>1;
+    if(heap[parent].cost<=item.cost)break;
+    heap[index]=heap[parent];
+    index=parent;
+  }
+  heap[index]=item;
+}
+function heapPop(heap){
+  if(!heap.length)return null;
+  const root=heap[0];
+  const tail=heap.pop();
+  if(heap.length){
+    let index=0;
+    while(true){
+      const left=index*2+1;
+      if(left>=heap.length)break;
+      const right=left+1;
+      const child=right<heap.length&&heap[right].cost<heap[left].cost?right:left;
+      if(heap[child].cost>=tail.cost)break;
+      heap[index]=heap[child];
+      index=child;
+    }
+    heap[index]=tail;
+  }
+  return root;
+}
 function costLimit(maxCost,profile){
   // An omitted limit may use the active profile/default. An explicitly
   // malformed limit must not silently widen or narrow the finesse envelope.
@@ -36,7 +69,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
     {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
     {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
   );
-  if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true&&Number.isFinite(profile.halfTurnCost)){
+  if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true&&Number.isInteger(profile.halfTurnCost)&&profile.halfTurnCost>0){
     actions.push({action:'half',mode:'tap',cost:profile.halfTurnCost,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
   }
   const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
@@ -48,7 +81,8 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
 
   const landing=p=>{const n=copyPiece(p);while(move(n,0,1,board,W,H,cellsFor)){}return n;};
   const stateKey=p=>p.x+','+p.y+','+p.o;
-  const queue=[{piece:start,cost:0,route:[]}];
+  const queue=[];
+  heapPush(queue,{piece:start,cost:0,route:[]});
   const best=new Map([[stateKey(start),0]]);
   // Retain distinct equal-cost histories for a state. Positive action costs
   // and the finite cost envelope bound this search; route keys prevent repeats.
@@ -56,7 +90,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   const targets=new Map();
 
   while(queue.length){
-    const current=queue.shift();
+    const current=heapPop(queue);
     const currentStateKey=stateKey(current.piece);
     const currentRouteKey=routeKey(current.route);
     if(current.cost>best.get(currentStateKey)||
@@ -105,7 +139,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
         knownRoutes.add(nextRouteKey);
         stateRoutes.set(key,knownRoutes);
       }
-      queue.push({piece:next,cost,route:nextRoute});
+      heapPush(queue,{piece:next,cost,route:nextRoute});
     }
   }
 
