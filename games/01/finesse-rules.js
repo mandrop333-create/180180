@@ -144,10 +144,9 @@ export function selectFinesseTarget(targets,selector){
 }
 
 
-// Training-target policy: among legal targets inside the active finesse
-// envelope, teach the most demanding minimum-cost placement first. Ties are
-// rotated deterministically so the trainer covers the available placements
-// without depending on object/map insertion order or randomness.
+// Fastest-placement policy: among legal targets inside the active finesse
+// envelope, choose a placement with the fewest deliberate inputs. Ties are
+// rotated deterministically without depending on map insertion order.
 export function chooseTrainingTarget(targets,{pieceIndex=0,pieceType='',maxCost=2,seed=0}={}){
   const list=(targets||[]).map(target=>{
     const orientation=Number.isInteger(target?.o)?((target.o%4)+4)%4:null;
@@ -155,8 +154,8 @@ export function chooseTrainingTarget(targets,{pieceIndex=0,pieceType='',maxCost=
     return {...target,normalized:normalizeFinesseTarget(target,10,{allowNegativeX})};
   }).filter(target=>target.normalized&&Number.isFinite(target.cost)&&target.cost<=maxCost);
   if(!list.length)return null;
-  const highest=Math.max(...list.map(target=>target.cost));
-  const eligible=list.filter(target=>target.cost===highest)
+  const lowest=Math.min(...list.map(target=>target.cost));
+  const eligible=list.filter(target=>target.cost===lowest)
     .sort((a,b)=>a.normalized.x-b.normalized.x||a.normalized.o-b.normalized.o||((a.normalized.y??-Infinity)-(b.normalized.y??-Infinity)));
   const typeSeed=String(pieceType||'').split('').reduce((sum,ch)=>sum+ch.charCodeAt(0),0);
   const offset=Math.abs((Number(seed)||0)+pieceIndex*7+typeSeed)%eligible.length;
