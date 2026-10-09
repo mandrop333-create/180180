@@ -3,6 +3,8 @@ name: Prompt-requested Playwright test
 on:
   issue_comment:
     types: [created]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       test_request:
@@ -20,14 +22,22 @@ concurrency:
 
 jobs:
   prompt-playwright:
-    if: github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/playwright '))
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/playwright '))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout diagnostics branch
+      - name: Checkout code under test
         uses: actions/checkout@v4
         with:
+          # Issue comments run this workflow from the default branch, so check out
+          # the PR head explicitly. Manual runs use the selected workflow ref.
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.ref }}
+      - name: Checkout diagnostics test harness
+        uses: actions/checkout@v4
+        with:
+          repository: mandrop333-create/180180
           ref: feature/runtime-diagnostics
+          path: test-harness
       - name: Record requested test
         env:
           TEST_REQUEST: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.test_request }}
@@ -50,8 +60,10 @@ jobs:
         run: npm init -y && npm install --no-save playwright
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run Worker API tests
-        run: node --experimental-default-type=module --test tests/worker-api.test.js
+      - name: Run Worker API tests against checked-out code
+        run: |
+          cp test-harness/tests/worker-api.test.js tests/worker-api.test.js
+          node --experimental-default-type=module --test tests/worker-api.test.js
       - name: Start isolated local game server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-http.log 2>&1 &
@@ -66,7 +78,7 @@ jobs:
           PLAYWRIGHT_TEST_REQUEST: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.test_request }}
         run: |
           case "$PLAYWRIGHT_TEST_REQUEST" in /playwright\ *) export PLAYWRIGHT_TEST_REQUEST="${PLAYWRIGHT_TEST_REQUEST#/playwright }" ;; esac
-          node --experimental-default-type=module tests/runtime-diagnostics.browser.js
+          node --experimental-default-type=module test-harness/tests/runtime-diagnostics.browser.js
       - name: Add requested test results to summary
         if: always()
         run: |
@@ -81,8 +93,10 @@ jobs:
           {
             echo
             echo '## Runner metadata'
-            echo "- Commit: ${GITHUB_SHA}"
-            echo "- Ref: ${GITHUB_REF}"
+            echo "- Workflow commit: ${GITHUB_SHA}"
+            echo "- Tested commit: $(git rev-parse HEAD)"
+            echo "- Tested branch/ref: $(git branch --show-current) / $(git rev-parse --abbrev-ref HEAD)"
+            echo "- Event ref: ${GITHUB_REF}"
             echo "- UTC time: $(date -u +%FT%TZ)"
             echo
             echo 'Static server log:'
