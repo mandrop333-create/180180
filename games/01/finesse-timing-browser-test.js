@@ -341,6 +341,48 @@ try {
   await page.keyboard.up('ArrowRight');
   console.log(JSON.stringify({dcdAfterRotation:true,passed:true,duringDcdX:duringDcd.x,afterDcdX:afterDcd.x}));
 
+  // Spawn also cuts charged DAS. A held direction may take its immediate
+  // cell, but its repeat timer must not advance during the spawn DCD window.
+  await page.evaluate(() => {
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=Infinity;
+    t.rules.lockDelay=100000;
+    t.rules.das=80;
+    t.rules.arr=0;
+    t.rules.dcd=180;
+    t.gameOver=false;
+    t.emptyBoard();
+    t.spawn('T');
+    t.moveState={dir:0,elapsed:0,repeatElapsed:0};
+    t.emitState();
+    t.render();
+  });
+  const spawnCut=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    remaining:window.trainer.dasCutRemaining
+  }));
+  assert(spawnCut.remaining===180,'spawn did not initialize configured DCD: '+JSON.stringify(spawnCut));
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(100);
+  const duringSpawnDcd=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    remaining:window.trainer.dasCutRemaining,
+    elapsed:window.trainer.moveState.elapsed
+  }));
+  assert(duringSpawnDcd.x===spawnCut.x+1&&duringSpawnDcd.remaining>0&&duringSpawnDcd.elapsed===0,
+    'spawn DCD did not pause the held-key repeat timer: '+JSON.stringify(duringSpawnDcd));
+  await page.waitForTimeout(200);
+  const afterSpawnDcd=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    remaining:window.trainer.dasCutRemaining,
+    elapsed:window.trainer.moveState.elapsed
+  }));
+  assert(afterSpawnDcd.remaining===0&&afterSpawnDcd.x>spawnCut.x+1,
+    'spawn DCD did not release held-key repeat after the pause: '+JSON.stringify(afterSpawnDcd));
+  await page.keyboard.up('ArrowRight');
+  console.log(JSON.stringify({dcdAfterSpawn:true,passed:true,duringDcdX:duringSpawnDcd.x,afterDcdX:afterSpawnDcd.x}));
+
   // A short key hold is a tap, not a DAS wall-slide.
   await page.evaluate(() => {
     const t=window.trainer;
