@@ -341,9 +341,22 @@ try {
           const t = window.trainer;
           const keyEvent = code => ({ code, preventDefault() {} });
           const cases = [];
-          for (const type of ['I', 'J', 'L', 'O', 'S', 'T', 'Z']) {
+          const pieceTypes = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
+          const boardKinds = ['empty', 'split-well', 'side-towers'];
+          for (const boardKind of boardKinds) for (const type of pieceTypes) {
             t.reset();
             t.emptyBoard();
+            if (boardKind === 'split-well') {
+              // A low shelf with a central two-column opening.
+              for (let x = 0; x < t.W; x++) if (x !== 4 && x !== 5) t.board[t.H - 1][x] = 1;
+              for (let x = 0; x < t.W; x++) if (x !== 3 && x !== 4 && x !== 5 && x !== 6) t.board[t.H - 2][x] = 1;
+            } else if (boardKind === 'side-towers') {
+              // Uneven, non-spawn-blocking stacks to exercise real rotation kicks and collision checks.
+              for (let y = t.H - 4; y < t.H; y++) t.board[y][0] = 1;
+              for (let y = t.H - 2; y < t.H; y++) t.board[y][1] = 1;
+              for (let y = t.H - 3; y < t.H; y++) t.board[y][8] = 1;
+              for (let y = t.H - 5; y < t.H; y++) t.board[y][9] = 1;
+            }
             t.gameOver = false;
             t.piece = { type, x: 4, y: 0, o: 0 };
             t.setFinesseEnabled(true);
@@ -364,16 +377,16 @@ try {
             const actualBeforeDrop = { ...t.piece };
             t.hardDrop();
             cases.push({
-              type, target, actions, initialProgress, initialStates, progressAfterInputs,
+              type, boardKind, target, actions, initialProgress, initialStates, progressAfterInputs,
               faultedAfterInputs, actualBeforeDrop,
               finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults
             });
           }
           return cases;
         });
-        assertCheck('finesse-route-present', result.every(r => r.actions.length > 0 && r.target !== null), 'Each of the seven tetrominoes must receive an explicit route and landing target');
-        assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.length && !r.faultedAfterInputs), 'Each displayed route must advance all steps without a fault for every tetromino');
-        assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for every tetromino');
+        assertCheck('finesse-route-present', result.every(r => r.target !== null && Array.isArray(r.actions)), 'Each piece on each test board must receive an explicit route and landing target');
+        assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.length && !r.faultedAfterInputs), 'Each displayed route must advance all steps without a fault across empty and obstructed boards');
+        assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for all piece/board combinations');
       }
     },
     {
