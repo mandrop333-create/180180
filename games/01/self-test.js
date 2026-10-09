@@ -448,6 +448,52 @@ export function runTrainerSelfTest(){
     'runtime must accept held-to-wall DAS as one deliberate input');
 
 
+  // DAS runtime timing regression: wall contact on keydown and a single
+  // animation frame must not confirm a held route before the configured DAS
+  // threshold. The same held input may confirm after the threshold is crossed.
+  const gatedDASRuntime=new Trainer(null,{mode:{id:'self-test-das-gated',rules:{finesseProfile:dasProfile},hooks:{}},
+    generator:testGenerator,deferInit:true,finesseEnabled:true});
+  gatedDASRuntime.emptyBoard();
+  gatedDASRuntime.piece={type:'O',x:7,y:0,o:0};
+  gatedDASRuntime.placed=rightWallIndex;
+  gatedDASRuntime.rules.das=100;
+  gatedDASRuntime.rules.arr=0;
+  gatedDASRuntime.rules.gravity=Infinity;
+  gatedDASRuntime.generateFinessePrompt();
+  gatedDASRuntime.handleKeydown(keyEvent(gatedDASRuntime.binds.right));
+  assert(gatedDASRuntime.finesseRouteCandidates.some(candidate=>
+    candidate.pendingDasAction==='right'&&candidate.progress===0),
+    'DAS interpretation must remain pending immediately after wall contact');
+  gatedDASRuntime.moveState.startedAt=1000;
+  gatedDASRuntime.moveState.nextRepeatAt=1100;
+  gatedDASRuntime.lastTime=1000;
+  gatedDASRuntime.tick(1050);
+  assert(gatedDASRuntime.finesseRouteCandidates.some(candidate=>
+    candidate.pendingDasAction==='right'&&candidate.progress===0),
+    'DAS must not confirm before the configured hold threshold');
+  gatedDASRuntime.tick(1101);
+  assert(!gatedDASRuntime.finesseRouteCandidates.some(candidate=>candidate.pendingDasAction==='right')&&
+    gatedDASRuntime.finesseRouteCandidates.some(candidate=>candidate.progress===candidate.route.length),
+    'DAS may confirm after the configured hold threshold while the key remains held');
+  gatedDASRuntime.handleKeyup(keyEvent(gatedDASRuntime.binds.right));
+  gatedDASRuntime.hardDrop();
+  assert(gatedDASRuntime.stats.finessePerfect===1&&gatedDASRuntime.stats.finesseFaults===0,
+    'DAS hold-threshold confirmation must preserve perfect lock-time scoring');
+
+  // Focus loss may not leave a pending DAS interpretation alive. Browsers do
+  // not guarantee keyup after blur, so blur must resolve pending modes itself.
+  const blurDASRuntime=new Trainer(null,{mode:{id:'self-test-das-blur',rules:{finesseProfile:dasProfile},hooks:{}},
+    generator:testGenerator,deferInit:true,finesseEnabled:true});
+  blurDASRuntime.emptyBoard();
+  blurDASRuntime.piece={type:'O',x:7,y:0,o:0};
+  blurDASRuntime.placed=rightWallIndex;
+  blurDASRuntime.rules.das=100;
+  blurDASRuntime.generateFinessePrompt();
+  blurDASRuntime.handleKeydown(keyEvent(blurDASRuntime.binds.right));
+  blurDASRuntime.handleBlur();
+  assert(!blurDASRuntime.finesseRouteCandidates.some(candidate=>candidate.pendingDasAction),
+    'focus loss must clear pending DAS candidates instead of falsely confirming a hold');
+
   let checkedPlans=0;
   for(const type of PIECE_TYPES){
     for(let o=0;o<(type==='O'?1:4);o++){
