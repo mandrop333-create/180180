@@ -70,7 +70,7 @@ function referenceLanding(piece, board) {
   while (referenceMove(p, 0, 1, board)) {}
   return p;
 }
-function boardFor(kind) {
+export function boardFor(kind) {
   const board = Array.from({ length: H }, () => Array(W).fill(0));
   if (kind.startsWith('generated-')) {
     // Deterministic, reproducible stack corpus. The top five rows remain empty
@@ -115,7 +115,7 @@ function boardFor(kind) {
   }
   return board;
 }
-function referenceTargets({ type, start, board, maxCost = 2 }) {
+export function referenceTargets({ type, start, board, maxCost = 2 }) {
   const actions = [
     { action:'left', mode:'tap', apply:p=>{ const n=copy(p); return referenceMove(n,-1,0,board)?n:null; } },
     { action:'right', mode:'tap', apply:p=>{ const n=copy(p); return referenceMove(n,1,0,board)?n:null; } }
