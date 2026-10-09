@@ -298,6 +298,18 @@ export function runIndependentFinesseOracleTests() {
   });
   assert(noOpRotation.every(item=>item.target.o===0),
     'planner accepted a successful-but-no-op rotation as a finesse transition');
+
+  // A callback may report the correct orientation yet teleport the origin.
+  // The planner must only accept displacement vectors in the engine kick table.
+  const teleportRotation=enumerateFinesseTargets({
+    piece:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
+    board:empty,W,H,cellsFor:productionCellsFor,move:productionMove,
+    tryRotate:(piece,delta)=>{piece.x+=7;piece.o=((piece.o+delta)%4+4)%4;return true;},
+    maxCost:1,profile:PROFILE
+  });
+  assert(teleportRotation.every(item=>item.route.every(step=>
+    step.action!=='cw'&&step.action!=='ccw'&&step.action!=='half')),
+    'planner accepted a rotation callback that teleported the piece outside legal kick offsets');
   // Movement adapters must preserve piece identity too. A callback that
   // changes the type while claiming a successful horizontal move is invalid.
   const typeChangingMove=enumerateFinesseTargets({
