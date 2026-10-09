@@ -66,7 +66,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   const stepMove=(piece,dx,dy)=>{
     const next=copyPiece(piece);
     if(!move(next,dx,dy,board,W,H,cellsFor))return null;
-    if(next.x!==piece.x+dx||next.y!==piece.y+dy||next.o!==piece.o)return null;
+    if(next.x!==piece.x+dx||next.y!==piece.y+dy||next.o!==piece.o||next.type!==piece.type)return null;
     return next;
   };
   const stepRotate=(piece,delta)=>{
