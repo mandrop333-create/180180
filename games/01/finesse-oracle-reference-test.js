@@ -298,6 +298,16 @@ export function runIndependentFinesseOracleTests() {
   });
   assert(noOpRotation.every(item=>item.target.o===0),
     'planner accepted a successful-but-no-op rotation as a finesse transition');
+  // Movement adapters must preserve piece identity too. A callback that
+  // changes the type while claiming a successful horizontal move is invalid.
+  const typeChangingMove=enumerateFinesseTargets({
+    piece:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
+    board:empty,W,H,cellsFor:productionCellsFor,
+    move:(piece,dx,dy)=>{piece.x+=dx;piece.y+=dy;piece.type='I';return true;},
+    tryRotate:productionTryRotate,maxCost:1,profile:PROFILE
+  });
+  assert(typeChangingMove.every(item=>item.target.x===REFERENCE_PIECES.T.spawn.x&&item.target.o===0),
+    'planner accepted a movement transition that changed piece identity');
 
   const weightedExpected=referenceWeightedTargets({
     type:'T',start:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
