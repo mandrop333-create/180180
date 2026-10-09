@@ -84,3 +84,12 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - The two Playwright workflows for commit `250347c1ca7eca8cf9449eff8a584c869fb60352` were still running at the time of this ledger update. Do not claim their result until queried.
 - Remaining formula-adjacent uncertainties are source/pivot compatibility of external kick fixtures and the full runtime input observer matrix. These are recorded in `docs/finesse-math-spec.md`; they are not silently treated as complete.
 - No production finesse implementation was changed, no merge to `main` was made, and no deployment was triggered.
+
+## Extended shortest-path and input timing checkpoint — 2026-10-09
+
+- Extended `games/01/finesse-oracle-reference-test.js` from the original cost-2 envelope to a cost-4 cross-check across four boards and all seven pieces. It compares target sets and minimum costs against the independent solver, and checks repeated planner calls return the same canonical route.
+- On commit `ccc29c518f02500c1a6e3a08f18d64b4544bc66d`, the expanded independent reference workflow passed: [run 37996725488](https://github.com/mandrop333-create/180180/actions/runs/37996725488); planner regression passed: [run 37996725636](https://github.com/mandrop333-create/180180/actions/runs/37996725636); independent Playwright route fixtures passed: [run 37996725537](https://github.com/mandrop333-create/180180/actions/runs/37996725537).
+- Added two browser timing checks in `games/01/finesse-timing-browser-test.js`: (1) held horizontal input is paused after a rotation during the configured DCD window and resumes after the window expires; (2) a short horizontal hold followed by keyup does not continue into a DAS wall-slide.
+- On commit `1393855aa9e004b83f59cc6b7564843f591c2f38`, the independent reference workflow passed: [run 37996902496](https://github.com/mandrop333-create/180180/actions/runs/37996902496), and the full independent Playwright route workflow passed, including the active-gravity timing suite with the new DCD and tap-release cases: [run 37996902615](https://github.com/mandrop333-create/180180/actions/runs/37996902615).
+- These tests support the implemented runtime's tested DAS/DCD behavior. They do not establish that all possible TETR.IO timing configurations, simultaneous-input combinations, or every official kick fixture have been exhaustively proven.
+- No production code was changed in this checkpoint; `main` and deployment remain untouched.
