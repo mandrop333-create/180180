@@ -149,6 +149,43 @@ try {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.waitForTimeout(100);
 
+  // Execute additional actions selected from the user's plain-English request.
+  // Only explicit, supported game actions are translated; unknown requests are reported,
+  // never silently treated as if they were tested.
+  const requestedText = process.env.PLAYWRIGHT_TEST_REQUEST || '';
+  const requestedActions = [];
+  const requestLower = requestedText.toLowerCase();
+  const actionRules = [
+    { name: 'move-left', terms: ['move left', 'left movement', 'left arrow'], run: async () => { await page.keyboard.press('ArrowLeft'); } },
+    { name: 'move-right', terms: ['move right', 'right movement', 'right arrow'], run: async () => { await page.keyboard.press('ArrowRight'); } },
+    { name: 'soft-drop', terms: ['soft drop', 'drop down'], run: async () => { await page.keyboard.press('ArrowDown'); } },
+    { name: 'rotate', terms: ['rotate', 'rotation'], run: async () => { await page.keyboard.press('x'); } },
+    { name: 'hold', terms: ['hold'], run: async () => { await page.keyboard.press('Shift'); } },
+    { name: 'hard-drop', terms: ['hard drop', 'hard-drop'], run: async () => { await page.keyboard.press('Space'); } },
+    { name: 'reset', terms: ['reset', 'restart'], run: async () => { await page.evaluate(() => window.trainer.reset()); } },
+    { name: 'mobile-layout', terms: ['mobile', 'phone', 'responsive'], run: async () => { await page.setViewportSize({ width: 390, height: 844 }); await capturePageState(page, 'requested-mobile-layout'); await page.setViewportSize({ width: 1440, height: 1000 }); } }
+  ];
+  if (requestedText.trim()) {
+    for (const rule of actionRules) {
+      if (rule.terms.some(term => requestLower.includes(term))) {
+        await rule.run();
+        requestedActions.push(rule.name);
+        await page.waitForTimeout(120);
+        await capturePageState(page, 'requested-' + rule.name);
+      }
+    }
+    const recognizedTerms = actionRules.flatMap(rule => rule.terms).filter(term => requestLower.includes(term));
+    telemetry.requestedTest = {
+      request: requestedText,
+      executedActions: requestedActions,
+      recognized: recognizedTerms.length > 0,
+      note: recognizedTerms.length ? null : 'No supported action keywords matched. Standard diagnostics ran, but the requested scenario was not interpreted.'
+    };
+    if (!recognizedTerms.length) throw new Error('No supported actions recognized in PLAYWRIGHT_TEST_REQUEST. Supported examples: move left, move right, soft drop, rotate, hold, hard drop, reset, mobile layout.');
+    const requestReport = path.join(outDir, 'requested-test-results.json');
+    fs.writeFileSync(requestReport, JSON.stringify(telemetry.requestedTest, null, 2));
+  }
+
   // Exercise keyboard handling and capture the intermediate gameplay state.
   await page.keyboard.down('ArrowLeft');
   await page.waitForTimeout(80);
