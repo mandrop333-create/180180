@@ -1,21 +1,30 @@
 # Runtime diagnostics
 
-## Current implementation
+## Gameplay recorder
 
-The game has an opt-in runtime recorder. Open the game with `?diagnostics=1` to enable it. For example, on the deployed site use `https://180436.xyz/?diagnostics=1` only after this feature is deployed.
+The recorder is opt-in: append `?diagnostics=1` to the game URL. Example: `https://180436.xyz/?diagnostics=1`.
 
-The recorder captures keyboard input, meaningful game/Finesse state changes, board changes, reset events, uncaught browser errors, unhandled promise rejections, and console errors. It keeps a bounded set of recent sessions in browser local storage and exposes:
+It records keyboard input, piece spawn/movement/rotation/hold/drop/placement, board and state changes, Finesse state, reset/game-over events, uncaught browser errors, unhandled promise rejections, and console errors. It keeps a bounded local backup and exposes:
 
-- `window.__180180Diagnostics.report()` — current session data
-- `window.export180180Diagnostics()` — downloads the current session as JSON
-- `window.get180180DiagnosticSessions()` — reads saved local sessions
+- `window.__180180Diagnostics.report()` — current report
+- `window.export180180Diagnostics()` — download the current report as JSON
+- `window.get180180DiagnosticSessions()` — read saved local sessions
 
-It is disabled unless `diagnostics=1` is present. It does not upload data anywhere by default.
+On the production host only, with diagnostics explicitly enabled, the recorder uploads new events every 30 seconds and on page exit to the separate `180180-diagnostics` Worker. Local development and Playwright do not upload to the live endpoint. The game continues normally if upload fails.
 
-## Automated browser test
+## Cloudflare report API
 
-The Runtime diagnostics browser smoke test uses Playwright to load the game, issue keyboard inputs, verify the expected diagnostic events, and upload a JSON report as a GitHub Actions artifact.
+Worker code and deployment configuration live in `worker/`. It uses a dedicated KV namespace and expires reports after 30 days. See [worker/README.md](../worker/README.md) for the one-time setup. This is deliberately a separate Worker; it must not replace the existing `180trainertool` Worker.
 
-## Not connected yet
+Endpoints:
+- `GET /health`
+- `POST /api/reports`
+- `GET /api/reports/latest`
+- `GET /api/reports?limit=10`
+- `GET /api/reports/{sessionId}`
 
-The Cloudflare Worker ingestion and durable remote storage/retrieval path still need to be wired to the actual deployed Worker source and its existing storage configuration. Do not add a client-side secret or enable browser uploads until the endpoint validates authorized requests. This recorder deliberately does not guess a Worker URL or send reports to an unverified endpoint.
+The read endpoints return gameplay diagnostic data without authentication so it can be retrieved without embedding a client secret. Do not put personal information into reports. CORS is not authentication.
+
+## Automated tests and artifacts
+
+GitHub Actions runs the Worker API tests and a headless Playwright gameplay test on the diagnostics branch and pull requests. The browser test exercises movement, rotation, hold, hard drop, reset, and a deterministic game-over path, then stores a JSON report as an Actions artifact for 7 days. CI tests the Worker handler with an in-memory KV implementation; it does not deploy to Cloudflare.
