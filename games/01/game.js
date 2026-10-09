@@ -28,7 +28,8 @@ const trainer=new Trainer(board,{
 });
 window.trainer=trainer;
 const diagnosticsParams=new URLSearchParams(location.search);
-const diagnostics=new RuntimeDiagnostics(trainer,{enabled:diagnosticsParams.get('diagnostics')==='1'});
+const diagnosticsEndpoint = ['180436.xyz','www.180436.xyz'].includes(location.hostname) ? 'https://180180-diagnostics.mandrop333.workers.dev/api/reports' : '';
+const diagnostics=new RuntimeDiagnostics(trainer,{enabled:diagnosticsParams.get('diagnostics')==='1',endpoint:diagnosticsEndpoint});
 window.__180180Diagnostics=diagnostics;
 window.export180180Diagnostics=()=>diagnostics.export();
 window.get180180DiagnosticSessions=getSavedDiagnosticSessions;
