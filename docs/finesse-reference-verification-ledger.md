@@ -253,3 +253,15 @@ A closer read of the pinned movement-snapshot generator refines the earlier raw-
 - This correction does not clear the no-go gate: the current direct-180 I table still needs transition-by-transition equivalence testing, and no pinned client snapshot corpus has yet been run against this repository's `tryRotate`.
 
 **Next action:** build a differential adapter for a small set of generated client movement cases, with expected results derived from the pinned client snapshot fixtures rather than comparing raw offset arrays. Preserve this distinction in future review: source arrays are kick-only offsets; the baseline rotation test is a separate first attempt.
+
+
+## Confirmed direct-180 I-piece baseline gap — 2026-10-09
+
+Inspection of production `games/01/kicks.js` against the pinned TETR.IO movement generator identified a concrete implementation gap to fix after the coordinate adapter is validated:
+
+- Production `HALF_I` currently has two non-zero offsets for each starting orientation, for example orientation 0 uses `[[1,1],[1,0]]`. `getTetrio180Kicks('I', 0)` returns that list directly, and `tryRotate` only tries entries in the returned list.
+- The pinned client algorithm always tries the no-kick destination first, then tries the transition's ordered kick list. In the extracted SRS+ I-piece data, direct transition `02` has one listed kick offset, `[[0,-1]]`, with the initial no-kick attempt handled separately.
+- This means the trainer currently does **not** attempt a no-kick I-piece 180 rotation. It also attempts two non-zero offsets where the pinned source models one explicit kick after the baseline. The exact normalized non-zero offset remains to be proven because local piece anchors and screen-y-down coordinates differ.
+- JLSTZ 180 tables do include an explicit `[0,0]` entry; the omission is specifically visible in `HALF_I`.
+
+This is a stronger, targeted finding than the earlier raw-array comparison. It does not yet prove which non-zero normalized I kick should replace the existing offsets, so this commit records the bug and keeps the production change gated on a minimal differential test. The next implementation step should add a regression fixture that proves the direct-180 baseline succeeds on an empty board, then map the single client kick to trainer coordinates and verify blocked-baseline cases. The tests must check final occupied cells, not just orientation labels.
