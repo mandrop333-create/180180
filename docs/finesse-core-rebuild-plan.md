@@ -1,6 +1,6 @@
 # Finesse Core Rebuild: Rules and Verification Plan
 
-Status: implementation and verification in progress on `rebuild/finesse-core`. At commit `91bcc98a86e790ee605f22f4c29b70ed8598c6fd`, planner regression tests, independent geometry/kick/oracle fixtures, and independent Playwright route/oracle/active-gravity checks all pass. The candidate uses cost-ordered Dijkstra search, updated I-piece SRS+ kick coordinates, and rejects unsupported rotation deltas. This is not yet a complete ground-up rewrite: independent pivot/kick source compatibility and the repository-wide legacy-import audit remain open. Do not merge or deploy without explicit authorization.
+Status: implementation and verification in progress on `rebuild/finesse-core`. At commit `98f162ba8b5d3ba3fc51cf78b41d2eae4c728192`, planner regression tests, independent geometry/kick/weighted-cost fixtures, and independent Playwright route, planner-oracle, active-gravity, and DAS timing checks pass. The planner now rejects malformed/no-op rotation transitions. This is still an incremental replacement, not proof of a fully ground-up engine rewrite: independent kick/pivot compatibility and a complete repository-wide legacy-import audit remain open. Keep the compatibility facade until that audit is complete. Do not merge or deploy without explicit authorization.
 
 ## Objective
 
