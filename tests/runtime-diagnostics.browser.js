@@ -235,11 +235,20 @@ try {
     {
       name: 'rotate-180', terms: ['rotate 180', '180 rotation', '180-degree', 'half turn', 'half-turn'],
       run: async () => {
-        await page.evaluate(() => window.trainer.reset());
+        await page.evaluate(() => {
+          const t = window.trainer;
+          t.reset();
+          // Use an asymmetric piece so a half-turn is observable; O pieces are rotationally symmetric.
+          t.piece.type = 'T';
+          t.piece.x = 3;
+          t.piece.y = 0;
+          t.piece.o = 0;
+          t.render();
+        });
         const before = await snapshotGame();
         await page.keyboard.press('a');
         const after = await snapshotGame();
-        assertCheck('rotate-180', after.piece && before.piece && ((after.piece.o - before.piece.o + 4) % 4) === 2, 'A/180 action should change orientation by exactly two quarter-turns');
+        assertCheck('rotate-180', after.piece && before.piece && ((after.piece.o - before.piece.o + 4) % 4) === 2 && after.stats.halfTurns === before.stats.halfTurns + 1, 'A/180 action should change an asymmetric piece by exactly two quarter-turns and increment half-turn stats');
       }
     },
     {
