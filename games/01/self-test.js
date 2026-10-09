@@ -37,8 +37,10 @@ export function runTrainerSelfTest(){
   }
   assert(getTetrio180Kicks('O',0).length===0,'O should not receive a fake 180 kick');
 
-  // Kick tables always have a no-kick first test for normal rotations.
-  for(const type of ['I','T','J','L','S','Z'])assert(getSrsKicks(type,0,1)[0][0]===0&&getSrsKicks(type,0,1)[0][1]===0,type+' SRS basic rotation missing');
+  // JLSTZ use the conventional no-kick-first order. TETR.IO SRS+ has
+  // piece-specific I-kick ordering and may apply an origin-compensating kick
+  // even on an open board; its exact ordered data is checked independently.
+  for(const type of ['T','J','L','S','Z'])assert(getSrsKicks(type,0,1)[0][0]===0&&getSrsKicks(type,0,1)[0][1]===0,type+' SRS basic rotation missing');
 
   // Exact TETR.IO SRS+ kick-order regression. Kick order changes which
   // legal destination wins when more than one offset fits.
@@ -53,14 +55,14 @@ export function runTrainerSelfTest(){
     '0>3':[[0,0],[1,0],[1,-1],[0,2],[1,2]]
   };
   const expectedI={
-    '0>1':[[0,0],[1,0],[-2,0],[-2,1],[1,-2]],
-    '1>0':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
-    '1>2':[[0,0],[-1,0],[2,0],[-1,-2],[2,1]],
-    '2>1':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
-    '2>3':[[0,0],[2,0],[-1,0],[2,-1],[-1,2]],
-    '3>2':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
-    '3>0':[[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
-    '0>3':[[0,0],[-1,0],[2,0],[2,1],[-1,-2]]
+    '0>1':[[1,0],[2,0],[-1,0],[-1,1],[2,-2]],
+    '1>2':[[0,1],[-1,1],[2,1],[-1,-1],[2,2]],
+    '2>3':[[-1,0],[1,0],[-2,0],[1,-1],[-2,2]],
+    '3>0':[[0,-1],[1,-1],[-2,-1],[1,1],[-2,-2]],
+    '0>3':[[0,1],[-1,1],[2,1],[2,2],[-1,-1]],
+    '1>0':[[-1,0],[-2,0],[1,0],[-2,2],[1,-1]],
+    '2>1':[[0,-1],[-2,-1],[1,-1],[-2,-2],[1,1]],
+    '3>2':[[1,0],[2,0],[-1,0],[2,-2],[-1,1]]
   };
   for(const [transition,expected] of Object.entries(expectedJLSTZ)){
     assert(JSON.stringify(getSrsKicks('T',...transition.split('>').map(Number)))===JSON.stringify(expected),
@@ -76,7 +78,7 @@ export function runTrainerSelfTest(){
     2:[[0,0],[0,1],[-1,1],[1,1],[-1,0],[1,0]],
     3:[[0,0],[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
   };
-  const expectedHalfI={0:[[0,0],[0,-1]],1:[[0,0],[1,0]],2:[[0,0],[0,1]],3:[[0,0],[-1,0]]};
+  const expectedHalfI={0:[[1,1],[1,0]],1:[[-1,1],[0,1]],2:[[-1,-1],[-1,0]],3:[[1,-1],[0,-1]]};
   for(let o=0;o<4;o++){
     assert(JSON.stringify(getTetrio180Kicks('T',o))===JSON.stringify(expectedHalfJLSTZ[o]),
       'JLSTZ 180 kick order mismatch for orientation '+o);
