@@ -154,11 +154,9 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   const limit=costLimit(maxCost,profile);
   if(limit===null)return null;
   const candidates=enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile});
-  if(!candidates.length){
-    const land=copyPiece(piece);
-    while(move(land,0,1,board,W,H,cellsFor)){}
-    return {actions:[],target:{x:land.x,o:land.o,y:land.y},cost:0,landingY:land.y};
-  }
+  // No valid lockable target means the spawn/top-out state is not a usable
+  // finesse prompt. Fail closed instead of inventing an invalid zero-cost target.
+  if(!candidates.length)return null;
   // Teach the most demanding placement that is still inside the active
   // finesse envelope. Every target already carries its shortest route, so
   // this maximizes training value without ever recommending a longer route.
