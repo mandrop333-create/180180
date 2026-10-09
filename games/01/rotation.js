@@ -8,7 +8,13 @@ export function tryRotate(piece, delta, board, W, H, cellsFor, onHalfTurn, halfT
   // The public action vocabulary is quarter-turn CW/CCW or a direct 180.
   // Reject zero and arbitrary deltas rather than treating them as a zero-kick
   // rotation; this keeps the transition graph aligned with actual inputs.
-  if (!piece || ![1, -1, 2, -2].includes(delta)) return false;
+  // Reject malformed state before consulting fallback geometry or kick tables.
+  // Otherwise an unknown type or out-of-range orientation could be normalized
+  // into a plausible but impossible transition.
+  if (!piece || !['I','O','T','S','Z','J','L'].includes(piece.type) ||
+      !Number.isInteger(piece.x) || !Number.isInteger(piece.y) ||
+      !Number.isInteger(piece.o) || piece.o < 0 || piece.o > 3 ||
+      ![1, -1, 2, -2].includes(delta)) return false;
 
   const from = piece.o;
   const to = targetOrientation(from, delta);
