@@ -11,6 +11,11 @@ import { placementIdentity,normalizeFinesseTarget,FINESSE_PROFILES } from './fin
 // never mutates the live piece: every transition operates on a clone supplied
 // to the real collision/rotation functions.
 function copyPiece(piece){return {...piece};}
+const PIECE_TYPES=new Set(['I','O','T','S','Z','J','L']);
+function validStartPiece(piece){
+  return !!piece&&PIECE_TYPES.has(piece.type)&&Number.isInteger(piece.x)&&
+    Number.isInteger(piece.y)&&Number.isInteger(piece.o)&&piece.o>=0&&piece.o<4;
+}
 function routeKey(route){return route.map(step=>step.action+':'+(step.mode||'tap')).join('|');}
 
 // Binary min-heap ordered by cumulative cost. Dijkstra is required here rather
@@ -55,7 +60,10 @@ function costLimit(maxCost,profile){
 }
 
 export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
-  if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return [];
+  // Reject malformed spawn/input states before asking engine adapters to
+  // interpret them. In particular, pieces.js falls back to T geometry for an
+  // unknown type, which must never silently create a valid-looking route.
+  if(!validStartPiece(piece)||typeof move!=='function'||typeof tryRotate!=='function')return [];
   const limit=costLimit(maxCost,profile);
   if(limit===null)return [];
   const start=copyPiece(piece);
