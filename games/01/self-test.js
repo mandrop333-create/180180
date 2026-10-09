@@ -366,6 +366,15 @@ export function runTrainerSelfTest(){
   // across all seven pieces, every recommended action must execute through the
   // game's actual collision and kick functions and land on the advertised target.
   const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
+  const firstSpawnT={type:'T',x:3,y:0,o:0};
+  const firstSpawnPlan=planFinesse({
+    piece:firstSpawnT,board:emptyBoard,W:10,H:20,cellsFor,maxCost:2,seed:0,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,delta,b,W,H,cf)=>tryRotate(p,delta,b,W,H,cf)
+  });
+  assert(firstSpawnPlan&&firstSpawnPlan.cost===0&&firstSpawnPlan.actions.length===0&&
+    firstSpawnPlan.target.x===firstSpawnT.x&&firstSpawnPlan.target.o===firstSpawnT.o,
+    'fastest-placement regression: a first-spawn T-piece on an empty board should need no movement inputs before hard drop');
   let checkedPlans=0;
   for(const type of PIECE_TYPES){
     for(let o=0;o<(type==='O'?1:4);o++){
