@@ -1,5 +1,5 @@
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
-import { REFERENCE_I_SRS_PLUS, REFERENCE_I_180_SRS_PLUS } from './finesse-kick-reference-fixtures.js';
+import { REFERENCE_I_SRS_PLUS, REFERENCE_I_180_SRS_PLUS, REFERENCE_JLSTZ_SRS, REFERENCE_JLSTZ_180_SRS_PLUS } from './finesse-kick-reference-fixtures.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error('finesse kick reference test: ' + message);
@@ -24,7 +24,21 @@ export function runFinesseKickReferenceTests() {
       JSON.stringify(expected) + ', got ' + JSON.stringify(getTetrio180Kicks('I', orientation)));
     checks++;
   }
-  return { ok: true, checks, transitions90: 8, orientations180: 4, source: 'S-Finder SRSPlus reference, y-axis normalized' };
+  for (const [transition, expected] of Object.entries(REFERENCE_JLSTZ_SRS)) {
+    const [from, to] = transition.split('>').map(Number);
+    assert(same(getSrsKicks('T', from, to), expected),
+      'JLSTZ SRS ordered kicks differ for ' + transition + '; expected ' + JSON.stringify(expected) +
+      ', got ' + JSON.stringify(getSrsKicks('T', from, to)));
+    checks++;
+  }
+  for (const [orientationText, expected] of Object.entries(REFERENCE_JLSTZ_180_SRS_PLUS)) {
+    const orientation = Number(orientationText);
+    assert(same(getTetrio180Kicks('T', orientation), expected),
+      'JLSTZ direct-180 ordered kicks differ for orientation ' + orientation + '; expected ' +
+      JSON.stringify(expected) + ', got ' + JSON.stringify(getTetrio180Kicks('T', orientation)));
+    checks++;
+  }
+  return { ok: true, checks, transitions90: 16, orientations180: 8, source: 'TetrisWiki SRS baseline + S-Finder SRSPlus reference, y-axis normalized' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
