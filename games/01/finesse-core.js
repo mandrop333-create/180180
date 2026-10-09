@@ -59,9 +59,19 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   const limit=costLimit(maxCost,profile);
   if(limit===null)return [];
   const start=copyPiece(piece);
+  // Enforce the movement contract at this boundary: a successful move
+  // must change exactly the requested coordinate and must not alter rotation.
+  // This prevents a broken adapter from creating phantom edges or infinite
+  // descent/wall-repeat loops.
+  const stepMove=(piece,dx,dy)=>{
+    const next=copyPiece(piece);
+    if(!move(next,dx,dy,board,W,H,cellsFor))return null;
+    if(next.x!==piece.x+dx||next.y!==piece.y+dy||next.o!==piece.o)return null;
+    return next;
+  };
   const actions=[
-    {action:'left',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,-1,0,board,W,H,cellsFor)?n:null;}},
-    {action:'right',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return move(n,1,0,board,W,H,cellsFor)?n:null;}}
+    {action:'left',mode:'tap',cost:1,apply:p=>stepMove(p,-1,0)},
+    {action:'right',mode:'tap',cost:1,apply:p=>stepMove(p,1,0)}
   ];
   // The O piece is rotationally invariant. Never offer rotations as a
   // finesse step when they cannot change its physical placement.
@@ -73,13 +83,29 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
     actions.push({action:'half',mode:'tap',cost:profile.halfTurnCost,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
   }
   const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
-    const n=copyPiece(p);let moved=false;
-    while(move(n,dir,0,board,W,H,cellsFor))moved=true;
+    let n=copyPiece(p);let moved=false;
+    // At most the board width plus a piece-frame allowance is ever needed
+    // to reach a wall. The cap is defensive against malformed callbacks.
+    const maxSteps=(Number.isInteger(W)&&W>0?W:10)+4;
+    for(let i=0;i<maxSteps;i++){
+      const next=stepMove(n,dir,0);
+      if(!next)break;
+      n=next;moved=true;
+    }
     return moved?n:null;
   }});
   if(profile?.dasCountsAsOneInput===true)actions.push(wallAction(-1,'left'),wallAction(1,'right'));
 
-  const landing=p=>{const n=copyPiece(p);while(move(n,0,1,board,W,H,cellsFor)){}return n;};
+  const landing=p=>{
+    let n=copyPiece(p);
+    const maxSteps=(Number.isInteger(H)&&H>0?H:20)+4;
+    for(let i=0;i<maxSteps;i++){
+      const next=stepMove(n,0,1);
+      if(!next)break;
+      n=next;
+    }
+    return n;
+  };
   const stateKey=p=>p.x+','+p.y+','+p.o;
   const queue=[];
   heapPush(queue,{piece:start,cost:0,route:[]});
