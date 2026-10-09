@@ -144,18 +144,18 @@ export class Trainer {
     this.syncFinesseDisplay();
     this.emitState();
   }
-  observeFinesseDAS(action){
+  observeFinesseDAS(action,{confirmedHold=false}={}){
     if(!this.finesseEnabled||this.finesseFaulted||!this.finesseRouteCandidates.length)return;
     const dir=action==='left'?-1:1;
     const wall=this.dasWallX(dir);
     if(wall===null||this.piece?.x!==wall)return;
-    let advanced=false;
-    const next=this.finesseRouteCandidates.map(candidate=>{
-      if(candidate.pendingDasAction!==action)return candidate;
-      advanced=true;
-      return {...candidate,progress:candidate.progress+1,pendingDasAction:null};
-    });
-    if(!advanced)return;
+    const pending=this.finesseRouteCandidates.filter(candidate=>candidate.pendingDasAction===action);
+    if(!pending.length)return;
+    const next=confirmedHold
+      ?pending.map(candidate=>({...candidate,progress:candidate.progress+1,pendingDasAction:null}))
+      :this.finesseRouteCandidates.map(candidate=>candidate.pendingDasAction===action
+        ?{...candidate,progress:candidate.progress+1,pendingDasAction:null}
+        :candidate);
     this.finesseRouteCandidates=next;
     this.syncFinesseDisplay();
     this.emitState();
@@ -369,7 +369,7 @@ export class Trainer {
     }
     if(this.finesseRouteCandidates.length){
       const pendingActions=new Set(this.finesseRouteCandidates.map(candidate=>candidate.pendingDasAction).filter(Boolean));
-      for(const action of pendingActions)this.observeFinesseDAS(action);
+      for(const action of pendingActions)this.observeFinesseDAS(action,{confirmedHold:true});
     }
     if(!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type))this.lockAcc=0;else this.lockAcc+=dt;
     if(this.lockAcc>=this.rules.lockDelay)this.lockPiece(true);this.hook('tick',dt,t);this.flushRender();
@@ -428,7 +428,7 @@ export class Trainer {
     }
     else if(action==='hold'){this.hold();}
   }
-  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action==='left'||action==='right'){this.observeFinesseDAS(action);this.finishFinesseHorizontalInput(action);}if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
+  handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action==='left'||action==='right')this.finishFinesseHorizontalInput(action);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
   handleBlur(){
     this.downKeys.clear();this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;
   }
