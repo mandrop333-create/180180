@@ -352,6 +352,11 @@ try {
           for (const step of actions) {
             const code = t.binds[step.action];
             t.handleKeydown(keyEvent(code));
+            // A DAS route is a held direction, not a tap. Advance the game's
+            // own input clock while the key remains down so the piece reaches
+            // the wall before keyup; otherwise this regression would test the
+            // harness's incorrect tap simulation rather than the trainer.
+            if (step.mode === 'das') t.tick(performance.now() + t.das() + 5);
             t.handleKeyup(keyEvent(code));
           }
           const progressAfterInputs = t.finesseProgress;
