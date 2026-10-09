@@ -138,3 +138,14 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - Planner regression suite passed on this checkpoint: [run 37999676782](https://github.com/mandrop333-create/180180/actions/runs/37999676782). Independent reference fixtures passed: [run 37999676836](https://github.com/mandrop333-create/180180/actions/runs/37999676836).
 - The full browser workflow passed on this checkpoint, including independent route fixtures, actual planner prompts checked against the independent oracle, and active-gravity timing checks: [run 37999676762](https://github.com/mandrop333-create/180180/actions/runs/37999676762). The separate prompt-requested diagnostics workflow was cancelled when a newer run superseded it; it is not counted as a pass.
 - These test-fixture repairs do not establish that the core is a complete ground-up rewrite. The replacement still requires independently verified rotation/kick geometry and broader state-space/execution validation. No merge or deployment to `main`.
+
+
+## Movement-transition hardening — 2026-10-09
+
+- `games/01/finesse-core.js` now validates that a successful horizontal/vertical movement callback changes exactly the requested coordinate and leaves orientation unchanged. Wall-directed DAS and landing descent are bounded by board dimensions, preventing malformed adapters from creating phantom transitions or non-terminating loops.
+- Added a planner regression for a movement callback that returns success without changing coordinates. Planner self-tests passed on `746f8717cd448bc20f64a4cf033c553477a90d85`: [run 37999895113](https://github.com/mandrop333-create/180180/actions/runs/37999895113).
+- Independent geometry/kick/oracle fixtures passed on the same commit: [run 37999895139](https://github.com/mandrop333-create/180180/actions/runs/37999895139).
+- Independent Playwright routes, actual planner prompts checked against the oracle, and active-gravity timing scenarios all passed on the same commit: [run 37999895097](https://github.com/mandrop333-create/180180/actions/runs/37999895097).
+- The separate prompt-requested diagnostics run was cancelled when a newer commit superseded it; it is not counted as a pass.
+- Targeted import audit confirms `games/01/engine.js` uses `finesse-core.js`, and the inspected finesse reference tests import the core directly or exercise the browser. `games/01/finesse.js` remains a compatibility facade; a full repository-wide caller audit is still required before removal.
+- These results validate the current bounded search and selected fixtures, not full external authority for every pivot/kick convention. No merge or production deployment.
