@@ -30,6 +30,10 @@ export class RuntimeDiagnostics {
     this.lastBoardSignature = '';
     this.closed = false;
     this.persistTimer = null;
+    this.uploadTimer = null;
+    this.revision = 0;
+    this.lastUploadedRevision = 0;
+    this.uploading = false;
     this.originalConsoleError = null;
     if (!enabled) return;
 
@@ -64,6 +68,7 @@ export class RuntimeDiagnostics {
     window.addEventListener('unhandledrejection', this.onRejection);
     window.addEventListener('pagehide', this.onPageHide);
     this.record('initial-state', this.snapshot());
+    if (this.endpoint) this.uploadTimer = setInterval(() => this.flush(), 30000);
   }
 
   now() { return Math.round(performance.now() - this.startedClock); }
@@ -71,6 +76,7 @@ export class RuntimeDiagnostics {
   record(type, data = {}) {
     if (!this.enabled || this.closed) return;
     this.events.push({ t: this.now(), type, data: clone(data) });
+    this.revision++;
     if (this.events.length > MAX_EVENTS) this.events.splice(0, this.events.length - MAX_EVENTS);
     this.schedulePersist();
   }
@@ -176,7 +182,9 @@ export class RuntimeDiagnostics {
   async flush() {
     if (!this.enabled) return;
     this.persist();
-    if (!this.endpoint) return;
+    if (!this.endpoint || this.uploading || this.revision <= this.lastUploadedRevision) return;
+    this.uploading = true;
+    const revisionAtStart = this.revision;
     try {
       const response = await fetch(this.endpoint, {
         method: 'POST',
@@ -184,9 +192,12 @@ export class RuntimeDiagnostics {
         body: JSON.stringify(this.report()),
         keepalive: true
       });
-      this.record('upload-result', { ok: response.ok, status: response.status });
+      if (!response.ok) throw new Error('Diagnostics upload returned HTTP ' + response.status);
+      this.lastUploadedRevision = revisionAtStart;
     } catch (error) {
       this.record('upload-error', { message: String(error?.message || error) });
+    } finally {
+      this.uploading = false;
     }
   }
 
@@ -214,6 +225,7 @@ export class RuntimeDiagnostics {
     window.removeEventListener('pagehide', this.onPageHide);
     if (console.error === this.onConsoleError && this.originalConsoleError) console.error = this.originalConsoleError;
     if (this.persistTimer !== null) { clearTimeout(this.persistTimer); this.persistTimer = null; }
+    if (this.uploadTimer !== null) { clearInterval(this.uploadTimer); this.uploadTimer = null; }
   }
 }
 
