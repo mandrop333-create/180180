@@ -9,7 +9,7 @@ import {
   REFERENCE_JLSTZ_SRS,
   REFERENCE_JLSTZ_180_SRS_PLUS
 } from './finesse-kick-reference-fixtures.js';
-import { enumerateFinesseTargets } from './finesse.js';
+import { enumerateFinesseTargets } from './finesse-core.js';
 import { cellsFor as productionCellsFor } from './pieces.js';
 import { collides as productionCollides, move as productionMove } from './collision.js';
 import { tryRotate as productionTryRotate } from './rotation.js';
