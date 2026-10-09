@@ -1,7 +1,7 @@
 // Executes every independently specified kick candidate in isolation.
 // Static reference geometry/kicks define the expected result; production
 // rotation/collision are only the system under test. For candidate i, blockers
-// are placed so every earlier candidate collides while candidate i remains legal.
+// force every earlier candidate to collide while candidate i remains legal.
 import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
 import {
   REFERENCE_I_SRS_PLUS,
@@ -11,12 +11,9 @@ import {
 } from './finesse-kick-reference-fixtures.js';
 import { tryRotate } from './rotation.js';
 import { cellsFor } from './pieces.js';
-import { collides } from './collision.js';
 
 const W = 10;
 const H = 20;
-const START_X = 4;
-const START_Y = 6;
 
 function assert(condition, message) {
   if (!condition) throw new Error('kick execution reference: ' + message);
@@ -26,7 +23,7 @@ function worldCells(type, orientation, x, y) {
   return REFERENCE_PIECES[type].orientations[((orientation % 4) + 4) % 4]
     .map(([cx,cy]) => [x + cx, y + cy]);
 }
-function intersectsBoard(type, orientation, x, y, board) {
+function referenceCollides(type, orientation, x, y, board) {
   for (const [cx,cy] of worldCells(type, orientation, x, y)) {
     if (cx < 0 || cx >= W || cy >= H) return true;
     if (cy >= 0 && board[cy][cx]) return true;
@@ -41,73 +38,77 @@ function boardWithBlockers(cells) {
   }
   return board;
 }
-function makeCase({type, from, to, delta, kicks, index, label}) {
-  const dx = kicks[index][0];
-  const dy = kicks[index][1];
-  const current = new Set(worldCells(type, from, START_X, START_Y).map(([x,y]) => key(x,y)));
-  const expected = new Set(worldCells(type, to, START_X + dx, START_Y + dy).map(([x,y]) => key(x,y)));
-  const blockers = new Set();
+function tryOrigin({type, from, to, delta, kicks, index, x, y}) {
+  const [dx,dy] = kicks[index];
+  const current = new Set(worldCells(type, from, x, y).map(([cx,cy]) => key(cx,cy)));
+  const expected = new Set(worldCells(type, to, x + dx, y + dy).map(([cx,cy]) => key(cx,cy)));
+  const empty = Array.from({ length:H }, () => Array(W).fill(0));
+  if (referenceCollides(type, from, x, y, empty) ||
+      referenceCollides(type, to, x + dx, y + dy, empty)) return null;
 
+  const blockers = new Set();
   for (let earlier = 0; earlier < index; earlier++) {
     const [priorDx,priorDy] = kicks[earlier];
-    const priorCells = worldCells(type, to, START_X + priorDx, START_Y + priorDy);
-    // Any target cell not occupied by the initial piece or the expected
-    // result can block this earlier candidate without invalidating the test.
+    if (referenceCollides(type, to, x + priorDx, y + priorDy, empty)) continue;
+    const priorCells = worldCells(type, to, x + priorDx, y + priorDy);
     const available = priorCells
-      .map(([x,y]) => [x,y])
-      .filter(([x,y]) => x >= 0 && x < W && y >= 0 && y < H)
-      .filter(([x,y]) => !current.has(key(x,y)) && !expected.has(key(x,y)))
+      .filter(([cx,cy]) => cx >= 0 && cx < W && cy >= 0 && cy < H)
+      .filter(([cx,cy]) => !current.has(key(cx,cy)) && !expected.has(key(cx,cy)))
       .sort((a,b) => a[1] - b[1] || a[0] - b[0]);
-    if (available.length === 0) {
-      return { skipped:true, reason:'no blocker cell isolates earlier candidate ' + earlier };
-    }
+    if (available.length === 0) return null;
     blockers.add(key(available[0][0], available[0][1]));
   }
 
   const blockerCells = [...blockers].map(value => value.split(',').map(Number));
   const board = boardWithBlockers(blockerCells);
-  assert(!intersectsBoard(type, from, START_X, START_Y, board),
-    label + ' candidate ' + index + ': generated board overlaps initial piece');
-  assert(!intersectsBoard(type, to, START_X + dx, START_Y + dy, board),
-    label + ' candidate ' + index + ': generated board blocks expected kick');
+  if (referenceCollides(type, from, x, y, board) ||
+      referenceCollides(type, to, x + dx, y + dy, board)) return null;
   for (let earlier = 0; earlier < index; earlier++) {
     const [priorDx,priorDy] = kicks[earlier];
-    assert(intersectsBoard(type, to, START_X + priorDx, START_Y + priorDy, board),
-      label + ' candidate ' + index + ': earlier kick ' + earlier + ' remains legal');
+    if (!referenceCollides(type, to, x + priorDx, y + priorDy, board)) return null;
   }
 
-  const piece = { type, x:START_X, y:START_Y, o:from };
+  const piece = { type, x, y, o:from };
   const succeeded = tryRotate(piece, delta, board, W, H, cellsFor);
-  assert(succeeded, label + ' candidate ' + index + ': production rotation failed');
-  assert(piece.x === START_X + dx && piece.y === START_Y + dy && piece.o === to,
-    label + ' candidate ' + index + ': expected offset (' + dx + ',' + dy +
-    ') but production selected (' + (piece.x - START_X) + ',' +
-    (piece.y - START_Y) + ') orientation ' + piece.o);
-  return { skipped:false, blockers:blockerCells.length };
+  assert(succeeded, type + ' ' + from + '>' + to + ' candidate ' + index + ': production rotation failed');
+  assert(piece.x === x + dx && piece.y === y + dy && piece.o === to,
+    type + ' ' + from + '>' + to + ' candidate ' + index + ': expected offset (' + dx + ',' + dy +
+    ') but production selected (' + (piece.x - x) + ',' + (piece.y - y) + ') orientation ' + piece.o);
+  return {blockers:blockerCells.length, origin:{x,y}};
+}
+function makeCase(spec) {
+  const positions = [];
+  for (let y of [0,1,2,3,4,6,12,14,15,16,17]) {
+    for (let x=0; x<W; x++) positions.push({x,y});
+  }
+  for (const origin of positions) {
+    const result = tryOrigin({...spec,...origin});
+    if (result) return result;
+  }
+  throw new Error('could not isolate ' + spec.label + ' candidate ' + spec.index +
+    ' (' + JSON.stringify(spec.kicks[spec.index]) + ') at any valid origin');
 }
 
 export function runFinesseKickExecutionReferenceTests() {
   let checked = 0;
-  let skipped = 0;
-  const sources = [];
+  let blockerCount = 0;
+  const run = (spec) => {
+    const result = makeCase(spec);
+    checked++;
+    blockerCount += result.blockers;
+  };
   for (const [transition,kicks] of Object.entries(REFERENCE_I_SRS_PLUS)) {
     const [from,to] = transition.split('>').map(Number);
     const delta = to === (from + 1) % 4 ? 1 : -1;
     for (let index=0; index<kicks.length; index++) {
-      const label = 'I SRS+ ' + transition;
-      const result = makeCase({type:'I',from,to,delta,kicks,index,label});
-      if (result.skipped) { skipped++; sources.push(label + '#' + index + ': ' + result.reason); }
-      else checked++;
+      run({type:'I',from,to,delta,kicks,index,label:'I SRS+ ' + transition});
     }
   }
   for (const [orientationText,kicks] of Object.entries(REFERENCE_I_180_SRS_PLUS)) {
     const from = Number(orientationText);
-    const to = (from + 2) % 4;
-    for (let index=0; index<kicks.length; index++) {
-      const label = 'I direct 180 orientation ' + from;
-      const result = makeCase({type:'I',from,to,delta:2,kicks,index,label});
-      if (result.skipped) { skipped++; sources.push(label + '#' + index + ': ' + result.reason); }
-      else checked++;
+    run({type:'I',from,to:(from + 2) % 4,delta:2,kicks,index:0,label:'I direct 180'});
+    for (let index=1; index<kicks.length; index++) {
+      run({type:'I',from,to:(from + 2) % 4,delta:2,kicks,index,label:'I direct 180'});
     }
   }
   for (const [transition,kicks] of Object.entries(REFERENCE_JLSTZ_SRS)) {
@@ -115,27 +116,19 @@ export function runFinesseKickExecutionReferenceTests() {
     const delta = to === (from + 1) % 4 ? 1 : -1;
     for (const type of ['J','L','S','T','Z']) {
       for (let index=0; index<kicks.length; index++) {
-        const label = type + ' SRS ' + transition;
-        const result = makeCase({type,from,to,delta,kicks,index,label});
-        if (result.skipped) { skipped++; sources.push(label + '#' + index + ': ' + result.reason); }
-        else checked++;
+        run({type,from,to,delta,kicks,index,label:type + ' SRS ' + transition});
       }
     }
   }
   for (const [orientationText,kicks] of Object.entries(REFERENCE_JLSTZ_180_SRS_PLUS)) {
     const from = Number(orientationText);
-    const to = (from + 2) % 4;
     for (const type of ['J','L','S','T','Z']) {
       for (let index=0; index<kicks.length; index++) {
-        const label = type + ' direct 180 orientation ' + from;
-        const result = makeCase({type,from,to,delta:2,kicks,index,label});
-        if (result.skipped) { skipped++; sources.push(label + '#' + index + ': ' + result.reason); }
-        else checked++;
+        run({type,from,to:(from + 2) % 4,delta:2,kicks,index,label:type + ' direct 180'});
       }
     }
   }
-  assert(skipped === 0, 'some kick candidates could not be independently isolated: ' + sources.join('; '));
-  return {ok:true,checked,skipped,coverage:'all ordered kick candidates forced through real production rotation/collision'};
+  return {ok:true,checked,blockerCount,coverage:'every ordered kick candidate forced through real production rotation/collision',originsSearched:'10 columns × 11 spawn heights as needed'};
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
