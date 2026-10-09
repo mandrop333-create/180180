@@ -3,6 +3,8 @@ name: Prompt-requested Playwright test
 on:
   issue_comment:
     types: [created]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       test_request:
@@ -20,7 +22,7 @@ concurrency:
 
 jobs:
   prompt-playwright:
-    if: github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/playwright '))
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/playwright '))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
