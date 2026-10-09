@@ -60,3 +60,5 @@ jobs:
             echo "Testing the live site read-only; no production files are modified."
           fi
           node --experimental-default-type=module games/01/finesse-browser-reference-test.js
+      - name: Verify actual planner prompts against the independent oracle
+        run: node --experimental-default-type=module games/01/finesse-planner-browser-oracle-test.js
