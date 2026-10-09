@@ -413,6 +413,81 @@ try {
     'short horizontal hold repeated after keyup: '+JSON.stringify(tapOnly));
   console.log(JSON.stringify({tapDoesNotRepeat:true,passed:true,x:tapOnly.x}));
 
+  // Focus loss must clear held directions and stop repeat timers even if
+  // the browser never delivers the matching keyup event.
+  await page.evaluate(() => {
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=Infinity;
+    t.rules.lockDelay=100000;
+    t.rules.das=80;
+    t.rules.arr=0;
+    t.rules.dcd=0;
+    t.gameOver=false;
+    t.emptyBoard();
+    t.piece={type:'T',x:3,y:0,o:0};
+    t.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};
+    t.emitState();
+    t.render();
+  });
+  await page.keyboard.down('ArrowRight');
+  const beforeBlur=await page.evaluate(()=>window.trainer.piece?.x);
+  await page.evaluate(()=>window.trainer.handleBlur());
+  await page.waitForTimeout(160);
+  const afterBlur=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    dir:window.trainer.moveState.dir,
+    held:window.trainer.downKeys.size
+  }));
+  assert(beforeBlur===4&&afterBlur.x===4&&afterBlur.dir===0&&afterBlur.held===0,
+    'focus loss left a sticky horizontal input: '+JSON.stringify({beforeBlur,afterBlur}));
+  await page.keyboard.up('ArrowRight');
+  console.log(JSON.stringify({focusLossClearsHeldInput:true,passed:true,x:afterBlur.x}));
+
+  // Opposite horizontal keys use last-pressed direction; releasing that key
+  // restores the still-held direction without an immediate extra movement.
+  await page.evaluate(() => {
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=Infinity;
+    t.rules.lockDelay=100000;
+    t.rules.das=100;
+    t.rules.arr=0;
+    t.rules.dcd=0;
+    t.gameOver=false;
+    t.emptyBoard();
+    t.piece={type:'T',x:3,y:0,o:0};
+    t.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};
+    t.emitState();
+    t.render();
+  });
+  await page.keyboard.down('ArrowRight');
+  await page.keyboard.down('ArrowLeft');
+  const bothHeld=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    dir:window.trainer.moveState.dir,
+    right:window.trainer.downKeys.has(window.trainer.binds.right),
+    left:window.trainer.downKeys.has(window.trainer.binds.left)
+  }));
+  assert(bothHeld.x===3&&bothHeld.dir===-1&&bothHeld.right&&bothHeld.left,
+    'simultaneous directions did not honor last-pressed input: '+JSON.stringify(bothHeld));
+  await page.keyboard.up('ArrowLeft');
+  const restored=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    dir:window.trainer.moveState.dir,
+    elapsed:window.trainer.moveState.elapsed,
+    right:window.trainer.downKeys.has(window.trainer.binds.right),
+    left:window.trainer.downKeys.has(window.trainer.binds.left)
+  }));
+  assert(restored.x===3&&restored.dir===1&&restored.elapsed===0&&restored.right&&!restored.left,
+    'releasing the last-pressed direction did not restore the held opposite direction cleanly: '+JSON.stringify(restored));
+  await page.waitForTimeout(130);
+  const afterRestoreDAS=await page.evaluate(()=>({x:window.trainer.piece?.x,dir:window.trainer.moveState.dir}));
+  assert(afterRestoreDAS.x>3&&afterRestoreDAS.dir===1,
+    'restored direction did not resume after a fresh DAS delay: '+JSON.stringify(afterRestoreDAS));
+  await page.keyboard.up('ArrowRight');
+  console.log(JSON.stringify({oppositeDirections:true,passed:true,afterRestoreX:afterRestoreDAS.x}));
+
   assert(pageErrors.length===0,'browser page errors: '+JSON.stringify(pageErrors));
   console.log(JSON.stringify({ok:true,scenarios:scenarios.length,finiteGravity:true,stackBoards:3,lockDelayReset:true,pageErrors:pageErrors.length}));
 } finally {
