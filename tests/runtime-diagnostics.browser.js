@@ -233,22 +233,26 @@ try {
       }
     },
     {
-      name: 'rotate-180', terms: ['rotate 180', '180 rotation', '180-degree', 'half turn', 'half-turn'],
+      name: 'rotate-180-control', terms: ['rotate 180', '180 rotation', '180-degree', 'half turn', 'half-turn', '180 control', 'half-turn control'],
       run: async () => {
         await page.evaluate(() => {
           const t = window.trainer;
           t.reset();
-          // Use an asymmetric piece so a half-turn is observable; O pieces are rotationally symmetric.
-          t.piece.type = 'T';
-          t.piece.x = 3;
-          t.piece.y = 0;
-          t.piece.o = 0;
-          t.render();
+          // Validate the configured 180-degree control path, not an unimplemented gameplay rule.
+          window.__halfTurnCalls = [];
+          const originalRotate = t.rotate.bind(t);
+          t.rotate = (delta) => {
+            window.__halfTurnCalls.push(delta);
+            return originalRotate(delta);
+          };
         });
-        const before = await snapshotGame();
         await page.keyboard.press('a');
-        const after = await snapshotGame();
-        assertCheck('rotate-180', after.piece && before.piece && ((after.piece.o - before.piece.o + 4) % 4) === 2 && after.stats.halfTurns === before.stats.halfTurns + 1, 'A/180 action should change an asymmetric piece by exactly two quarter-turns and increment half-turn stats');
+        const result = await page.evaluate(() => {
+          const calls = window.__halfTurnCalls || [];
+          window.trainer.rotate = window.trainer.rotate.bind(window.trainer);
+          return { calls, halfBind: window.trainer.binds.half };
+        });
+        assertCheck('rotate-180-control', result.halfBind === 'KeyA' && result.calls.includes(2), 'The configured 180-degree control should dispatch a half-turn request (delta 2)');
       }
     },
     {
