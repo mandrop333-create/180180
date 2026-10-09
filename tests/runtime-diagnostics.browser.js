@@ -400,6 +400,7 @@ try {
             }
             return {
               progressAfterInputs: t.finesseProgress,
+              actionCount: t.finesseActions.filter(item => item.action !== 'hard').length,
               faultedAfterInputs: t.finesseFaulted,
               actualBeforeDrop: { ...t.piece }
             };
@@ -416,7 +417,8 @@ try {
           });
           assertCheck('finesse-visible-progress-' + label,
             visibleProgress.visible && visibleProgress.states.filter(state => state === 'done').length === replay.progressAfterInputs &&
-            (replay.progressAfterInputs === before.actions.length - 1 || visibleProgress.states.includes('next')),
+            replay.progressAfterInputs === replay.actionCount &&
+            (replay.progressAfterInputs === before.actions.length || visibleProgress.states.includes('next')),
             JSON.stringify({progress:replay.progressAfterInputs,states:visibleProgress.states,visible:visibleProgress.visible}));
           const placed = await page.evaluate(() => {
             const t = window.trainer;
@@ -427,7 +429,7 @@ try {
           result.push({ type, boardKind, ...before, ...replay, ...placed });
         }
         assertCheck('finesse-route-present', result.every(r => r.target !== null && Array.isArray(r.actions)), 'Each piece on each test board must receive an explicit route and landing target');
-        assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.length - 1 && !r.faultedAfterInputs), 'Each displayed movement route must advance without a fault, leaving Space as the final step across empty and obstructed boards');
+        assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.filter(step => step.action !== 'hard').length && !r.faultedAfterInputs), 'Every deliberate movement/rotation action must advance without a fault; hard drop is verified separately and is not part of the finesse cost');
         assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for all piece/board combinations');
       }
     },
