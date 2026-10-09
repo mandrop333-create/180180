@@ -67,6 +67,14 @@ export class RuntimeDiagnostics {
     window.addEventListener('error', this.onError);
     window.addEventListener('unhandledrejection', this.onRejection);
     window.addEventListener('pagehide', this.onPageHide);
+    const originalHook = trainer.hook.bind(trainer);
+    trainer.hook = (name, ...args) => {
+      const result = originalHook(name, ...args);
+      if (['spawn', 'move', 'rotate', 'hold', 'place', 'hardDrop', 'gameOver', 'reset'].includes(name)) {
+        this.record('game-' + name, { args: clone(args) });
+      }
+      return result;
+    };
     this.record('initial-state', this.snapshot());
     if (this.endpoint) this.uploadTimer = setInterval(() => this.flush(), 30000);
   }
