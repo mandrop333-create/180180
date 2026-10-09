@@ -52,6 +52,12 @@ export class RuntimeDiagnostics {
       reason: String(event.reason?.stack || event.reason?.message || event.reason || 'Unknown rejection')
     });
     this.onPageHide = () => this.flush();
+    this.originalConsoleError = console.error;
+    this.onConsoleError = (...args) => {
+      this.record('console-error', { messages: args.map(value => String(value?.stack || value?.message || value)).slice(0, 12) });
+      this.originalConsoleError.apply(console, args);
+    };
+    console.error = this.onConsoleError;
     window.addEventListener('keydown', this.onKeyDown, true);
     window.addEventListener('keyup', this.onKeyUp, true);
     window.addEventListener('error', this.onError);
@@ -206,6 +212,8 @@ export class RuntimeDiagnostics {
     window.removeEventListener('error', this.onError);
     window.removeEventListener('unhandledrejection', this.onRejection);
     window.removeEventListener('pagehide', this.onPageHide);
+    if (console.error === this.onConsoleError && this.originalConsoleError) console.error = this.originalConsoleError;
+    if (this.persistTimer !== null) { clearTimeout(this.persistTimer); this.persistTimer = null; }
   }
 }
 
