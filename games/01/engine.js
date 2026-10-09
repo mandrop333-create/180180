@@ -401,7 +401,8 @@ export class Trainer {
           // Keep tap and DAS interpretations alive until wall contact or key
           // release proves which input mode was actually performed.
           this.recordFinesseObservation(action,{mode:'horizontal'});
-          this.observeFinesseDAS(action);
+          // A single movement reaching a wall does not prove this was a held
+          // DAS input. Only the tick loop may confirm a sustained hold.
         }
       }
     }else if(action==='soft'){
