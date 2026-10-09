@@ -488,10 +488,10 @@ try {
               !alternateReplay.faulted && alternateReplay.finessePerfect === 1 &&
               alternateReplay.finesseFaults === 0,
               JSON.stringify({targetMatches, route:alternateRoute, result:alternateReplay}));
-            result.push({ type, boardKind, alternateRoute, ...alternateReplay, alternateRoutePassed:
-              targetMatches && alternateReplay.progress === alternateReplay.actionCount &&
-              !alternateReplay.faulted && alternateReplay.finessePerfect === 1 &&
-              alternateReplay.finesseFaults === 0 });
+            result[result.length - 1] = { ...result[result.length - 1], alternateRoute,
+              alternateRoutePassed: targetMatches && alternateReplay.progress === alternateReplay.actionCount &&
+                !alternateReplay.faulted && alternateReplay.finessePerfect === 1 &&
+                alternateReplay.finesseFaults === 0 };
           }
         }
         assertCheck('finesse-alternate-optimal-route-coverage',
