@@ -44,6 +44,22 @@ export function runTrainerSelfTest(){
   assert(JSON.stringify(invalidRotationPiece)===invalidRotationBefore,
     'unsupported rotation delta mutated the piece');
 
+  // Malformed piece states must be rejected atomically, not normalized into
+  // valid-looking rotations through fallback kick data.
+  for (const malformed of [
+    {type:'?',x:3,y:0,o:0},
+    {type:'T',x:3,y:0,o:-1},
+    {type:'T',x:3,y:0,o:4},
+    {type:'T',x:3.5,y:0,o:0},
+    {type:'T',x:3,y:0.5,o:0}
+  ]) {
+    const before=JSON.stringify(malformed);
+    assert(!tryRotate(malformed,1,Array.from({length:H},()=>Array(W).fill(0)),W,H,cellsFor),
+      'malformed piece state should not rotate: '+before);
+    assert(JSON.stringify(malformed)===before,
+      'rejected malformed rotation mutated its piece: '+before);
+  }
+
   // TETR.IO-style direct 180 exists independently of two 90 turns.
   for(const type of ['I','T','J','L','S','Z']){
     for(let o=0;o<4;o++)assert(getTetrio180Kicks(type,o).length>0,type+' 180 kick table missing state '+o);
