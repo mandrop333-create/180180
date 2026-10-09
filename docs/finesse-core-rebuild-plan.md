@@ -1,6 +1,6 @@
 # Finesse Core Rebuild: Rules and Verification Plan
 
-Status: implementation and verification in progress on `rebuild/finesse-core`. At commit `98f162ba8b5d3ba3fc51cf78b41d2eae4c728192`, planner regression tests, independent geometry/kick/weighted-cost fixtures, and independent Playwright route, planner-oracle, active-gravity, and DAS timing checks pass. The planner now rejects malformed/no-op rotation transitions. This is still an incremental replacement, not proof of a fully ground-up engine rewrite: independent kick/pivot compatibility and a complete repository-wide legacy-import audit remain open. Keep the compatibility facade until that audit is complete. Do not merge or deploy without explicit authorization.
+Status: implementation and verification in progress on `rebuild/finesse-core`. At commit `b5d50e718bc910ddf030bf9a0727a7c8882c499b`, planner regression and independent reference workflows pass; the independent Playwright and prompt-requested Playwright workflows are still running. The planner rejects malformed/no-op/teleporting transitions, and lock-time scoring now fails closed when prompt generation produced no target. A Playwright regression covers that missing-target score path. This is still an incremental replacement, not proof of a fully ground-up engine rewrite: independent kick/pivot compatibility, final browser verification for this commit, and a complete repository-wide legacy-import audit remain open. Keep the compatibility facade until that audit is complete. Do not merge or deploy without explicit authorization.
 
 ## Objective
 
