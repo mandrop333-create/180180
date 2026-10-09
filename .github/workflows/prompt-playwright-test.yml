@@ -50,7 +50,7 @@ jobs:
             echo
             echo "**Requested test:** $TEST_REQUEST"
             echo
-            echo "Supported request keywords: move left, move right, soft drop, rotate, hold, hard drop, reset, mobile layout. Unsupported requests fail clearly instead of claiming success."
+            echo "Supported request keywords: finesse, red to green, move left, move right, soft drop, rotate, hold, hard drop, reset, mobile layout. Unsupported requests fail clearly instead of claiming success."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Set up Node
         uses: actions/setup-node@v4
