@@ -228,7 +228,7 @@ export function runTrainerSelfTest(){
   assert(FINESSE_PROFILES.TETRIO_SRS_PLUS_180.supportsDirectHalfTurn===true&&FINESSE_PROFILES.TETRIO_SRS_PLUS_180.halfTurnCost===1,'TETR.IO profile must explicitly define direct 180 cost');
   const planned=planFinesse({
     piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,seed:0,
-    move:(p,dx,dy)=>{if(dx&& (p.x+dx<0||p.x+dx>9))return false;p.x+=dx;p.y+=dy;return p.y<20;},
+    move:(p,dx,dy)=>{if(p.x+dx<0||p.x+dx>9||p.y+dy<0||p.y+dy>=20)return false;p.x+=dx;p.y+=dy;return true;},
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
     cellsFor:()=>[[0,0]]
   });
