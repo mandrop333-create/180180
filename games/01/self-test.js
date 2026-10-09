@@ -232,7 +232,7 @@ export function runTrainerSelfTest(){
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
     cellsFor:()=>[[0,0]]
   });
-  assert(planned&&planned.cost===routeCost(planned.actions,FINESSE_PROFILES.TETRIO_SRS_PLUS_180),'planner cost must equal profile-weighted deliberate route cost');
+  assert(planned&&planned.cost===routeCost(planned.actions,FINESSE_PROFILES.TETRIO_SRS_PLUS_180),'planner cost must equal profile-weighted deliberate route cost: planned='+JSON.stringify(planned)+' routeCost='+(planned?routeCost(planned.actions,FINESSE_PROFILES.TETRIO_SRS_PLUS_180):'no-plan'));
   assert(planned.actions.every(step=>['left','right','cw','ccw','half'].includes(step.action)),'planner must not count gravity or hard drop as finesse input');
   assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
