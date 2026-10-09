@@ -338,10 +338,10 @@ export function runTrainerSelfTest(){
   const testGenerator={next:()=> 'O'};
   const runtime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
   runtime.emptyBoard();
-  runtime.piece={type:'O',x:4,y:0,o:0};
+  runtime.piece={type:'T',x:3,y:0,o:0};
   runtime.generateFinessePrompt();
-  assert(runtime.finesseTarget&&runtime.finesseTarget.x===4&&runtime.finesseTarget.y===18,
-    'fastest-placement prompt must retain the physical landing directly below the spawn');
+  assert(runtime.finesseTarget&&runtime.finesseTarget.x===3&&runtime.finesseTarget.y===18,
+    'first-spawn T-piece fastest-placement prompt must retain the physical landing directly below spawn');
   assert(runtime.finesseActions.length===1&&runtime.finesseActions[0].action==='hard',
     'runtime should recommend Space as the only step when hard-dropping from spawn is fastest');
   const keyEvent=code=>({code,preventDefault(){}});
