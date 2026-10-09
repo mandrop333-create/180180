@@ -69,6 +69,17 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
     if(next.x!==piece.x+dx||next.y!==piece.y+dy||next.o!==piece.o)return null;
     return next;
   };
+  const stepRotate=(piece,delta)=>{
+    const next=copyPiece(piece);
+    if(!tryRotate(next,delta,board,W,H,cellsFor))return null;
+    const expected=((piece.o+delta)%4+4)%4;
+    // A successful engine rotation must produce the requested orientation and
+    // a finite integer origin. Treat broken adapters as absent edges rather
+    // than allowing zero-change or malformed transitions into the search.
+    if(!Number.isInteger(next.x)||!Number.isInteger(next.y)||
+      !Number.isInteger(next.o)||next.o!==expected||next.type!==piece.type)return null;
+    return next;
+  };
   const actions=[
     {action:'left',mode:'tap',cost:1,apply:p=>stepMove(p,-1,0)},
     {action:'right',mode:'tap',cost:1,apply:p=>stepMove(p,1,0)}
@@ -76,11 +87,11 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   // The O piece is rotationally invariant. Never offer rotations as a
   // finesse step when they cannot change its physical placement.
   if(start.type!=='O')actions.push(
-    {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,1,board,W,H,cellsFor)?n:null;}},
-    {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copyPiece(p);return tryRotate(n,-1,board,W,H,cellsFor)?n:null;}}
+    {action:'cw',mode:'tap',cost:1,apply:p=>stepRotate(p,1)},
+    {action:'ccw',mode:'tap',cost:1,apply:p=>stepRotate(p,-1)}
   );
   if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true&&Number.isInteger(profile.halfTurnCost)&&profile.halfTurnCost>0){
-    actions.push({action:'half',mode:'tap',cost:profile.halfTurnCost,apply:p=>{const n=copyPiece(p);return tryRotate(n,2,board,W,H,cellsFor)?n:null;}});
+    actions.push({action:'half',mode:'tap',cost:profile.halfTurnCost,apply:p=>stepRotate(p,2)});
   }
   const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
     let n=copyPiece(p);let moved=false;
