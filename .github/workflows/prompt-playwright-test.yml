@@ -62,6 +62,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run Worker API tests against checked-out code
         run: |
+          mkdir -p tests
           cp test-harness/tests/worker-api.test.js tests/worker-api.test.js
           node --experimental-default-type=module --test tests/worker-api.test.js
       - name: Start isolated local game server
