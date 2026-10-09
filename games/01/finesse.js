@@ -108,7 +108,7 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   const hardest=candidates.filter(candidate=>candidate.cost===highestCost);
   const offset=Math.abs(Number(seed)||0)%hardest.length;
   const chosen=hardest[offset];
-  return {actions:chosen.route,target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
+  return {actions:chosen.route,routes:chosen.routes,target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
 }
 
 export function minimumRoutesForTargets(options={}){
