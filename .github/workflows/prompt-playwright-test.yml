@@ -24,10 +24,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout diagnostics branch
+      - name: Checkout code under test
         uses: actions/checkout@v4
         with:
-          ref: feature/runtime-diagnostics
+          # Issue comments run this workflow from the default branch, so check out
+          # the PR head explicitly. Manual runs use the selected workflow ref.
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.ref }}
       - name: Record requested test
         env:
           TEST_REQUEST: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.test_request }}
@@ -81,8 +83,10 @@ jobs:
           {
             echo
             echo '## Runner metadata'
-            echo "- Commit: ${GITHUB_SHA}"
-            echo "- Ref: ${GITHUB_REF}"
+            echo "- Workflow commit: ${GITHUB_SHA}"
+            echo "- Tested commit: $(git rev-parse HEAD)"
+            echo "- Tested branch/ref: $(git branch --show-current) / $(git rev-parse --abbrev-ref HEAD)"
+            echo "- Event ref: ${GITHUB_REF}"
             echo "- UTC time: $(date -u +%FT%TZ)"
             echo
             echo 'Static server log:'
