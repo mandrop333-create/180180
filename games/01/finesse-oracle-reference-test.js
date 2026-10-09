@@ -306,7 +306,7 @@ export function runIndependentFinesseOracleTests() {
     move:(piece,dx,dy)=>{piece.x+=dx;piece.y+=dy;piece.type='I';return true;},
     tryRotate:productionTryRotate,maxCost:1,profile:PROFILE
   });
-  assert(typeChangingMove.every(item=>item.target.x===REFERENCE_PIECES.T.spawn.x&&item.target.o===0),
+  assert(typeChangingMove.every(item=>item.route.every(step=>step.action!=='left'&&step.action!=='right')),
     'planner accepted a movement transition that changed piece identity');
 
   const weightedExpected=referenceWeightedTargets({
