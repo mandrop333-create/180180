@@ -121,6 +121,10 @@ export function runTrainerSelfTest(){
   assert(routeCost([{action:'hard'}],{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,hardDropCost:1})===1,
     'route cost must honor the active profile hard-drop cost');
   assert(finesseActionCost('left','invalid')===Infinity,'invalid finesse mode must be rejected');
+  assert(finesseActionCost('cw','das')===Infinity,'DAS mode must be restricted to horizontal movement');
+  assert(finesseActionCost('half','das')===Infinity,'direct 180 must remain a tap, not a DAS input');
+  assert(finesseActionCost('hard','das')===Infinity&&finesseActionCost('soft','das')===Infinity,
+    'vertical/drop actions must not accept a horizontal DAS mode');
   assert(finesseActionCost('left','DAS',FINESSE_PROFILES.SRS_NORMAL)===1,'input modes must normalize case before profile checks');
   assert(finesseActionCost('left','das',{...FINESSE_PROFILES.SRS_NORMAL,dasCountsAsOneInput:false})===Infinity,
     'profiles without DAS-as-one-input must reject DAS routes');
