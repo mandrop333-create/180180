@@ -369,7 +369,15 @@ export class Trainer {
     }
     if(this.finesseRouteCandidates.length){
       const pendingActions=new Set(this.finesseRouteCandidates.map(candidate=>candidate.pendingDasAction).filter(Boolean));
-      for(const action of pendingActions)this.observeFinesseDAS(action,{confirmedHold:true});
+      for(const action of pendingActions){
+        const dir=action==='left'?-1:1;
+        const held=this.downKeys.has(this.binds[action])&&this.moveState.dir===dir;
+        const dasElapsed=t-this.moveState.startedAt>=this.das();
+        // A frame after keydown is not proof of DAS. Confirm only after the
+        // active hold has crossed the configured DAS delay and repeats are
+        // not temporarily suppressed by DCD.
+        if(held&&dasElapsed&&this.dasCutRemaining<=0)this.observeFinesseDAS(action,{confirmedHold:true});
+      }
     }
     if(!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type))this.lockAcc=0;else this.lockAcc+=dt;
     if(this.lockAcc>=this.rules.lockDelay)this.lockPiece(true);this.hook('tick',dt,t);this.flushRender();
@@ -431,6 +439,11 @@ export class Trainer {
   }
   handleKeyup(e){this.downKeys.delete(e.code);const action=Object.keys(this.binds).find(k=>this.binds[k]===e.code);if(action==='left'||action==='right')this.finishFinesseHorizontalInput(action);if(action!=='left'&&action!=='right')return;const released=action==='left'?-1:1;const otherCode=action==='left'?this.binds.right:this.binds.left;if(this.downKeys.has(otherCode)){if(this.moveState.dir===released){const now=performance.now();this.moveState.dir=-released;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=now;this.moveState.nextRepeatAt=now+this.das();}return;}if(this.moveState.dir===released){this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;}}
   handleBlur(){
+    // Browsers may omit keyup when focus is lost. Resolve pending horizontal
+    // interpretations before clearing key state so a lost key cannot later
+    // be mistaken for a sustained DAS hold by the animation loop.
+    const pendingActions=new Set(this.finesseRouteCandidates.map(candidate=>candidate.pendingDasAction).filter(Boolean));
+    for(const action of pendingActions)this.finishFinesseHorizontalInput(action);
     this.downKeys.clear();this.moveState.dir=0;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=0;this.moveState.nextRepeatAt=Infinity;
   }
   say(s){if(this.toastCallback)this.toastCallback(s);}setToastCallback(cb){this.toastCallback=cb;}
