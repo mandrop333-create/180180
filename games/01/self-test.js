@@ -437,7 +437,8 @@ export function runTrainerSelfTest(){
   assert(dasRuntime.finesseTarget.x===8&&dasRuntime.finesseActions[0]?.mode==='das',
     'runtime must display the intended DAS wall route');
   dasRuntime.handleKeydown(keyEvent(dasRuntime.binds.right));
-  dasRuntime.tick(performance.now()+1);
+  while(dasRuntime.movePiece(1,0)){}
+  dasRuntime.observeFinesseDAS('right',{confirmedHold:true});
   dasRuntime.handleKeyup(keyEvent(dasRuntime.binds.right));
   dasRuntime.hardDrop();
   assert(dasRuntime.stats.finessePerfect===1&&dasRuntime.stats.finesseFaults===0,
