@@ -50,6 +50,31 @@ test('Finesse feedback accepts alternate equally optimal routes to the same land
     route.map(step => step.action).join(',') !== equivalent.route.map(step => step.action).join(',')
   );
   assert.ok(alternate, 'fixture must include a genuinely different action sequence');
+
+  const replay = { ...t.piece };
+  for (const step of alternate) {
+    if (step.action === 'left' || step.action === 'right') {
+      const dx = step.action === 'left' ? -1 : 1;
+      if (step.mode === 'das') {
+        while (move(replay, dx, 0, t.board, t.W, t.H, t.cellsFor)) {}
+      } else {
+        assert.equal(move(replay, dx, 0, t.board, t.W, t.H, t.cellsFor), true);
+      }
+    } else if (step.action === 'cw') {
+      assert.equal(tryRotate(replay, 1, t.board, t.W, t.H, t.cellsFor), true);
+    } else if (step.action === 'ccw') {
+      assert.equal(tryRotate(replay, -1, t.board, t.W, t.H, t.cellsFor), true);
+    } else if (step.action === 'half') {
+      assert.equal(tryRotate(replay, 2, t.board, t.W, t.H, t.cellsFor), true);
+    }
+  }
+  while (move(replay, 0, 1, t.board, t.W, t.H, t.cellsFor)) {}
+  assert.deepEqual(
+    { x: replay.x, o: replay.o, y: replay.y },
+    { x: equivalent.target.x, o: equivalent.target.o, y: equivalent.target.y },
+    'alternate route must physically reach the same landing'
+  );
+
   for (const step of alternate) t.recordFinesseObservation(step.action);
 
   assert.equal(t.finesseFaulted, false, 'equally optimal route must not be marked as a fault');
