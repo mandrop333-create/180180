@@ -96,6 +96,7 @@ jobs:
             echo '## Runner metadata'
             echo "- Workflow commit: ${GITHUB_SHA}"
             echo "- Tested commit: $(git rev-parse HEAD)"
+            echo "- Diagnostics harness commit: $(git -C test-harness rev-parse HEAD)"
             echo "- Tested branch/ref: $(git branch --show-current) / $(git rev-parse --abbrev-ref HEAD)"
             echo "- Event ref: ${GITHUB_REF}"
             echo "- UTC time: $(date -u +%FT%TZ)"
