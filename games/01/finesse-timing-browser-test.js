@@ -25,7 +25,7 @@ function expectedBoardAfterLock(board,type,target) {
     const x=target.x+dx, y=target.y+dy;
     assert(x>=0&&x<10&&y>=0&&y<20,type+': reference target cell outside board: '+x+','+y);
     assert(!expected[y][x],type+': reference target overlaps the initial stack at '+x+','+y);
-    expected[y][x]=1;
+    expected[y][x]=type;
   }
   const kept=expected.filter(row=>!row.every(Boolean));
   const linesCleared=expected.length-kept.length;
