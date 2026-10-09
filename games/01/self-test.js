@@ -244,6 +244,20 @@ export function runTrainerSelfTest(){
     tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),
     maxCost:2
   });
+  const malformedLimitBase={
+    piece:{type:'O',x:4,y:0,o:0},board:routeRegressionBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
+  };
+  assert(enumerateFinesseTargets({...malformedLimitBase,maxCost:-1}).length===0,
+    'negative finesse search limits must not produce zero-cost placements');
+  assert(enumerateFinesseTargets({...malformedLimitBase,maxCost:1.5}).length===0,
+    'fractional finesse search limits must be rejected rather than rounded implicitly');
+  assert(enumerateFinesseTargets({...malformedLimitBase,
+    profile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxCost:1.5}}).length===0,
+    'fractional profile search limits must be rejected instead of silently using a default');
+  assert(planFinesse({...malformedLimitBase,maxCost:-1})===null,
+    'planFinesse must fail closed for an invalid explicit search limit');
   const rightWallTarget=routeRegressionTargets.find(t=>t.target.x===8&&t.target.o===0);
   assert(rightWallTarget&&rightWallTarget.cost===1&&rightWallTarget.route.length===1&&
     rightWallTarget.route[0].action==='right'&&rightWallTarget.route[0].mode==='das',
