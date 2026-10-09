@@ -1,6 +1,8 @@
 name: Prompt-requested Playwright test
 
 on:
+  issue_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       test_request:
@@ -18,6 +20,7 @@ concurrency:
 
 jobs:
   prompt-playwright:
+    if: github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/playwright '))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -27,9 +30,10 @@ jobs:
           ref: feature/runtime-diagnostics
       - name: Record requested test
         env:
-          TEST_REQUEST: ${{ inputs.test_request }}
+          TEST_REQUEST: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.test_request }}
         run: |
           mkdir -p artifacts
+          case "$TEST_REQUEST" in /playwright\ *) TEST_REQUEST="${TEST_REQUEST#/playwright }" ;; esac
           printf '%s\n' "$TEST_REQUEST" > artifacts/requested-test.txt
           {
             echo '## Prompt-requested Playwright run'
@@ -59,8 +63,10 @@ jobs:
           exit 1
       - name: Run Playwright gameplay diagnostics
         env:
-          PLAYWRIGHT_TEST_REQUEST: ${{ inputs.test_request }}
-        run: node --experimental-default-type=module tests/runtime-diagnostics.browser.js
+          PLAYWRIGHT_TEST_REQUEST: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.test_request }}
+        run: |
+          case "$PLAYWRIGHT_TEST_REQUEST" in /playwright\ *) export PLAYWRIGHT_TEST_REQUEST="${PLAYWRIGHT_TEST_REQUEST#/playwright }" ;; esac
+          node --experimental-default-type=module tests/runtime-diagnostics.browser.js
       - name: Add requested test results to summary
         if: always()
         run: |
