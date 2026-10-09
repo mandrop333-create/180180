@@ -22,7 +22,7 @@ try {
   await page.keyboard.press('Shift');
   await page.keyboard.press('Space');
   await page.waitForTimeout(250);
-  await page.locator('#restartButton').click();
+  await page.evaluate(() => window.trainer.reset());
   await page.waitForTimeout(100);
 
   // Deterministically exercise the game-over handler after the real input sequence.
