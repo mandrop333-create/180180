@@ -20,3 +20,5 @@ jobs:
         run: node --experimental-default-type=module -e "import('./games/01/finesse-reference-test.js').then(({runFinesseReferenceTests}) => console.log(JSON.stringify(runFinesseReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
       - name: Check independent SRS+ I-piece kick fixtures
         run: node --experimental-default-type=module -e "import('./games/01/finesse-kick-reference-test.js').then(({runFinesseKickReferenceTests}) => console.log(JSON.stringify(runFinesseKickReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+      - name: Compare production planner against independent shortest-path oracle
+        run: node --experimental-default-type=module -e "import('./games/01/finesse-oracle-reference-test.js').then(({runIndependentFinesseOracleTests}) => console.log(JSON.stringify(runIndependentFinesseOracleTests()))).catch(error => { console.error(error); process.exit(1); })"
