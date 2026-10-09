@@ -146,6 +146,36 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(150);
   await capturePageState(page, 'mobile-initial');
+  telemetry.visualAudit = await page.evaluate(() => {
+    const rect = selector => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      return {
+        exists: true,
+        visible: style.display !== 'none' && style.visibility !== 'hidden' && r.width > 0 && r.height > 0,
+        x: Math.round(r.x), y: Math.round(r.y),
+        width: Math.round(r.width), height: Math.round(r.height)
+      };
+    };
+    return {
+      mobile: {
+        viewportWidth: innerWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+        board: rect('#board'),
+        score: rect('#hudScore'),
+        lines: rect('#hudLines'),
+        hold: rect('#holdPreview'),
+        next: rect('#nextPreview'),
+        restart: rect('#restartButton')
+      }
+    };
+  });
+  const mobileAudit = telemetry.visualAudit.mobile;
+  if (!mobileAudit.board?.visible) throw new Error('Visual audit: game board is not visible on the mobile viewport');
+  if (mobileAudit.horizontalOverflow) throw new Error('Visual audit: mobile layout has horizontal overflow (' + mobileAudit.documentWidth + 'px document in ' + mobileAudit.viewportWidth + 'px viewport)');
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.waitForTimeout(100);
 
