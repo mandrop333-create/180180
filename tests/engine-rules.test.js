@@ -5,6 +5,7 @@ import { SevenBagGenerator } from '../games/01/generator.js';
 import { PIECE_TYPES, cellsFor } from '../games/01/pieces.js';
 import { collides, move } from '../games/01/collision.js';
 import { tryRotate } from '../games/01/rotation.js';
+import { enumerateFinesseTargets } from '../games/01/finesse.js';
 
 function makeTrainer() {
   const trainer = new Trainer(null, {
@@ -18,6 +19,43 @@ function makeTrainer() {
   trainer.gameOver = false;
   return trainer;
 }
+
+
+test('Finesse feedback accepts alternate equally optimal routes to the same landing', () => {
+  const t = makeTrainer();
+  t.piece = { type: 'T', x: 3, y: 0, o: 0 };
+  const targets = enumerateFinesseTargets({
+    piece: t.piece,
+    board: t.board,
+    W: t.W,
+    H: t.H,
+    cellsFor: t.cellsFor,
+    move,
+    tryRotate,
+    maxCost: 2
+  });
+  const equivalent = targets.find(target => target.routes?.length > 1);
+  assert.ok(equivalent, 'fixture must contain a target with multiple minimum-cost routes');
+
+  t.emitState = () => {};
+  t.finesseEnabled = true;
+  t.finesseTarget = { ...equivalent.target };
+  t.finesseActions = equivalent.route.map(step => ({ ...step }));
+  t.finesseRouteCandidates = equivalent.routes.map(route => route.map(step => ({ ...step })));
+  t.finesseObservedActions = [];
+  t.finesseProgress = 0;
+  t.finesseFaulted = false;
+
+  const alternate = equivalent.routes.find(route =>
+    route.map(step => step.action).join(',') !== equivalent.route.map(step => step.action).join(',')
+  );
+  assert.ok(alternate, 'fixture must include a genuinely different action sequence');
+  for (const step of alternate) t.recordFinesseObservation(step.action);
+
+  assert.equal(t.finesseFaulted, false, 'equally optimal route must not be marked as a fault');
+  assert.equal(t.finesseProgress, alternate.length);
+  assert.ok(t.finesseRouteCandidates.some(route => route.length === alternate.length));
+});
 
 test('seven-bag randomizer yields each of the seven tetrominoes exactly once per bag', () => {
   const generator = new SevenBagGenerator({ seed: 180180 });
