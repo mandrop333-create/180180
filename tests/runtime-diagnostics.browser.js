@@ -377,6 +377,7 @@ try {
             return {
               target: t.finesseTarget ? { ...t.finesseTarget } : null,
               actions: t.finesseActions.map(step => ({ ...step })),
+              routes: t.finesseRouteCandidates.map(candidate => candidate.route.map(step => ({ ...step }))),
               initialProgress: t.finesseProgress,
               initialStates: keys.map(el => [...el.classList].find(name => ['done', 'next', 'pending'].includes(name)) || 'missing'),
               visiblePrompt: visible,
@@ -427,7 +428,75 @@ try {
             return { finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults };
           });
           result.push({ type, boardKind, ...before, ...replay, ...placed });
+
+          // Re-run one distinct equal-cost route for the same physical target.
+          // This specifically proves the runtime accepts alternate optimal
+          // routes instead of only accepting the planner's canonical route.
+          const canonicalKey = route => route.map(step => step.action + ':' + (step.mode || 'tap')).join('|');
+          const alternateRoute = before.routes.find(route => canonicalKey(route) !== canonicalKey(before.actions));
+          if (alternateRoute) {
+            await page.evaluate(({ boardKind, type }) => {
+              const t = window.trainer;
+              t.reset();
+              t.emptyBoard();
+              if (boardKind === 'split-well') {
+                for (let x = 0; x < t.W; x++) if (x !== 4 && x !== 5) t.board[t.H - 1][x] = 1;
+                for (let x = 0; x < t.W; x++) if (![3, 4, 5, 6].includes(x)) t.board[t.H - 2][x] = 1;
+              } else if (boardKind === 'side-towers') {
+                for (let y = t.H - 4; y < t.H; y++) t.board[y][0] = 1;
+                for (let y = t.H - 2; y < t.H; y++) t.board[y][1] = 1;
+                for (let y = t.H - 3; y < t.H; y++) t.board[y][8] = 1;
+                for (let y = t.H - 5; y < t.H; y++) t.board[y][9] = 1;
+              }
+              t.gameOver = false;
+              t.piece = { type, x: 4, y: 0, o: 0 };
+              t.generateFinessePrompt();
+              t.render();
+              const toggle = document.querySelector('#mainRuleFinesse');
+              toggle.checked = true;
+              toggle.dispatchEvent(new Event('change', { bubbles: true }));
+            }, { boardKind, type });
+            const alternateReplay = await page.evaluate(route => {
+              const t = window.trainer;
+              const keyEvent = code => ({ code, preventDefault() {} });
+              const target = { ...t.finesseTarget };
+              for (const step of route) {
+                const code = t.binds[step.action];
+                t.handleKeydown(keyEvent(code));
+                if (step.mode === 'das') t.tick(performance.now() + t.das() + 5);
+                t.handleKeyup(keyEvent(code));
+              }
+              const progress = t.finesseProgress;
+              const faulted = t.finesseFaulted;
+              const actualBeforeDrop = { ...t.piece };
+              t.handleKeydown(keyEvent(t.binds.hard));
+              return {
+                target,
+                progress,
+                actionCount: route.length,
+                faulted,
+                finessePerfect: t.stats.finessePerfect,
+                finesseFaults: t.stats.finesseFaults,
+                actualBeforeDrop
+              };
+            }, alternateRoute);
+            const targetMatches = alternateReplay.target.x === before.target.x &&
+              alternateReplay.target.o === before.target.o &&
+              alternateReplay.target.y === before.target.y;
+            assertCheck('finesse-alternate-optimal-route-' + label,
+              targetMatches && alternateReplay.progress === alternateReplay.actionCount &&
+              !alternateReplay.faulted && alternateReplay.finessePerfect === 1 &&
+              alternateReplay.finesseFaults === 0,
+              JSON.stringify({targetMatches, route:alternateRoute, result:alternateReplay}));
+            result.push({ type, boardKind, alternateRoute, ...alternateReplay, alternateRoutePassed:
+              targetMatches && alternateReplay.progress === alternateReplay.actionCount &&
+              !alternateReplay.faulted && alternateReplay.finessePerfect === 1 &&
+              alternateReplay.finesseFaults === 0 });
+          }
         }
+        assertCheck('finesse-alternate-optimal-route-coverage',
+          result.some(r => r.alternateRoute) && result.filter(r => r.alternateRoute).every(r => r.alternateRoutePassed),
+          'At least one distinct equal-cost route must be replayed, and every tested alternative must lock the same target without a finesse fault');
         assertCheck('finesse-route-present', result.every(r => r.target !== null && Array.isArray(r.actions)), 'Each piece on each test board must receive an explicit route and landing target');
         assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.filter(step => step.action !== 'hard').length && !r.faultedAfterInputs), 'Every deliberate movement/rotation action must advance without a fault; hard drop is verified separately and is not part of the finesse cost');
         assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for all piece/board combinations');
