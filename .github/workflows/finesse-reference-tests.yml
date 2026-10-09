@@ -1,0 +1,20 @@
+name: Finesse independent reference fixtures
+
+on:
+  push:
+    branches: ["rebuild/finesse-core"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  reference-fixtures:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check independent geometry and orientation fixtures
+        run: node --experimental-default-type=module -e "import('./games/01/finesse-reference-test.js').then(({runFinesseReferenceTests}) => console.log(JSON.stringify(runFinesseReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
