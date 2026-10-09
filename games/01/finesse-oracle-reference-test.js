@@ -11,7 +11,7 @@ import {
 } from './finesse-kick-reference-fixtures.js';
 import { enumerateFinesseTargets } from './finesse.js';
 import { cellsFor as productionCellsFor } from './pieces.js';
-import { move as productionMove } from './collision.js';
+import { collides as productionCollides, move as productionMove } from './collision.js';
 import { tryRotate as productionTryRotate } from './rotation.js';
 import { FINESSE_PROFILES } from './finesse-rules.js';
 
@@ -130,6 +130,16 @@ function referenceTargets({ type, start, board, maxCost = 2 }) {
 export function runIndependentFinesseOracleTests() {
   let fixtures = 0;
   let comparedTargets = 0;
+  let collisionStates = 0;
+  const empty = boardFor('empty');
+  for (const type of TYPES) for (let o=0; o<4; o++) {
+    for (const x of [-4,-3,-2,-1,0,7,8,9,10,11]) for (const y of [-2,-1,0,18,19,20,21]) {
+      const expected = referenceCollides(x,y,o,empty,type);
+      const actual = productionCollides(x,y,o,empty,W,H,productionCellsFor,type);
+      assert(actual === expected, 'collision mismatch for ' + type + ' at (' + x + ',' + y + ') orientation ' + o);
+      collisionStates++;
+    }
+  }
   for (const boardKind of ['empty','split-well','side-towers']) {
     const board = boardFor(boardKind);
     for (const type of TYPES) {
@@ -154,7 +164,7 @@ export function runIndependentFinesseOracleTests() {
       fixtures++;
     }
   }
-  return { ok:true, fixtures, comparedTargets, boards:3, pieces:7, maxCost:2, oracle:'static geometry/kick fixtures + independent transitions' };
+  return { ok:true, fixtures, comparedTargets, collisionStates, boards:3, pieces:7, maxCost:2, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
