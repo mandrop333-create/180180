@@ -29,6 +29,7 @@ export class RuntimeDiagnostics {
     this.lastStateSignature = '';
     this.lastBoardSignature = '';
     this.closed = false;
+    this.persistTimer = null;
     this.originalConsoleError = null;
     if (!enabled) return;
 
@@ -65,7 +66,15 @@ export class RuntimeDiagnostics {
     if (!this.enabled || this.closed) return;
     this.events.push({ t: this.now(), type, data: clone(data) });
     if (this.events.length > MAX_EVENTS) this.events.splice(0, this.events.length - MAX_EVENTS);
-    this.persist();
+    this.schedulePersist();
+  }
+
+  schedulePersist() {
+    if (!this.enabled || this.persistTimer !== null) return;
+    this.persistTimer = setTimeout(() => {
+      this.persistTimer = null;
+      this.persist();
+    }, 250);
   }
 
   recordInput(type, event) {
