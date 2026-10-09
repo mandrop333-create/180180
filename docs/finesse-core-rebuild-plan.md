@@ -1,6 +1,6 @@
 # Finesse Core Rebuild: Rules and Verification Plan
 
-Status: implementation and verification in progress on `rebuild/finesse-core`. The isolated candidate now uses cost-ordered Dijkstra search and has passing planner, independent-reference, and Playwright route/oracle/timing suites on commit `746f8717cd448bc20f64a4cf033c553477a90d85`. This is not yet a complete ground-up rewrite: kick/pivot source compatibility and a full repository-wide legacy-import audit remain open. Do not merge or deploy without explicit authorization.
+Status: implementation and verification in progress on `rebuild/finesse-core`. At commit `40d3b764406d88e157fab0e56ce381db9b79f3e3`, planner regression tests, independent reference fixtures, and independent Playwright route fixtures pass. The separate prompt-requested Playwright run is queued and is not counted as a pass. The candidate uses cost-ordered Dijkstra search and updated I-piece SRS+ kick coordinates, but this is not yet a complete ground-up rewrite: independent pivot/kick source compatibility and the repository-wide legacy-import audit remain open. Do not merge or deploy without explicit authorization.
 
 ## Objective
 
