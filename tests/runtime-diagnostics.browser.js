@@ -446,10 +446,12 @@ try {
         await page.setViewportSize({ width: 390, height: 844 });
         const result = await page.evaluate(() => ({
           viewportWidth: innerWidth,
+          documentWidth: document.documentElement.scrollWidth,
           boardExists: Boolean(document.querySelector('#board')),
           boardWidth: document.querySelector('#board')?.getBoundingClientRect().width || 0
         }));
-        assertCheck('mobile-layout', result.viewportWidth === 390 && result.boardExists && result.boardWidth > 0, 'Board should remain rendered at 390px viewport width');
+        assertCheck('mobile-layout', result.viewportWidth === 390 && result.boardExists && result.boardWidth > 0 &&
+          result.documentWidth <= result.viewportWidth + 1, 'Board should remain rendered without horizontal overflow at 390px viewport width');
         await capturePageState(page, 'requested-mobile-layout');
         await page.setViewportSize({ width: 1440, height: 1000 });
       }
