@@ -418,7 +418,7 @@ export function runTrainerSelfTest(){
   // the piece reaches the wall, then count as one deliberate finesse input.
   const dasProfile={...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxCost:1};
   const dasOptions={
-    piece:{type:'O',x:4,y:0,o:0},board:emptyBoard,W:10,H:20,cellsFor,maxCost:1,profile:dasProfile,
+    piece:{type:'O',x:7,y:0,o:0},board:emptyBoard,W:10,H:20,cellsFor,maxCost:1,profile:dasProfile,
     move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
     tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
   };
@@ -429,7 +429,7 @@ export function runTrainerSelfTest(){
   const dasRuntime=new Trainer(null,{mode:{id:'self-test-das',rules:{finesseProfile:dasProfile},hooks:{}},
     generator:testGenerator,deferInit:true,finesseEnabled:true});
   dasRuntime.emptyBoard();
-  dasRuntime.piece={type:'O',x:4,y:0,o:0};
+  dasRuntime.piece={type:'O',x:7,y:0,o:0};
   dasRuntime.placed=rightWallIndex;
   dasRuntime.rules.das=0;
   dasRuntime.rules.arr=0;
@@ -437,6 +437,9 @@ export function runTrainerSelfTest(){
   assert(dasRuntime.finesseTarget.x===8&&dasRuntime.finesseActions[0]?.mode==='das',
     'runtime must display the intended DAS wall route');
   dasRuntime.handleKeydown(keyEvent(dasRuntime.binds.right));
+  assert(dasRuntime.finesseRouteCandidates.some(candidate=>
+    candidate.pendingDasAction==='right'&&candidate.progress===0),
+    'reaching the wall on the initial keydown must not prematurely confirm a held DAS route');
   while(dasRuntime.movePiece(1,0)){}
   dasRuntime.observeFinesseDAS('right',{confirmedHold:true});
   dasRuntime.handleKeyup(keyEvent(dasRuntime.binds.right));
