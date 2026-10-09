@@ -3,6 +3,7 @@ import mode from './mode.js';
 import { getSettings, mountSettings, keyLabel } from './settings.js';
 import { runTrainerSelfTest } from './self-test.js';
 import { cellsFor } from './pieces.js';
+import { RuntimeDiagnostics, getSavedDiagnosticSessions } from './diagnostics.js';
 
 const settings=getSettings();
 const colorOnlyFocalPiece=localStorage.getItem('180180.colorOnlyFocalPiece')==='1';
@@ -26,6 +27,12 @@ const trainer=new Trainer(board,{
   finesseEnabled:settings.finesse
 });
 window.trainer=trainer;
+const diagnosticsParams=new URLSearchParams(location.search);
+const diagnosticsEndpoint = ['180436.xyz','www.180436.xyz'].includes(location.hostname) ? 'https://180180-diagnostics.mandrop333.workers.dev/api/reports' : '';
+const diagnostics=new RuntimeDiagnostics(trainer,{enabled:diagnosticsParams.get('diagnostics')==='1',endpoint:diagnosticsEndpoint});
+window.__180180Diagnostics=diagnostics;
+window.export180180Diagnostics=()=>diagnostics.export();
+window.get180180DiagnosticSessions=getSavedDiagnosticSessions;
 const title=document.getElementById('miniHomeTitle');
 const number=document.getElementById('miniHomeNumber');
 const description=document.getElementById('miniHomeDescription');
@@ -106,9 +113,9 @@ function renderState(state){
   if(hold)hold.innerHTML=miniPiece(state.hold,colorOnlyHoldEnabled);
   if(next){const count=Math.max(1,Math.min(15,Number(trainer.nextQueueSize)||5));next.innerHTML=state.queue.slice(0,count).map(type=>miniPiece(type,colorOnlyNextEnabled)).join('');}
 }
-trainer.options.onState=renderState;
+trainer.options.onState=state=>{renderState(state);diagnostics.recordState(state);};
 trainer.options.onRhythmReport=renderRhythmReport;
-trainer.options.onReset=reason=>{if(reason!=='gameover')clearRhythmReport();};
+trainer.options.onReset=reason=>{if(reason!=='gameover')clearRhythmReport();diagnostics.recordReset(reason);};
 trainer.emitState();
 trainer.setToastCallback(message=>{const toast=document.getElementById('toast');if(toast){toast.textContent=message;toast.hidden=false;clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>toast.hidden=true,1400);}});
 window.addEventListener('keydown',e=>trainer.handleKeydown(e),true);

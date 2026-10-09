@@ -1,0 +1,38 @@
+name: Sync latest gameplay diagnostics report
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */4 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  sync-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Fetch latest gameplay report
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          url="https://180180-diagnostics.mandrop333.workers.dev/api/reports/latest"
+          status=$(curl --connect-timeout 10 --max-time 30 --silent --show-error --output artifacts/latest-gameplay-report.json --write-out "%{http_code}" "$url" || true)
+          if [ "$status" = "200" ]; then
+            node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('artifacts/latest-gameplay-report.json','utf8')); if(r.schema !== '180180-runtime-diagnostics/v1' || !Array.isArray(r.events)) process.exit(1)"
+            echo "Fetched the latest gameplay diagnostics report."
+          elif [ "$status" = "404" ]; then
+            printf '{"status":"no_reports_yet","message":"The Worker has not received a gameplay report yet."}\n' > artifacts/latest-gameplay-report.json
+            echo "No gameplay report exists yet."
+          else
+            printf '{"status":"worker_unavailable","httpStatus":"%s","message":"Check Worker deployment, KV binding, and endpoint URL."}\n' "$status" > artifacts/latest-gameplay-report.json
+            echo "::warning::Diagnostics Worker returned HTTP status $status; saved status report for inspection."
+          fi
+      - name: Upload report for retrieval and analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-gameplay-diagnostics
+          path: artifacts/latest-gameplay-report.json
+          if-no-files-found: error
+          retention-days: 7

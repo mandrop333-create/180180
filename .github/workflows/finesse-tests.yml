@@ -2,7 +2,7 @@ name: Finesse planner regression tests
 
 on:
   push:
-    branches: ["main", "fix/finesse-planner-reconciliation"]
+    branches: ["main", "fix/finesse-planner-reconciliation", "feature/runtime-diagnostics"]
   pull_request:
     branches: ["main"]
 

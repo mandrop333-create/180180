@@ -1,0 +1,70 @@
+name: Runtime diagnostics browser smoke test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-diagnostics-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm init -y && npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Worker API tests
+        run: node --experimental-default-type=module --test tests/worker-api.test.js
+      - name: Start static game server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/180180-http.log
+          exit 1
+      - name: Run browser diagnostics test
+        run: node --experimental-default-type=module tests/runtime-diagnostics.browser.js
+      - name: Capture runner and server metadata
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          {
+            echo '## Playwright run metadata'
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Ref: ${GITHUB_REF}"
+            echo "- Runner: ${RUNNER_OS} / ${RUNNER_ARCH}"
+            echo "- Node: $(node --version 2>/dev/null || echo unavailable)"
+            echo "- UTC time: $(date -u +%FT%TZ)"
+            echo
+            echo 'Static server log:'
+            cat /tmp/180180-http.log 2>/dev/null || true
+          } > artifacts/runner-metadata.md
+          cat artifacts/runner-metadata.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload complete diagnostics bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-diagnostics-bundle
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 6

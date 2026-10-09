@@ -1,0 +1,13 @@
+name = "180180-diagnostics"
+main = "src/index.js"
+compatibility_date = "2026-10-09"
+workers_dev = true
+
+# Create a KV namespace named 180180-diagnostics-reports and replace this ID
+# before deploying. This Worker is intentionally separate from 180trainertool.
+[[kv_namespaces]]
+binding = "REPORTS"
+id = "4029335afe924ac8a52a391ab4eff155"
+
+[vars]
+ALLOWED_ORIGINS = "https://180436.xyz,https://www.180436.xyz,http://localhost:4173,http://127.0.0.1:4173"
