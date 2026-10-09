@@ -250,7 +250,7 @@ export function runTrainerSelfTest(){
   // and must remain available to the runtime observer.
   const equivalentStart={type:'T',x:3,y:0,o:0};
   const equivalentPlan=planFinesse({
-    piece:equivalentStart,board:emptyBoard,W:10,H:20,cellsFor,maxCost:2,seed:0,
+    piece:equivalentStart,board:routeRegressionBoard,W:10,H:20,cellsFor,maxCost:2,seed:0,
     profile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,supportsDirectHalfTurn:false,dasCountsAsOneInput:false},
     move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
     tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
@@ -261,23 +261,6 @@ export function runTrainerSelfTest(){
     route.map(step=>step.action+':'+step.mode).join('|')!==equivalentPlan.actions.map(step=>step.action+':'+step.mode).join('|'));
   assert(alternateRoute&&alternateRoute.length===equivalentPlan.cost,
     'an alternative route must remain minimum-cost');
-  const alternateRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
-  alternateRuntime.emptyBoard();
-  alternateRuntime.piece={...equivalentStart};
-  alternateRuntime.generateFinessePrompt();
-  assert(alternateRuntime.finesseTarget.x===equivalentPlan.target.x&&
-    alternateRuntime.finesseTarget.o===equivalentPlan.target.o&&
-    alternateRuntime.finesseTarget.y===equivalentPlan.target.y,
-    'runtime must select the same physical target as the planner');
-  for(const step of alternateRoute){
-    const code=alternateRuntime.binds[step.action];
-    alternateRuntime.handleKeydown(keyEvent(code));
-    alternateRuntime.handleKeyup(keyEvent(code));
-  }
-  alternateRuntime.hardDrop();
-  assert(alternateRuntime.stats.finessePerfect===1&&alternateRuntime.stats.finesseFaults===0,
-    'runtime must accept an alternate equal-cost route and confirm its physical landing');
-
   // O-piece regression: a square has no meaningful rotation. Even when the
   // supplied rotation transition would mutate orientation metadata, the
   // planner must never include rotation in its recommended route.
@@ -405,6 +388,24 @@ export function runTrainerSelfTest(){
   // across all seven pieces, every recommended action must execute through the
   // game's actual collision and kick functions and land on the advertised target.
   const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
+  const alternateRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
+  alternateRuntime.emptyBoard();
+  alternateRuntime.piece={...equivalentStart};
+  alternateRuntime.generateFinessePrompt();
+  assert(alternateRuntime.finesseTarget.x===equivalentPlan.target.x&&
+    alternateRuntime.finesseTarget.o===equivalentPlan.target.o&&
+    alternateRuntime.finesseTarget.y===equivalentPlan.target.y,
+    'runtime must select the same physical target as the planner');
+  for(const step of alternateRoute){
+    const code=alternateRuntime.binds[step.action];
+    alternateRuntime.handleKeydown(keyEvent(code));
+    alternateRuntime.handleKeyup(keyEvent(code));
+  }
+  alternateRuntime.hardDrop();
+  assert(alternateRuntime.stats.finessePerfect===1&&alternateRuntime.stats.finesseFaults===0,
+    'runtime must accept an alternate equal-cost route and confirm its physical landing');
+
+
   let checkedPlans=0;
   for(const type of PIECE_TYPES){
     for(let o=0;o<(type==='O'?1:4);o++){
