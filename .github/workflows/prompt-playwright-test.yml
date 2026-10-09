@@ -60,6 +60,7 @@ jobs:
             echo "**Requested test:** $TEST_REQUEST"
             echo
             echo "Supported request keywords: move left, move right, soft drop, rotate, hold, hard drop, reset, mobile layout. Unsupported requests fail clearly instead of claiming success."
+            echo "Finesse-feedback tests also replay alternate equal-cost routes when available and verify the same physical landing."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Set up Node
         uses: actions/setup-node@v4
