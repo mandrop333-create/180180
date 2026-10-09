@@ -372,7 +372,10 @@ export class Trainer {
         this.moveState.elapsed=Math.max(0,t-this.moveState.startedAt);
       }
     }
-    if(this.finesseDASPending)this.observeFinesseDAS(this.finesseDASPending.action);
+    if(this.finesseRouteCandidates.length){
+      const pendingActions=new Set(this.finesseRouteCandidates.map(candidate=>candidate.pendingDasAction).filter(Boolean));
+      for(const action of pendingActions)this.observeFinesseDAS(action);
+    }
     if(!this.collides(this.piece.x,this.piece.y+1,this.piece.o,this.piece.type))this.lockAcc=0;else this.lockAcc+=dt;
     if(this.lockAcc>=this.rules.lockDelay)this.lockPiece(true);this.hook('tick',dt,t);this.flushRender();
   }
@@ -402,11 +405,11 @@ export class Trainer {
         const expectedMode=expected&&typeof expected==='object'?(expected.mode||'tap'):'tap';
         if(!moved){
           this.finesseFault();
-        }else if(expectedAction===action&&expectedMode==='das'){
-          this.finesseDASPending={action};
-          this.observeFinesseDAS(action);
         }else{
+          // Keep tap and DAS interpretations alive until wall contact or key
+          // release proves which input mode was actually performed.
           this.recordFinesseObservation(action,{mode:'horizontal'});
+          this.observeFinesseDAS(action);
         }
       }
     }else if(action==='soft'){
