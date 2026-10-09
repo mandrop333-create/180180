@@ -24,6 +24,8 @@ jobs:
         run: npm init -y && npm install --no-save playwright
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Run Worker API tests
+        run: node --experimental-default-type=module --test tests/worker-api.test.js
       - name: Start static game server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-http.log 2>&1 &
