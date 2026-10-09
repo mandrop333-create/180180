@@ -61,4 +61,6 @@ jobs:
           fi
           node --experimental-default-type=module games/01/finesse-browser-reference-test.js
       - name: Verify actual planner prompts against the independent oracle
+        env:
+          FINESSE_BROWSER_BASE_URL: ${{ github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/playwright-live') && 'https://180436.xyz/' || 'http://127.0.0.1:4173/' }}
         run: node --experimental-default-type=module games/01/finesse-planner-browser-oracle-test.js
