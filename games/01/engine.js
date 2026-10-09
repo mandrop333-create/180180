@@ -46,7 +46,7 @@ export class Trainer {
     this.ensureQueue();
     const type=forcedType||this.queue.shift();
     this.ensureQueue();
-    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
+    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.finessePlacementResolved=false;this.finesseDASPending=null;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.finishRhythm();this.render();queueMicrotask(()=>{if(this.gameOver)this.reset('gameover');});return;}
     this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.generateFinessePrompt();this.markRender();
   }
