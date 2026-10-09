@@ -16,6 +16,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Inventory legacy finesse.js references across tracked source
+        shell: bash
+        run: |
+          echo "=== All tracked references to the legacy finesse.js path ==="
+          git grep -nE 'finesse\\.js' -- '*.js' '*.mjs' '*.html' || true
+          echo "=== Direct runtime imports of the legacy module path ==="
+          git grep -nE '(from[[:space:]]*["'\\''][^"'\\'']*finesse\\.js|import[[:space:]]*\\([[:space:]]*["'\\''][^"'\\'']*finesse\\.js)' -- '*.js' '*.mjs' '*.html' || true
+          echo "Inventory is informational until each reference is classified; do not remove the compatibility facade before review."
       - name: Check unobstructed T-piece rotation geometry
         run: node --experimental-default-type=module -e "import('./games/01/finesse-t-rotation-reference-test.js').then(({runFinesseTRotationReferenceTest}) => console.log(JSON.stringify(runFinesseTRotationReferenceTest()))).catch(error => { console.error(error); process.exit(1); })"
       - name: Check independent geometry and orientation fixtures
