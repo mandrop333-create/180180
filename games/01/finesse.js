@@ -48,9 +48,12 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
       // Cost must dominate route ordering. A lexicographically earlier route
       // is only a tie-breaker between equally short routes, never permission
       // to replace a minimum route with a longer one.
-      if(!previous||candidate.cost<previous.cost||
-        (candidate.cost===previous.cost&&candidate.routeKey<previous.routeKey)){
-        targets.set(key,candidate);
+      if(!previous||candidate.cost<previous.cost){
+        targets.set(key,{...candidate,routes:[current.route]});
+      }else if(candidate.cost===previous.cost){
+        const signature=candidate.routeKey;
+        if(!previous.routes.some(route=>routeKey(route)===signature))previous.routes.push(current.route);
+        if(signature<previous.routeKey){previous.route=current.route;previous.routeKey=signature;}
       }
     }
     if(current.cost>=limit)continue;
@@ -59,7 +62,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
       const stepCost=Number.isFinite(step.cost)?step.cost:Infinity;
       if(!Number.isFinite(stepCost)||current.cost+stepCost>limit)continue;
       const cost=current.cost+stepCost,key=stateKey(next);
-      if(best.has(key)&&best.get(key)<=cost)continue;
+      if(best.has(key)&&best.get(key)<cost)continue;
       best.set(key,cost);
       queue.push({piece:next,cost,route:[...current.route,{action:step.action,mode:step.mode}]});
     }
@@ -84,12 +87,13 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   const hardest=candidates.filter(candidate=>candidate.cost===highestCost);
   const offset=Math.abs(Number(seed)||0)%hardest.length;
   const chosen=hardest[offset];
-  return {actions:chosen.route,target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
+  return {actions:chosen.route,routes:chosen.routes||[chosen.route],target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
 }
 
 export function minimumRoutesForTargets(options={}){
   return enumerateFinesseTargets(options).map(candidate=>({
     actions:candidate.route,
+    routes:candidate.routes||[candidate.route],
     target:candidate.target,
     cost:candidate.cost,
     landingY:candidate.landingY
