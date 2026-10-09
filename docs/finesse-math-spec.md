@@ -58,6 +58,10 @@ The production SRS+ kick tables are compared to independent static fixtures, and
 
 For a state S, landing is the state reached by repeatedly applying the legal downward move `(0,+1)` until the next downward move collides. This is computed on a clone and must not mutate the live piece or board.
 
+A landing is a valid target only if every occupied mino is inside the visible field at lock time:
+`0 <= y_land + cy < H` for every `(cx,cy)` in `Cells(type,o_land)`.
+TETR.IO top-outs rather than locking if any mino remains above row zero. A ceiling-kicked state may be reachable and rest against the stack but is not a legal finesse placement; exclude it from the target set.
+
 Physical placement identity is:
 
 `P(S) = (x_land, o_land, y_land)`
@@ -147,11 +151,11 @@ The planner regression workflow at the same commit also passed. This is evidence
 ## 11. Remaining gates before replacing the broken finesse implementation
 
 1. Review the independent kick fixture's source/pivot assumptions against the TETR.IO reference; specifically preserve any uncertainty about I-piece local origins.
-2. Add exhaustive unit-cost shortest-path tests beyond the two-input envelope and prove target/route determinism.
-3. Validate every reachable ordered kick, record structurally unreachable later kicks, and add wall/floor/ceiling/overhang fixtures.
-4. Add deterministic tests for the observer's DAS/ARR/DCD and lock-time scoring edge cases listed in section 8.
+2. Continue extending shortest-path and deterministic-route tests beyond the initial two-input envelope; a cost-4 independent comparison is now passing.
+3. Validate every reachable ordered kick, record structurally unreachable later kicks, and retain wall/floor/ceiling/overhang fixtures. A new ceiling regression now rejects reachable but un-lockable top-out landings.
+4. The browser suite now verifies representative DAS/ARR/DCD behavior, including post-rotation DCD, spawn DCD, short key release, finite gravity, and lock-delay reset. Remaining work is broader simultaneous-input/focus-loss and full configuration coverage.
 5. Freeze the default cost profile and make the trainer's displayed sequence agree with its lock-time observer.
-6. Only after these pass, replace the retired finesse path on the rebuild branch and run all browser/runtime diagnostics.
+6. Only after these pass, complete the replacement-path integration and run all browser/runtime diagnostics.
 7. Keep `main` and deployment untouched until the user explicitly approves a reviewed, passing pull request.
 
 ## 12. Frozen decisions vs. open decisions
