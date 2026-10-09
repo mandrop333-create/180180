@@ -90,7 +90,7 @@ export default {
       return json(request, env, 201, { ok: true, sessionId: report.sessionId, smokeTest: true });
     }
 
-    const testSingle = path.match(/^\\/api\\/test\\/reports\\/([a-zA-Z0-9_-]{1,100})$/);
+    const testSingle = path.match(/^\/api\/test\/reports\/([a-zA-Z0-9_-]{1,100})$/);
     if (testSingle && request.method === "GET") {
       const report = await env.REPORTS.get("test/session/" + testSingle[1]);
       if (!report) return json(request, env, 404, { error: "test_report_not_found" });
