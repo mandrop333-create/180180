@@ -149,17 +149,12 @@ export class Trainer {
     const dir=action==='left'?-1:1;
     const wall=this.dasWallX(dir);
     if(wall===null||this.piece?.x!==wall)return;
-    const next=[];
-    for(const candidate of this.finesseRouteCandidates){
-      if(candidate.pendingDasAction===action){
-        next.push({...candidate,progress:candidate.progress+1,pendingDasAction:null});
-      }else{
-        next.push(candidate);
-      }
-    }
-    if(next.some(candidate=>candidate!==this.finesseRouteCandidates.find(old=>old===candidate))){}
-    const advanced=next.some(candidate=>candidate.pendingDasAction===null&&
-      this.finesseRouteCandidates.some(old=>old.pendingDasAction===action&&old.route===candidate.route&&old.progress+1===candidate.progress));
+    let advanced=false;
+    const next=this.finesseRouteCandidates.map(candidate=>{
+      if(candidate.pendingDasAction!==action)return candidate;
+      advanced=true;
+      return {...candidate,progress:candidate.progress+1,pendingDasAction:null};
+    });
     if(!advanced)return;
     this.finesseRouteCandidates=next;
     this.syncFinesseDisplay();
@@ -400,9 +395,6 @@ export class Trainer {
       this.moveState.dir=nextDir;this.moveState.elapsed=0;this.moveState.repeatElapsed=0;this.moveState.startedAt=performance.now();this.moveState.nextRepeatAt=this.moveState.startedAt+this.das();
       const moved=this.movePiece(nextDir,0);
       if(this.finesseEnabled){
-        const expected=this.finesseActions[this.finesseProgress];
-        const expectedAction=expected&&(typeof expected==='string'?expected:expected.action);
-        const expectedMode=expected&&typeof expected==='object'?(expected.mode||'tap'):'tap';
         if(!moved){
           this.finesseFault();
         }else{
