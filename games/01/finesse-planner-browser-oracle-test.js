@@ -145,6 +145,42 @@ try {
     console.log(JSON.stringify({type,passed:true,target:planned.target,minimumCost:minimum,route:planned.actions,lockedCells:locked.cells.length}));
   }
 
+  // Regression: a planner failure must not silently award a perfect placement.
+  await page.evaluate(() => {
+    const t = window.trainer;
+    t.reset();
+    t.rules.gravity = Infinity;
+    t.rules.lockDelay = 100000;
+    t.emptyBoard();
+    t.gameOver = false;
+    t.piece = {type:'?',x:4,y:0,o:0};
+    t.finesseEnabled = true;
+    t.finesseTarget = null;
+    t.finesseActions = [];
+    t.finesseRouteCandidates = [];
+    t.finesseProgress = 0;
+    t.finesseFaulted = false;
+    t.finessePlacementResolved = false;
+    t.stats.finessePerfect = 0;
+    t.stats.finesseFaults = 0;
+    t.stats.piecesPlaced = 0;
+    t.generateFinessePrompt();
+  });
+  const failedPrompt = await page.evaluate(() => ({
+    target:window.trainer.finesseTarget,
+    actions:window.trainer.finesseActions.length
+  }));
+  assert(failedPrompt.target===null && failedPrompt.actions===0,
+    'malformed spawn fixture should make the planner fail closed');
+  await page.keyboard.press('Space');
+  await page.waitForFunction(() => window.trainer.stats.piecesPlaced===1, null, {timeout:5000});
+  const failedLock = await page.evaluate(() => ({
+    perfect:window.trainer.stats.finessePerfect,
+    faults:window.trainer.stats.finesseFaults
+  }));
+  assert(failedLock.perfect===0 && failedLock.faults===1,
+    'lock without a generated target must be a fault, never a finesse-perfect placement: '+JSON.stringify(failedLock));
+
   assert(pageErrors.length===0,'browser page errors: ' + JSON.stringify(pageErrors));
   console.log(JSON.stringify({ok:true,pieces:types.length,independentPlannerComparison:true,pageErrors:pageErrors.length}));
 } finally {
