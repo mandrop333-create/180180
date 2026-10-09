@@ -96,6 +96,7 @@ For each failure, report the first divergent layer: expected geometry, legal tra
 ### Gate 0 — Freeze the contract
 - Lock down the exact profile: TETR.IO-style SRS+, separate direct 180° rotation, one finesse input for a direct half-turn, hard drop excluded from finesse cost, and the explicit treatment of soft drop and DAS.
 - Document what "minimum" means for this trainer. Do not silently mix 0G, finite-gravity, 20G, and wall-finesse assumptions.
+- **Explicit vertical-movement boundary:** the current 180 Flip candidate searches horizontal taps, wall-directed DAS, 90° rotations, and direct 180° rotations from the active piece state, then computes landing. Gravity and hard drop do not add finesse cost. Soft drop is ignored by the score observer but is not currently a planner transition; therefore the planner must not be described as enumerating every TETR.IO-reachable tuck. TETR.IO reference material documents 180 tucks that require soft drop before rotation. If full tuck coverage is required, add soft-drop/vertical-state transitions as a separate model change, with independent tests; do not quietly broaden the current oracle's claims.
 - Keep the current UI and all unrelated modes out of scope.
 
 ### Gate 1 — Prove the rules layer
