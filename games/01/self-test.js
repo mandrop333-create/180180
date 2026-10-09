@@ -357,6 +357,7 @@ export function runTrainerSelfTest(){
   // Finesse math contract: the scoring layer counts deliberate inputs, not
   // simulated frames or individual ARR movements. Hard drop remains free.
   assert(routeCost([{action:'left'},{action:'cw'}])===2,'finesse route cost must count deliberate inputs');
+  assert(routeCost(null)===Infinity,'a malformed route container must be rejected, not treated as a zero-cost route');
   assert(routeCost([{action:'left',mode:'das'}])===1,'DAS must count as one deliberate input');
   assert(placementKey({x:3,o:1,y:17})==='3,1,17','finesse placement key must include landing position');
   assert(isFinessePerfect([{action:'left'},{action:'cw'}],2),'minimum-cost route equality failed');
