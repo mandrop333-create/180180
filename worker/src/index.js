@@ -155,8 +155,17 @@ export default {
     if (path === "/api/reports" && request.method === "GET") {
       const requested = Number.parseInt(url.searchParams.get("limit") || "10", 10);
       const limit = Number.isFinite(requested) ? Math.max(1, Math.min(20, requested)) : 10;
-      const listing = await env.REPORTS.list({ prefix: "reports/", limit: 100 });
-      const keys = listing.keys.slice().sort((a, b) => b.name.localeCompare(a.name)).slice(0, limit);
+      // KV list results are lexicographically ascending. Read every page before
+      // sorting descending; slicing the first page would hide newer reports
+      // once more than one page of reports exists.
+      const allKeys = [];
+      let cursor;
+      do {
+        const page = await env.REPORTS.list({ prefix: "reports/", limit: 1000, ...(cursor ? { cursor } : {}) });
+        allKeys.push(...page.keys);
+        cursor = page.list_complete === false && page.cursor ? page.cursor : undefined;
+      } while (cursor);
+      const keys = allKeys.sort((a, b) => b.name.localeCompare(a.name)).slice(0, limit);
       const reports = await Promise.all(keys.map(async key => {
         const value = await env.REPORTS.get(key.name);
         if (!value) return null;
