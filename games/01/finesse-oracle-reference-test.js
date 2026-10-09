@@ -197,7 +197,44 @@ export function runIndependentFinesseOracleTests() {
       fixtures++;
     }
   }
-  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
+  // Extend beyond the trainer's default two-input envelope to validate the
+  // shortest-path formula itself, including route and target determinism.
+  let extendedFixtures = 0;
+  let extendedTargets = 0;
+  const extendedBoards = ['empty','split-well','overhang','generated-2'];
+  const routeKey = route => route.map(step => step.action + ':' + (step.mode || 'tap')).join('|');
+  for (const boardKind of extendedBoards) {
+    const board = boardFor(boardKind);
+    for (const type of TYPES) {
+      const start = { type, x:REFERENCE_PIECES[type].spawn.x, y:REFERENCE_PIECES[type].spawn.y, o:0 };
+      const expected = referenceTargets({ type, start, board, maxCost:4 });
+      const args = {
+        piece:{...start}, board, W, H, cellsFor:productionCellsFor,
+        move:productionMove, tryRotate:productionTryRotate,
+        maxCost:4, profile:PROFILE
+      };
+      const actual = enumerateFinesseTargets(args);
+      const repeated = enumerateFinesseTargets({...args, piece:{...start}});
+      const actualMap = new Map(actual.map(item => [targetKey(item.target), item]));
+      const repeatedMap = new Map(repeated.map(item => [targetKey(item.target), item]));
+      assert(actualMap.size === expected.size,
+        'cost-4 ' + boardKind + '/' + type + ' target count differs: expected ' + expected.size + ', got ' + actualMap.size);
+      assert(repeatedMap.size === actualMap.size,
+        'cost-4 deterministic repeat changed target count for ' + boardKind + '/' + type);
+      for (const [key,cost] of expected) {
+        const got = actualMap.get(key);
+        const again = repeatedMap.get(key);
+        assert(got, 'cost-4 ' + boardKind + '/' + type + ' missing target ' + key);
+        assert(got.cost === cost,
+          'cost-4 ' + boardKind + '/' + type + ' minimum cost differs at ' + key + ': expected ' + cost + ', got ' + got.cost);
+        assert(again && again.cost === got.cost && routeKey(again.route) === routeKey(got.route),
+          'cost-4 deterministic canonical route changed for ' + boardKind + '/' + type + '/' + key);
+        extendedTargets++;
+      }
+      extendedFixtures++;
+    }
+  }
+  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, extendedFixtures, extendedTargets, extendedMaxCost:4, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
