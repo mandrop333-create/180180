@@ -73,9 +73,10 @@ export function finesseActionCost(action,mode='tap',profile=FINESSE_PROFILES.TET
   const normalizedMode=typeof mode==='string'?mode.toLowerCase():'';
   const normalizedAction=typeof action==='string'?action.toLowerCase():'';
   if(!Object.values(FINESSE_INPUT_MODES).includes(normalizedMode)||!profile)return Infinity;
-  if(normalizedMode==='das'&&(
-    profile.dasCountsAsOneInput!==true||!['left','right'].includes(normalizedAction)
-  ))return Infinity;
+  if(normalizedMode==='das'&&['left','right'].includes(normalizedAction)&&
+    profile.dasCountsAsOneInput!==true)return Infinity;
+  if(normalizedMode==='das'&&
+    !['left','right','hard','soft','gravity'].includes(normalizedAction))return Infinity;
   if(normalizedAction==='half'){
     if(profile.supportsDirectHalfTurn!==true||!Number.isFinite(profile.halfTurnCost))return Infinity;
     return profile.halfTurnCost;
