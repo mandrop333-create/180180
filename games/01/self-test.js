@@ -243,6 +243,14 @@ export function runTrainerSelfTest(){
     cellsFor:()=>[]
   });
   assert(invalidLockPlan===null,'planner must fail closed when no landing can be locked');
+  const malformedMovementPlan=planFinesse({
+    piece:{x:4,y:19,o:0,type:'T'},W:10,H:20,maxCost:2,
+    move:()=>true,
+    tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
+    cellsFor:()=>[[0,1]]
+  });
+  assert(malformedMovementPlan===null,
+    'planner must reject successful movement callbacks that do not apply the requested coordinate change');
 
   // Minimum-route regression: a longer route must never replace a shorter
   // route merely because its action labels sort earlier alphabetically.
