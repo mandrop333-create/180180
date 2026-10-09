@@ -145,6 +145,91 @@ try {
     console.log(JSON.stringify({type,passed:true,target:planned.target,minimumCost:minimum,route:planned.actions,lockedCells:locked.cells.length}));
   }
 
+  // Regression: placement-resolution state must reset for each real spawn.
+  await page.evaluate(() => {
+    const t = window.trainer;
+    t.reset();
+    t.rules.gravity = Infinity;
+    t.rules.lockDelay = 100000;
+    t.emptyBoard();
+    t.gameOver = false;
+    t.finesseEnabled = true;
+    t.piece = {type:'O',x:4,y:0,o:0};
+    t.stats.finessePerfect = 0;
+    t.stats.finesseFaults = 0;
+    t.stats.piecesPlaced = 0;
+    t.finessePlacementResolved = false;
+    t.generateFinessePrompt();
+    t.emitState();
+  });
+  async function executeCurrentPlan() {
+    const current = await page.evaluate(() => ({
+      piece:window.trainer.piece ? {...window.trainer.piece} : null,
+      target:window.trainer.finesseTarget ? {...window.trainer.finesseTarget} : null,
+      actions:window.trainer.finesseActions.map(step=>({...step}))
+    }));
+    assert(current.piece && current.target, 'consecutive-placement regression has no current target');
+    for (const step of current.actions) {
+      const keyName = step.action==='left'?'ArrowLeft'
+        : step.action==='right'?'ArrowRight'
+        : step.action==='cw'?'x'
+        : step.action==='ccw'?'z':'a';
+      if (step.mode==='das') {
+        await page.keyboard.down(keyName);
+        await page.waitForTimeout(100);
+        await page.keyboard.up(keyName);
+        await page.waitForTimeout(30);
+      } else {
+        await page.keyboard.press(keyName);
+      }
+    }
+    await page.keyboard.press('Space');
+    await page.waitForFunction(() => window.trainer.stats.piecesPlaced > 0 &&
+      window.trainer.piece !== null, null, {timeout:5000});
+    return current;
+  }
+  await executeCurrentPlan();
+  const nextSpawn = await page.evaluate(() => ({
+    placementResolved:window.trainer.finessePlacementResolved,
+    target:window.trainer.finesseTarget ? {...window.trainer.finesseTarget} : null,
+    actions:window.trainer.finesseActions.length,
+    perfect:window.trainer.stats.finessePerfect,
+    faults:window.trainer.stats.finesseFaults,
+    placed:window.trainer.stats.piecesPlaced
+  }));
+  assert(nextSpawn.placementResolved===false && nextSpawn.target && nextSpawn.actions>=0,
+    'new spawn inherited the previous piece\'s resolved-placement flag: '+JSON.stringify(nextSpawn));
+  const second = await page.evaluate(() => ({
+    target:window.trainer.finesseTarget ? {...window.trainer.finesseTarget} : null,
+    actions:window.trainer.finesseActions.map(step=>({...step}))
+  }));
+  assert(second.target, 'second spawned piece has no finesse target');
+  for (const step of second.actions) {
+    const keyName = step.action==='left'?'ArrowLeft'
+      : step.action==='right'?'ArrowRight'
+      : step.action==='cw'?'x'
+      : step.action==='ccw'?'z':'a';
+    if (step.mode==='das') {
+      await page.keyboard.down(keyName);
+      await page.waitForTimeout(100);
+      await page.keyboard.up(keyName);
+      await page.waitForTimeout(30);
+    } else {
+      await page.keyboard.press(keyName);
+    }
+  }
+  await page.keyboard.press('Space');
+  await page.waitForFunction(() => window.trainer.stats.piecesPlaced===2, null, {timeout:5000});
+  const consecutive = await page.evaluate(() => ({
+    perfect:window.trainer.stats.finessePerfect,
+    faults:window.trainer.stats.finesseFaults,
+    placed:window.trainer.stats.piecesPlaced,
+    placementResolved:window.trainer.finessePlacementResolved
+  }));
+  assert(consecutive.perfect===2 && consecutive.faults===0 && consecutive.placed===2,
+    'two consecutive valid placements must score two perfects and zero faults: '+JSON.stringify(consecutive));
+  console.log(JSON.stringify({consecutivePlacements:true,passed:true,...consecutive}));
+
   // Regression: a planner failure must not silently award a perfect placement.
   await page.evaluate(() => {
     const t = window.trainer;
