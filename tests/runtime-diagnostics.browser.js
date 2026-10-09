@@ -356,7 +356,9 @@ try {
             }
             t.gameOver = false;
             t.piece = { type, x: 4, y: 0, o: 0 };
-            t.setFinesseEnabled(true);
+            const toggle = document.querySelector('#mainRuleFinesse');
+            toggle.checked = true;
+            toggle.dispatchEvent(new Event('change', { bubbles: true }));
           }, { boardKind, type });
           const label = `finesse-${boardKind}-${type}`;
           await capturePageState(page, label + '-prompt');
