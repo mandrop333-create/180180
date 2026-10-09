@@ -105,6 +105,7 @@ export class RuntimeDiagnostics {
       repeat: !!event.repeat, defaultPrevented: !!event.defaultPrevented,
       piece: this.trainer.piece ? { ...this.trainer.piece } : null,
       finesseProgress: this.trainer.finesseProgress,
+      finesseMistakes: this.trainer.finesseMistakes,
       finesseFaulted: this.trainer.finesseFaulted
     });
   }
@@ -137,7 +138,9 @@ export class RuntimeDiagnostics {
     const reduced = {
       piece, queue: state?.queue, hold: state?.hold, holdUsed: state?.holdUsed,
       lines: state?.lines, gameOver: state?.gameOver, stats: state?.stats,
-      finesseState: state?.finesseState, finesse: state?.finesse
+      finesseState: state?.finesseState, finesse: state?.finesse,
+      finesseProgress: t.finesseProgress, finesseMistakes: t.finesseMistakes,
+      finesseFaulted: t.finesseFaulted
     };
     const signature = JSON.stringify(reduced);
     if (signature === this.lastStateSignature) return;
