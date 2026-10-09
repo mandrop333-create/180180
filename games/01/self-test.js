@@ -342,11 +342,11 @@ export function runTrainerSelfTest(){
   runtime.generateFinessePrompt();
   assert(runtime.finesseTarget&&runtime.finesseTarget.x===4&&runtime.finesseTarget.y===18,
     'fastest-placement prompt must retain the physical landing directly below the spawn');
-  assert(runtime.finesseActions.length===0,
-    'runtime should not recommend movement when hard-dropping from spawn is the fastest placement');
+  assert(runtime.finesseActions.length===1&&runtime.finesseActions[0].action==='hard',
+    'runtime should recommend Space as the only step when hard-dropping from spawn is fastest');
   const keyEvent=code=>({code,preventDefault(){}});
-  assert(runtime.finesseProgress===0&&!runtime.finesseFaulted,'empty fastest route should start complete without faults');
-  runtime.hardDrop();
+  assert(runtime.finesseProgress===0&&!runtime.finesseFaulted,'fastest route should start with Space pending and no faults');
+  runtime.handleKeydown(keyEvent('Space'));
   assert(runtime.stats.finessePerfect===1&&runtime.stats.finesseFaults===0,
     'correct route and physical landing must score exactly one clean finesse placement');
 
