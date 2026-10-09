@@ -196,3 +196,17 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - Independent Playwright workflow passed, including actual planner prompts against the independent oracle and active-gravity route checks: [run 38003615722](https://github.com/mandrop333-create/180180/actions/runs/38003615722).
 - The prompt-requested Playwright workflow also passed on this commit: [run 38003615775](https://github.com/mandrop333-create/180180/actions/runs/38003615775).
 - These checks verify the isolated branch's current tested behavior; they do not close the independent kick/pivot source question or certify the repository-wide legacy import audit. No merge or production deployment.
+
+
+## Independent kick-table audit — 2026-10-09
+
+A second-source audit found material disagreement between the current fixture and an independently maintained TETR.IO-inspired implementation. This is a **no-go finding**, not a reason to silently replace the production table.
+
+- Source inspected: `matt-chow/teto-clone/src/game/rotation.js`, pinned at commit `d22aadb274c97ddbab1444d7a0d7ec2c9a80d313` (file: https://github.com/matt-chow/teto-clone/blob/d22aadb274c97ddbab1444d7a0d7ec2c9a80d313/src/game/rotation.js).
+- Its screen-y-down I-piece 90-degree arrays do not match `games/01/kicks.js` for all transitions/orderings. For example, its `0>1` sequence is `[[0,0],[-2,0],[1,0],[-2,1],[1,-2]]`, while this branch currently uses `[[0,0],[1,0],[-2,0],[-2,1],[1,-2]]`.
+- Its I-piece direct-180 table also differs structurally: the source has five ordered candidates per transition (including the origin and horizontal/vertical offsets), while this branch currently uses two candidates per orientation and omits the origin candidate. Example source `0>2`: `[[0,0],[1,0],[2,0],[-1,0],[-2,0]]`; current branch orientation 0: `[[1,1],[1,0]]`.
+- The same source's JLSTZ 90-degree table agrees with the conventional SRS screen-y-down fixture. This is useful cross-checking evidence for that family, but does not prove its SRS+ I or 180 tables are authoritative for the exact target client/version.
+- A second repository, `twaldin/tetrio-tui`, explicitly marks its kick-table notes as superseded and warns that its I/180 entries differ from implemented rules; it must not be treated as an authority for those tables. Its notes reinforce the need to pin the exact source/profile rather than combine tables from unrelated profiles.
+- No production rotation table was changed as part of this audit. Existing passing tests compare against local static fixtures and therefore cannot resolve this disagreement.
+
+**Required next gate:** identify and pin an authoritative source for the target TETR.IO client/version (prefer the client’s own published rotation data or a documented, reproducible extraction), then independently compare piece pivot/origin semantics and every ordered transition. If the authoritative table confirms the current implementation is wrong, update production data, independent fixtures, and reachable-kick tests together in a dedicated commit. Until then, SRS+ I-piece and direct-180 behavior remain unverified and the rebuild must not be merged/deployed.
