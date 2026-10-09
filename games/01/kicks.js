@@ -17,15 +17,18 @@ const JLSTZ = {
 // TETR.IO SRS+ I-piece kicks. The order differs from vanilla SRS and is
 // gameplay-significant: the engine must try each kick in this exact order.
 const I = {
- // TETR.IO SRS+ I-piece ordered kicks, normalized to screen-y-down.
- '0>1': [[1,0],[2,0],[-1,0],[-1,1],[2,-2]],
- '1>2': [[0,1],[-1,1],[2,1],[-1,-1],[2,2]],
- '2>3': [[-1,0],[1,0],[-2,0],[1,-1],[-2,2]],
- '3>0': [[0,-1],[1,-1],[-2,-1],[1,1],[-2,-2]],
- '0>3': [[0,1],[-1,1],[2,1],[2,2],[-1,-1]],
- '1>0': [[-1,0],[-2,0],[1,0],[-2,2],[1,-1]],
- '2>1': [[0,-1],[-2,-1],[1,-1],[-2,-2],[1,1]],
- '3>2': [[1,0],[2,0],[-1,0],[2,-2],[-1,1]]
+ // TETR.IO SRS+ ordered kicks, converted from S-Finder's explicitly documented
+ // "basic rotation coordinate system" to this board's screen-y-down axes.
+ // Do not use S-Finder's raw Mino-origin offsets here: our pieces.js geometry
+ // rotates around the basic local-frame pivot.
+ '0>1': [[0,0],[1,0],[-2,0],[-2,1],[1,-2]],
+ '1>2': [[0,0],[-1,0],[2,0],[-1,-2],[2,1]],
+ '2>3': [[0,0],[2,0],[-1,0],[2,-1],[-1,2]],
+ '3>0': [[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
+ '0>3': [[0,0],[-1,0],[2,0],[2,1],[-1,-2]],
+ '1>0': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+ '2>1': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+ '3>2': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]]
 };
 
 const HALF_JLSTZ = {
