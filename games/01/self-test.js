@@ -154,10 +154,10 @@ export function runTrainerSelfTest(){
   assert(selectFinesseTarget(declaredTargets)===null,'target selection must not invent a selector');
   const trainingTargets=[{x:2,o:0,cost:1},{x:4,o:1,cost:2},{x:7,o:0,cost:2}];
   const chosenTraining=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
-  assert(chosenTraining&&chosenTraining.cost===2,'training target policy must prefer the highest finesse cost inside the envelope');
+  assert(chosenTraining&&chosenTraining.cost===1,'fastest-placement policy must prefer the lowest finesse cost inside the envelope');
   const chosenAgain=chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T'});
   assert(chosenTraining.x===chosenAgain.x&&chosenTraining.o===chosenAgain.o,'training target policy must be deterministic');
-  assert(chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T',maxCost:1}).cost===1,'training target policy must respect max cost');
+  assert(chooseTrainingTarget(trainingTargets,{pieceIndex:0,pieceType:'T',maxCost:1}).cost===1,'fastest-placement policy must respect max cost');
   const verticalITarget=chooseTrainingTarget([{x:-2,o:1,cost:2}],{pieceType:'I',maxCost:2});
   assert(verticalITarget&&verticalITarget.x===-2&&verticalITarget.o===1,
     'generic training-target selection must preserve legal negative-origin vertical I placements');
@@ -340,16 +340,12 @@ export function runTrainerSelfTest(){
   runtime.emptyBoard();
   runtime.piece={type:'O',x:4,y:0,o:0};
   runtime.generateFinessePrompt();
-  assert(runtime.finesseTarget&&runtime.finesseTarget.x===2&&runtime.finesseTarget.y===18,
-    'runtime prompt must retain the exact physical landing target');
-  assert(runtime.finesseActions.length===2&&runtime.finesseActions.every(step=>step.action==='left'&&step.mode==='tap'),
-    'runtime should expose the minimum two-tap route to the selected O placement');
+  assert(runtime.finesseTarget&&runtime.finesseTarget.x===4&&runtime.finesseTarget.y===18,
+    'fastest-placement prompt must retain the physical landing directly below the spawn');
+  assert(runtime.finesseActions.length===0,
+    'runtime should not recommend movement when hard-dropping from spawn is the fastest placement');
   const keyEvent=code=>({code,preventDefault(){}});
-  for(let i=0;i<2;i++){
-    runtime.handleKeydown(keyEvent('ArrowLeft'));
-    runtime.handleKeyup(keyEvent('ArrowLeft'));
-  }
-  assert(runtime.finesseProgress===2&&!runtime.finesseFaulted,'runtime observer must accept the displayed route');
+  assert(runtime.finesseProgress===0&&!runtime.finesseFaulted,'empty fastest route should start complete without faults');
   runtime.hardDrop();
   assert(runtime.stats.finessePerfect===1&&runtime.stats.finesseFaults===0,
     'correct route and physical landing must score exactly one clean finesse placement');
