@@ -129,3 +129,12 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - Next logical work: verify the latest tests; then replace the remaining implementation dependencies with explicit, independently checked transition contracts and expand the weighted oracle. Only after tests directly import `finesse-core.js` and the caller audit shows no remaining dependency on the facade should `finesse.js` be removed.
 
 - Migrated the independent oracle and self-test imports from the compatibility facade to `finesse-core.js`, reducing test reliance on the old module path. The facade remains temporarily until a complete caller audit confirms no remaining dependency.
+
+
+## Fail-closed target regression cleanup — 2026-10-09
+
+- Corrected planner test fixtures so mock movement callbacks reject out-of-bounds moves atomically. The unbounded mock in the no-lockable-target test could otherwise make wall-directed DAS loop forever; the O-piece fixture also now supplies a valid lockable cell fixture rather than an empty geometry that the new fail-closed contract must reject.
+- Latest checkpoint: `405217cfa5c0ac440d81320b5af2e4082646b0f7`.
+- Planner regression suite passed on this checkpoint: [run 37999676782](https://github.com/mandrop333-create/180180/actions/runs/37999676782). Independent reference fixtures passed: [run 37999676836](https://github.com/mandrop333-create/180180/actions/runs/37999676836).
+- Browser route fixtures and the prompt-requested Playwright run are still being checked; no browser pass is claimed for this checkpoint until those workflow conclusions are final.
+- These test-fixture repairs do not establish that the core is a complete ground-up rewrite. The replacement still requires independently verified rotation/kick geometry and broader state-space/execution validation. No merge or deployment to `main`.
