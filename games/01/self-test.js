@@ -245,6 +245,39 @@ export function runTrainerSelfTest(){
   assert(allRegressionRoutes.every(target=>new Set(target.routes.map(route=>route.map(step=>step.action+':'+step.mode).join('|'))).size===target.routes.length),
     'equal-cost route candidates must be distinct by action and input mode');
 
+  // Equivalent-route regression: the same physical target can be reached by
+  // moving then rotating or rotating then moving. Both routes are minimum-cost
+  // and must remain available to the runtime observer.
+  const equivalentStart={type:'T',x:3,y:0,o:0};
+  const equivalentPlan=planFinesse({
+    piece:equivalentStart,board:emptyBoard,W:10,H:20,cellsFor,maxCost:2,seed:0,
+    profile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,supportsDirectHalfTurn:false,dasCountsAsOneInput:false},
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
+  });
+  assert(equivalentPlan&&equivalentPlan.routes?.length>1,
+    'planner must retain multiple equal-cost routes to the selected physical target');
+  const alternateRoute=equivalentPlan.routes.find(route=>
+    route.map(step=>step.action+':'+step.mode).join('|')!==equivalentPlan.actions.map(step=>step.action+':'+step.mode).join('|'));
+  assert(alternateRoute&&alternateRoute.length===equivalentPlan.cost,
+    'an alternative route must remain minimum-cost');
+  const alternateRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
+  alternateRuntime.emptyBoard();
+  alternateRuntime.piece={...equivalentStart};
+  alternateRuntime.generateFinessePrompt();
+  assert(alternateRuntime.finesseTarget.x===equivalentPlan.target.x&&
+    alternateRuntime.finesseTarget.o===equivalentPlan.target.o&&
+    alternateRuntime.finesseTarget.y===equivalentPlan.target.y,
+    'runtime must select the same physical target as the planner');
+  for(const step of alternateRoute){
+    const code=alternateRuntime.binds[step.action];
+    alternateRuntime.handleKeydown(keyEvent(code));
+    alternateRuntime.handleKeyup(keyEvent(code));
+  }
+  alternateRuntime.hardDrop();
+  assert(alternateRuntime.stats.finessePerfect===1&&alternateRuntime.stats.finesseFaults===0,
+    'runtime must accept an alternate equal-cost route and confirm its physical landing');
+
   // O-piece regression: a square has no meaningful rotation. Even when the
   // supplied rotation transition would mutate orientation metadata, the
   // planner must never include rotation in its recommended route.
