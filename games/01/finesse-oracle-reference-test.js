@@ -289,6 +289,16 @@ export function runIndependentFinesseOracleTests() {
     'cost-ordered search failed: two quarter-turns should beat a cost-3 direct half-turn');
   assert(weightedHalfTarget.routes.some(route=>route.length===2&&route.every(step=>step.action==='cw'||step.action==='ccw')),
     'weighted shortest route did not preserve the two-quarter-turn solution');
+  // A malformed adapter that reports rotation success without changing
+  // orientation must not create phantom rotational routes or targets.
+  const noOpRotation=enumerateFinesseTargets({
+    piece:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
+    board:empty,W,H,cellsFor:productionCellsFor,move:productionMove,
+    tryRotate:()=>true,maxCost:1,profile:PROFILE
+  });
+  assert(noOpRotation.every(item=>item.target.o===0),
+    'planner accepted a successful-but-no-op rotation as a finesse transition');
+
   const weightedExpected=referenceWeightedTargets({
     type:'T',start:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
     board:empty,maxCost:3,halfTurnCost:3
