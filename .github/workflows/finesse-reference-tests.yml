@@ -20,9 +20,10 @@ jobs:
         shell: bash
         run: |
           echo "=== All tracked references to the legacy finesse.js path ==="
-          git grep -nE 'finesse[.]js' -- '*.js' '*.mjs' '*.html' || true
+          git grep -n 'finesse.js' -- '*.js' '*.mjs' '*.html' || true
           echo "=== Direct runtime imports of the legacy module path ==="
-          git grep -nE 'from .*finesse[.]js|import[(].*finesse[.]js' -- '*.js' '*.mjs' '*.html' || true
+          git grep -n 'from .*finesse.js' -- '*.js' '*.mjs' '*.html' || true
+          git grep -n 'import(.*finesse.js' -- '*.js' '*.mjs' '*.html' || true
           echo "Inventory is informational until each reference is classified; do not remove the compatibility facade before review."
       - name: Check unobstructed T-piece rotation geometry
         run: node --experimental-default-type=module -e "import('./games/01/finesse-t-rotation-reference-test.js').then(({runFinesseTRotationReferenceTest}) => console.log(JSON.stringify(runFinesseTRotationReferenceTest()))).catch(error => { console.error(error); process.exit(1); })"
