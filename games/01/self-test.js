@@ -625,6 +625,11 @@ export function runTrainerSelfTest(){
             const recordLanding=(state,cost)=>{
               const landed={...state};
               while(move(landed,0,1,board,10,20,cellsFor)){}
+              // Match the lockability contract independently: reachable states
+              // above the ceiling are top-outs, not legal placement targets.
+              const lockCells=cellsFor(type,landed.o);
+              if(!Array.isArray(lockCells)||!lockCells.length||
+                !lockCells.every(([cx,cy])=>landed.y+cy>=0&&landed.y+cy<20))return;
               const orientation=type==='O'?0:landed.o;
               const key=landed.x+','+orientation+','+landed.y;
               const old=oracle.get(key);
