@@ -309,6 +309,22 @@ export function runIndependentFinesseOracleTests() {
   assert(typeChangingMove.every(item=>item.route.every(step=>step.action!=='left'&&step.action!=='right')),
     'planner accepted a movement transition that changed piece identity');
 
+  // Malformed initial states must fail closed. The production geometry helper
+  // falls back to T for unknown piece types, so accepting an unknown type here
+  // would hide a caller/data error as a plausible but incorrect target set.
+  for (const malformedPiece of [
+    {type:'?',x:3,y:0,o:0},
+    {type:'T',x:3.5,y:0,o:0},
+    {type:'T',x:3,y:0.5,o:0},
+    {type:'T',x:3,y:0,o:-1},
+    {type:'T',x:3,y:0,o:4}
+  ]) {
+    assert(enumerateFinesseTargets({
+      piece:malformedPiece,board:empty,W,H,cellsFor:productionCellsFor,
+      move:productionMove,tryRotate:productionTryRotate,maxCost:2,profile:PROFILE
+    }).length===0,'planner accepted malformed start state '+JSON.stringify(malformedPiece));
+  }
+
   const weightedExpected=referenceWeightedTargets({
     type:'T',start:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
     board:empty,maxCost:3,halfTurnCost:3
