@@ -337,21 +337,18 @@ try {
     {
       name: 'finesse-feedback', terms: ['finesse', 'red to green', 'finesse trainer', 'finesse inputs'],
       run: async () => {
-        const result = await page.evaluate(() => {
-          const t = window.trainer;
-          const keyEvent = code => ({ code, preventDefault() {} });
-          const cases = [];
-          const pieceTypes = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
-          const boardKinds = ['empty', 'split-well', 'side-towers'];
-          for (const boardKind of boardKinds) for (const type of pieceTypes) {
+        const result = [];
+        const pieceTypes = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
+        const boardKinds = ['empty', 'split-well', 'side-towers'];
+        for (const boardKind of boardKinds) for (const type of pieceTypes) {
+          await page.evaluate(({ boardKind, type }) => {
+            const t = window.trainer;
             t.reset();
             t.emptyBoard();
             if (boardKind === 'split-well') {
-              // A low shelf with a central two-column opening.
               for (let x = 0; x < t.W; x++) if (x !== 4 && x !== 5) t.board[t.H - 1][x] = 1;
-              for (let x = 0; x < t.W; x++) if (x !== 3 && x !== 4 && x !== 5 && x !== 6) t.board[t.H - 2][x] = 1;
+              for (let x = 0; x < t.W; x++) if (![3, 4, 5, 6].includes(x)) t.board[t.H - 2][x] = 1;
             } else if (boardKind === 'side-towers') {
-              // Uneven, non-spawn-blocking stacks to exercise real rotation kicks and collision checks.
               for (let y = t.H - 4; y < t.H; y++) t.board[y][0] = 1;
               for (let y = t.H - 2; y < t.H; y++) t.board[y][1] = 1;
               for (let y = t.H - 3; y < t.H; y++) t.board[y][8] = 1;
@@ -360,30 +357,41 @@ try {
             t.gameOver = false;
             t.piece = { type, x: 4, y: 0, o: 0 };
             t.setFinesseEnabled(true);
-            const target = t.finesseTarget ? { ...t.finesseTarget } : null;
-            const actions = t.finesseActions.map(step => ({ ...step }));
-            const initialProgress = t.finesseProgress;
-            const initialStates = t.finesseActions.map((step, i) => i < t.finesseProgress ? 'done' : i === t.finesseProgress ? 'next' : 'pending');
-            for (const step of actions) {
+          }, { boardKind, type });
+          const label = `finesse-${boardKind}-${type}`;
+          await capturePageState(page, label + '-prompt');
+          const before = await page.evaluate(() => {
+            const t = window.trainer;
+            return {
+              target: t.finesseTarget ? { ...t.finesseTarget } : null,
+              actions: t.finesseActions.map(step => ({ ...step })),
+              initialProgress: t.finesseProgress,
+              initialStates: t.finesseActions.map((step, i) => i < t.finesseProgress ? 'done' : i === t.finesseProgress ? 'next' : 'pending')
+            };
+          });
+          const replay = await page.evaluate(() => {
+            const t = window.trainer;
+            const keyEvent = code => ({ code, preventDefault() {} });
+            for (const step of t.finesseActions.map(item => ({ ...item }))) {
               const code = t.binds[step.action];
               t.handleKeydown(keyEvent(code));
-              // DAS is a held direction, so advance the game's own input clock
-              // before keyup instead of incorrectly simulating it as a tap.
               if (step.mode === 'das') t.tick(performance.now() + t.das() + 5);
               t.handleKeyup(keyEvent(code));
             }
-            const progressAfterInputs = t.finesseProgress;
-            const faultedAfterInputs = t.finesseFaulted;
-            const actualBeforeDrop = { ...t.piece };
+            return {
+              progressAfterInputs: t.finesseProgress,
+              faultedAfterInputs: t.finesseFaulted,
+              actualBeforeDrop: { ...t.piece }
+            };
+          });
+          await capturePageState(page, label + '-after-inputs');
+          const placed = await page.evaluate(() => {
+            const t = window.trainer;
             t.hardDrop();
-            cases.push({
-              type, boardKind, target, actions, initialProgress, initialStates, progressAfterInputs,
-              faultedAfterInputs, actualBeforeDrop,
-              finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults
-            });
-          }
-          return cases;
-        });
+            return { finessePerfect: t.stats.finessePerfect, finesseFaults: t.stats.finesseFaults };
+          });
+          result.push({ type, boardKind, ...before, ...replay, ...placed });
+        }
         assertCheck('finesse-route-present', result.every(r => r.target !== null && Array.isArray(r.actions)), 'Each piece on each test board must receive an explicit route and landing target');
         assertCheck('finesse-progress', result.every(r => r.progressAfterInputs === r.actions.length && !r.faultedAfterInputs), 'Each displayed route must advance all steps without a fault across empty and obstructed boards');
         assertCheck('finesse-physical-target', result.every(r => r.finessePerfect === 1 && r.finesseFaults === 0), 'Following each route and hard-dropping must count exactly one clean placement on the advertised target for all piece/board combinations');
