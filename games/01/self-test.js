@@ -249,14 +249,22 @@ export function runTrainerSelfTest(){
   // moving then rotating or rotating then moving. Both routes are minimum-cost
   // and must remain available to the runtime observer.
   const equivalentStart={type:'T',x:3,y:0,o:0};
-  const equivalentPlan=planFinesse({
-    piece:equivalentStart,board:routeRegressionBoard,W:10,H:20,cellsFor,maxCost:2,seed:0,
-    profile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,supportsDirectHalfTurn:false,dasCountsAsOneInput:false},
+  const equivalentProfile={...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,
+    supportsDirectHalfTurn:false,dasCountsAsOneInput:false};
+  const equivalentOptions={
+    piece:equivalentStart,board:routeRegressionBoard,W:10,H:20,cellsFor,maxCost:2,
+    profile:equivalentProfile,
     move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
     tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
-  });
+  };
+  const equivalentTargets=enumerateFinesseTargets(equivalentOptions);
+  const hardestEquivalentTargets=equivalentTargets.filter(target=>target.cost===equivalentTargets[0]?.cost);
+  const alternativeTargetIndex=hardestEquivalentTargets.findIndex(target=>target.routes.length>1);
+  assert(alternativeTargetIndex>=0,
+    'planner must retain multiple equal-cost routes to at least one challenging physical target');
+  const equivalentPlan=planFinesse({...equivalentOptions,seed:alternativeTargetIndex});
   assert(equivalentPlan&&equivalentPlan.routes?.length>1,
-    'planner must retain multiple equal-cost routes to the selected physical target');
+    'planner must expose all equal-cost routes for the selected physical target');
   const alternateRoute=equivalentPlan.routes.find(route=>
     route.map(step=>step.action+':'+step.mode).join('|')!==equivalentPlan.actions.map(step=>step.action+':'+step.mode).join('|'));
   assert(alternateRoute&&alternateRoute.length===equivalentPlan.cost,
