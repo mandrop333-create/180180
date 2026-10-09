@@ -301,7 +301,18 @@ export class Trainer {
   }
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
-    if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
+    if(this.dasCutRemaining>0){
+      // DCD pauses the charged DAS clock, it does not merely suppress the
+      // movement frame. Shift both timing anchors by the portion of this
+      // frame spent inside DCD so a long DAS hold cannot fire immediately
+      // when the cut expires.
+      const pausedMs=Math.min(dt,this.dasCutRemaining);
+      this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
+      if(this.moveState.dir){
+        if(Number.isFinite(this.moveState.startedAt)&&this.moveState.startedAt>0)this.moveState.startedAt+=pausedMs;
+        if(Number.isFinite(this.moveState.nextRepeatAt))this.moveState.nextRepeatAt+=pausedMs;
+      }
+    }
     // Soft drop owns the vertical clock while held. Horizontal input/DAS
     // must never reset or suppress that clock, so moving sideways while
     // holding soft drop cannot make the piece appear to float.
