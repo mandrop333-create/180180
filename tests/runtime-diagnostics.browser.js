@@ -274,7 +274,7 @@ try {
       }
     },
     {
-      name: 'line-clear', terms: ['line clear', 'clear a line', 'clear one line', 'single line clear'],
+      name: 'line-clear', terms: ['line clear', 'clear a line', 'clear one line', 'single line clear', 'clearing a line', 'clear the line'],
       run: async () => {
         const result = await page.evaluate(() => {
           const t = window.trainer;
