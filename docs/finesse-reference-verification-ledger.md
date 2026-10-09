@@ -155,3 +155,13 @@ Do not treat current `self-test.js` expectations as independent evidence, becaus
 - Expanded `games/01/finesse-oracle-reference-test.js` beyond the single half-turn regression with an independent weighted shortest-path reference using a sorted open list (not the production binary heap). With direct 180 cost raised to 3, the test compares the complete reachable target set and minimum costs against the production Dijkstra planner through cost 3.
 - The weighted reference suite passed on `8642c5256572520d76bd3ab5bd2a59e6c2c1d4f3`: [run 38000060396](https://github.com/mandrop333-create/180180/actions/runs/38000060396).
 - This validates weighted shortest-path behavior for the tested profile/board, but does not resolve the separately documented external kick/pivot convention uncertainty. No merge or production deployment.
+
+## Verification refresh — 2026-10-09 (commit `40d3b764406d88e157fab0e56ce381db9b79f3e3`)
+
+- Planner regression suite passed: [run 38000602166](https://github.com/mandrop333-create/180180/actions/runs/38000602166).
+- Independent reference fixtures passed: [run 38000602184](https://github.com/mandrop333-create/180180/actions/runs/38000602184).
+- Independent Playwright route fixtures passed, including the I-piece clockwise and counter-clockwise kick scenarios: [run 38000602165](https://github.com/mandrop333-create/180180/actions/runs/38000602165).
+- The additional prompt-requested Playwright run [run 38000602145](https://github.com/mandrop333-create/180180/actions/runs/38000602145) remained pending at the time of this update; it is not counted as a pass.
+- The preceding browser failure was traced to a post-lock test-fixture issue: synthetic blocker cells used to force an ordered I-piece kick were left on the board and affected the next spawn. The fixture now clears those synthetic cells after checking the intended rotation.
+- A separate frame-sensitive DAS test was corrected to validate a fresh DAS deadline rather than assume the browser had not advanced a frame.
+- No merge/deploy. Kick/pivot compatibility and repository-wide legacy-import audit remain open.
