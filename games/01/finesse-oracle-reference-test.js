@@ -72,7 +72,31 @@ function referenceLanding(piece, board) {
 }
 function boardFor(kind) {
   const board = Array.from({ length: H }, () => Array(W).fill(0));
-  if (kind === 'split-well') {
+  if (kind.startsWith('generated-')) {
+    // Deterministic, reproducible stack corpus. The top five rows remain empty
+    // so all spawn states are legal; column heights vary up to 15 rows to
+    // exercise high stacks, side wells, and kick-sensitive landing routes.
+    const seed = Number(kind.slice('generated-'.length)) + 1;
+    let randomState = (seed * 2654435761) >>> 0;
+    const nextRandom = () => {
+      randomState = (Math.imul(randomState, 1664525) + 1013904223) >>> 0;
+      return randomState;
+    };
+    const heights = Array.from({ length: W }, () => 2 + (nextRandom() % 14));
+    heights[seed % W] = 0;
+    if (seed % 3 === 0) heights[(seed + 5) % W] = 0;
+    for (let x = 0; x < W; x++) {
+      for (let y = H - heights[x]; y < H; y++) {
+        if (y >= 0) board[y][x] = 1;
+      }
+    }
+    // Cut one shallow horizontal notch so the generated boards are not only
+    // flat column stacks and can expose tucked/overhang landing differences.
+    const notchY = H - 4 - (seed % 3);
+    const notchX = (seed * 3) % W;
+    board[notchY][notchX] = 0;
+    if (notchX + 1 < W && seed % 2 === 0) board[notchY][notchX + 1] = 0;
+  } else if (kind === 'split-well') {
     for (let x = 0; x < W; x++) if (x !== 4 && x !== 5) board[H - 1][x] = 1;
     for (let x = 0; x < W; x++) if (![3,4,5,6].includes(x)) board[H - 2][x] = 1;
   } else if (kind === 'side-towers') {
@@ -148,7 +172,8 @@ export function runIndependentFinesseOracleTests() {
       collisionStates++;
     }
   }
-  for (const boardKind of ['empty','split-well','side-towers','overhang']) {
+  const boardKinds = ['empty','split-well','side-towers','overhang', ...Array.from({length:8}, (_,i) => 'generated-' + i)];
+  for (const boardKind of boardKinds) {
     const board = boardFor(boardKind);
     for (const type of TYPES) {
       const start = { type, x:REFERENCE_PIECES[type].spawn.x, y:REFERENCE_PIECES[type].spawn.y, o:0 };
@@ -172,7 +197,7 @@ export function runIndependentFinesseOracleTests() {
       fixtures++;
     }
   }
-  return { ok:true, fixtures, comparedTargets, collisionStates, boards:4, pieces:7, maxCost:2, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
+  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
