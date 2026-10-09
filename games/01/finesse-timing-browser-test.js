@@ -294,6 +294,83 @@ try {
     'grounded lock-delay case did not score exactly once: '+JSON.stringify(lockResult));
   console.log(JSON.stringify({lockDelayReset:true,passed:true,initialLockAcc:800,lockDelay:1000,route:lockPlan.actions}));
 
+  // DAS cut delay acceptance: a held horizontal key may not auto-repeat
+  // during the DCD window after a rotation, but resumes afterward.
+  await page.evaluate(() => {
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=Infinity;
+    t.rules.lockDelay=100000;
+    t.rules.das=80;
+    t.rules.arr=0;
+    t.rules.dcd=180;
+    t.gameOver=false;
+    t.emptyBoard();
+    t.piece={type:'T',x:3,y:0,o:0};
+    t.dasCutRemaining=0; // isolate post-rotation DCD, not the spawn DCD window
+    t.moveState={dir:0,elapsed:0,repeatElapsed:0};
+    t.emitState();
+    t.render();
+  });
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(30);
+  await page.keyboard.press('x');
+  const afterDcdRotation=await page.evaluate(()=>({
+    piece:window.trainer.piece?{...window.trainer.piece}:null,
+    remaining:window.trainer.dasCutRemaining,
+    dir:window.trainer.moveState.dir
+  }));
+  assert(afterDcdRotation.piece&&afterDcdRotation.piece.x===4&&afterDcdRotation.piece.o===1,
+    'DCD fixture did not begin from expected right-move + T rotation state: '+JSON.stringify(afterDcdRotation));
+  await page.waitForTimeout(100);
+  const duringDcd=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    remaining:window.trainer.dasCutRemaining,
+    dir:window.trainer.moveState.dir
+  }));
+  assert(duringDcd.x===4&&duringDcd.remaining>0&&duringDcd.dir===1,
+    'held horizontal input repeated during DCD: '+JSON.stringify(duringDcd));
+  await page.waitForTimeout(150);
+  const afterDcd=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    remaining:window.trainer.dasCutRemaining,
+    dir:window.trainer.moveState.dir
+  }));
+  assert(afterDcd.x>4&&afterDcd.remaining===0&&afterDcd.dir===1,
+    'held horizontal input did not resume after DCD expired: '+JSON.stringify(afterDcd));
+  await page.keyboard.up('ArrowRight');
+  console.log(JSON.stringify({dcdAfterRotation:true,passed:true,duringDcdX:duringDcd.x,afterDcdX:afterDcd.x}));
+
+  // A short key hold is a tap, not a DAS wall-slide.
+  await page.evaluate(() => {
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=Infinity;
+    t.rules.lockDelay=100000;
+    t.rules.das=100;
+    t.rules.arr=0;
+    t.rules.dcd=0;
+    t.gameOver=false;
+    t.emptyBoard();
+    t.piece={type:'T',x:3,y:0,o:0};
+    t.dasCutRemaining=0;
+    t.moveState={dir:0,elapsed:0,repeatElapsed:0};
+    t.emitState();
+    t.render();
+  });
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(25);
+  await page.keyboard.up('ArrowRight');
+  await page.waitForTimeout(140);
+  const tapOnly=await page.evaluate(()=>({
+    x:window.trainer.piece?.x,
+    dir:window.trainer.moveState.dir,
+    down:window.trainer.downKeys.has(window.trainer.binds.right)
+  }));
+  assert(tapOnly.x===4&&tapOnly.dir===0&&!tapOnly.down,
+    'short horizontal hold repeated after keyup: '+JSON.stringify(tapOnly));
+  console.log(JSON.stringify({tapDoesNotRepeat:true,passed:true,x:tapOnly.x}));
+
   assert(pageErrors.length===0,'browser page errors: '+JSON.stringify(pageErrors));
   console.log(JSON.stringify({ok:true,scenarios:scenarios.length,finiteGravity:true,stackBoards:3,lockDelayReset:true,pageErrors:pageErrors.length}));
 } finally {
