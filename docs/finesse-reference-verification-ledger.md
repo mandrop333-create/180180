@@ -7,9 +7,11 @@ This ledger records what has been checked and what remains unproven. An in-repos
 - Added `games/01/finesse-reference-fixtures.js`: static expected cell coordinates and spawn origins for all seven pieces and four orientations.
 - Added `games/01/finesse-reference-test.js`: compares production geometry to separately authored constants, checks four cells per orientation, duplicate cells, spawn origins, and orientation arithmetic.
 - Added `.github/workflows/finesse-reference-tests.yml`.
-- Added `games/01/finesse-kick-reference-fixtures.js` and `games/01/finesse-kick-reference-test.js` for static SRS+ I-piece 90° and direct-180 kick-order fixtures.
+- Added `games/01/finesse-kick-reference-fixtures.js` and `games/01/finesse-kick-reference-test.js` for static SRS+ I-piece and JLSTZ 90°/direct-180 kick-order fixtures.
+- Added `games/01/finesse-oracle-reference-test.js`: an independent transition/collision/shortest-path oracle that uses static geometry and kick fixtures, then compares its minimum-cost physical placements to the production planner on 21 curated piece/board combinations. It also compares collision results across 1,960 piece/orientation/position cases.
 - Corrected the production I-piece kick arrays on this isolated branch to match the normalized reference fixture; updated the colocated regression expectations so the old vanilla-SRS I table is no longer mislabelled as SRS+.
-- **Verified CI:** [reference-fixture workflow](https://github.com/mandrop333-create/180180/actions/runs/37982829776) passed on commit `b6e54b8d8d091539e7322578ba2ee3f25fe67e26`. This proves the test ran and passed, not that every reference convention is externally canonical.
+- **Verified initial CI:** [reference-fixture workflow](https://github.com/mandrop333-create/180180/actions/runs/37982829776) passed on commit `b6e54b8d8d091539e7322578ba2ee3f25fe67e26`. This proved only the initial geometry layer.
+- **Verified expanded CI:** [expanded reference workflow](https://github.com/mandrop333-create/180180/actions/runs/37983630582) passed on commit `85e7c106489a6ba5187c03451b4c85bd517e6e5f`, including the geometry fixtures, I-piece kick fixtures, and the independent shortest-path oracle. Boundary-comparison additions are being rerun on the current head.
 - **Verified Playwright run:** [prompt-requested Playwright run](https://github.com/mandrop333-create/180180/actions/runs/37982829570) passed on the same isolated branch. It exercised the current game locally in Chromium, including finesse prompts, equal-cost alternate routes, tap-versus-DAS equivalence, and lock/scoring assertions across piece/board fixtures. It did not test the deployed live site.
 - **Important Playwright limitation:** the existing browser harness obtains targets/routes from production `enumerateFinesseTargets`, and installs alternate routes returned by that same planner. It is useful for checking UI/input-observer/lock integration, but it cannot independently prove that the planner found the true minimum or that its kick tables are correct. The harness must be extended to consume independent expected fixtures and to fail if the planner disagrees with them.
 
@@ -46,8 +48,8 @@ This ledger records what has been checked and what remains unproven. An in-repos
 | SRS+ I-piece direct 180 kicks | Reference fixture added and CI passed | Four orientation-specific ordered tables match the same third-party source after vertical-coordinate normalization; full piece/pivot validation remains open |
 | JLSTZ 90-degree kicks | Not independently verified against a TETR.IO-specific fixture | Current table matches conventional SRS; confirm SRS+ semantics do not alter these transitions |
 | JLSTZ direct 180 kicks | Cross-checked, not fully independently tested | Current arrays align with the S-Finder SRSPlus table after vertical sign conversion; add a static fixture test for all ordered entries |
-| Collision/top-out behavior | Not independently verified | Need explicit boundary, stack, overhang, and top-out fixtures |
-| Minimum route/finesse cost | Not independently verified | Need a separate shortest-path oracle and curated board-state fixtures |
+| Collision/top-out behavior | Independent comparison added; current-head rerun pending | Reference collision logic is compared with production over walls, floor, top boundary, and occupied cells across a grid of piece/orientation/position states |
+| Minimum route/finesse cost | Independent oracle added; 21-fixture run passed | Oracle uses static fixtures and independently implemented transitions; compares all target identities and minimum costs for 7 pieces across 3 board shapes with max cost 2 |
 | DAS/ARR/lock timing | Partially exercised by current Playwright; not independently verified | Need declared timing assumptions and tests against those assumptions |
 | Runtime observer and lock-time score | Integration-tested for selected current-planner routes, not independently proven | Need independent expected routes/placements and exactly-once scoring assertions |
 | Live production behavior | Not verified after the persistent user-reported issue | The Playwright run served the isolated branch locally; no production code changed |
@@ -57,7 +59,7 @@ This ledger records what has been checked and what remains unproven. An in-repos
 1. Normalize the S-Finder reference coordinate/pivot conventions against the trainer's 4x4 piece origins.
 2. Add static, reviewed kick fixtures and tests for all transitions, preserving ordered tests.
 3. Add a separate shortest-path oracle that does not import production geometry, kick functions, or planner.
-4. Extend Playwright to compare actual key sequences and locked placements against those independent expected fixtures; keep its existing integration tests as a separate layer.
+4. Extend Playwright to compare actual key sequences and locked placements against those independent expected fixtures; keep its existing integration tests as a separate layer. The current Playwright workflow was still running/cancelled during rapid isolated-branch commits, so a final current-head run is required.
 5. Reproduce the original live failure before any production change, and demonstrate it fixed in the isolated branch first.
 
 Do not treat current `self-test.js` expectations as independent evidence, because those expectations live beside the implementation. Do not merge or deploy without explicit authorization.
