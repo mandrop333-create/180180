@@ -250,7 +250,9 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;
     if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
-      const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&(!Number.isInteger(target.y)||lockedPiece.y===target.y));
+      // A missing prompt means planning failed; it must never count as a perfect placement.
+      const targetOk=!!target&&lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&
+        (!Number.isInteger(target.y)||lockedPiece.y===target.y);
       const sequenceComplete=this.finesseRouteCandidates.length
         ?this.finesseRouteCandidates.some(candidate=>candidate.progress>=candidate.route.length&&!candidate.pendingDasAction)
         :this.finesseProgress>=this.finesseActions.length;
