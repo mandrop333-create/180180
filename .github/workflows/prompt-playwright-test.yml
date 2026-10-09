@@ -1,0 +1,84 @@
+name: Prompt-requested Playwright test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_request:
+        description: "Describe what to test in plain English (current runner records this and runs the standard gameplay diagnostics suite)"
+        required: true
+        type: string
+        default: "Test movement, rotation, hold, hard drop, reset, and game over"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prompt-playwright-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prompt-playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostics branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/runtime-diagnostics
+      - name: Record requested test
+        env:
+          TEST_REQUEST: ${{ inputs.test_request }}
+        run: |
+          mkdir -p artifacts
+          printf '%s\n' "$TEST_REQUEST" > artifacts/requested-test.txt
+          {
+            echo '## Prompt-requested Playwright run'
+            echo
+            echo "**Requested test:** $TEST_REQUEST"
+            echo
+            echo "This workflow currently runs the standard diagnostics scenario. The request is recorded for traceability; arbitrary natural-language steps are not yet translated into browser actions."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm init -y && npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Worker API tests
+        run: node --experimental-default-type=module --test tests/worker-api.test.js
+      - name: Start isolated local game server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/180180-http.log
+          exit 1
+      - name: Run Playwright gameplay diagnostics
+        run: node --experimental-default-type=module tests/runtime-diagnostics.browser.js
+      - name: Add runner metadata
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo
+            echo '## Runner metadata'
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Ref: ${GITHUB_REF}"
+            echo "- UTC time: $(date -u +%FT%TZ)"
+            echo
+            echo 'Static server log:'
+            cat /tmp/180180-http.log 2>/dev/null || true
+          } >> artifacts/requested-test.txt
+      - name: Upload diagnostics bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-playwright-diagnostics
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 6
