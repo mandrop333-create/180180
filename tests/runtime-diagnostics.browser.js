@@ -364,13 +364,27 @@ try {
           await capturePageState(page, label + '-prompt');
           const before = await page.evaluate(() => {
             const t = window.trainer;
+            const prompt = document.querySelector('#finessePrompt');
+            const toggle = document.querySelector('#mainRuleFinesse');
+            const rect = prompt?.getBoundingClientRect();
+            const visible = !!prompt && !prompt.hidden && getComputedStyle(prompt).display !== 'none' &&
+              getComputedStyle(prompt).visibility !== 'hidden' && !!rect && rect.width > 0 && rect.height > 0;
+            const keys = [...(prompt?.querySelectorAll('.finesse-key') || [])];
             return {
               target: t.finesseTarget ? { ...t.finesseTarget } : null,
               actions: t.finesseActions.map(step => ({ ...step })),
               initialProgress: t.finesseProgress,
-              initialStates: t.finesseActions.map((step, i) => i < t.finesseProgress ? 'done' : i === t.finesseProgress ? 'next' : 'pending')
+              initialStates: keys.map(el => [...el.classList].find(name => ['done', 'next', 'pending'].includes(name)) || 'missing'),
+              visiblePrompt: visible,
+              visibleLabels: keys.map(el => el.textContent),
+              toggleChecked: !!toggle?.checked,
+              promptHidden: !!prompt?.hidden
             };
           });
+          assertCheck('finesse-visible-prompt-' + label,
+            before.visiblePrompt && before.toggleChecked && before.visibleLabels.length === before.actions.length &&
+            before.visibleLabels.every(Boolean),
+            JSON.stringify({visible:before.visiblePrompt,toggle:before.toggleChecked,labels:before.visibleLabels,actions:before.actions.length}));
           const replay = await page.evaluate(() => {
             const t = window.trainer;
             const keyEvent = code => ({ code, preventDefault() {} });
@@ -387,6 +401,19 @@ try {
             };
           });
           await capturePageState(page, label + '-after-inputs');
+          const visibleProgress = await page.evaluate(() => {
+            const prompt = document.querySelector('#finessePrompt');
+            const keys = [...(prompt?.querySelectorAll('.finesse-key') || [])];
+            return {
+              visible: !!prompt && !prompt.hidden && getComputedStyle(prompt).display !== 'none',
+              states: keys.map(el => [...el.classList].find(name => ['done', 'next', 'pending'].includes(name)) || 'missing'),
+              labels: keys.map(el => el.textContent)
+            };
+          });
+          assertCheck('finesse-visible-progress-' + label,
+            visibleProgress.visible && visibleProgress.states.filter(state => state === 'done').length === replay.progressAfterInputs &&
+            (replay.progressAfterInputs === before.actions.length || visibleProgress.states.includes('next')),
+            JSON.stringify({progress:replay.progressAfterInputs,states:visibleProgress.states,visible:visibleProgress.visible}));
           const placed = await page.evaluate(() => {
             const t = window.trainer;
             t.hardDrop();
