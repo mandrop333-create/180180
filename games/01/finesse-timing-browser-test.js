@@ -504,11 +504,14 @@ try {
     x:window.trainer.piece?.x,
     dir:window.trainer.moveState.dir,
     elapsed:window.trainer.moveState.elapsed,
+    startedAt:window.trainer.moveState.startedAt,
+    nextRepeatAt:window.trainer.moveState.nextRepeatAt,
     right:window.trainer.downKeys.has(window.trainer.binds.right),
     left:window.trainer.downKeys.has(window.trainer.binds.left)
   }));
-  assert(restored.x===3&&restored.dir===1&&restored.elapsed===0&&restored.right&&!restored.left,
-    'releasing the last-pressed direction did not restore the held opposite direction cleanly: '+JSON.stringify(restored));
+  assert(restored.x===3&&restored.dir===1&&restored.right&&!restored.left&&
+    Math.abs((restored.nextRepeatAt-restored.startedAt)-100)<1,
+    'releasing the last-pressed direction did not restore the held opposite direction with a fresh DAS clock: '+JSON.stringify(restored));
   await page.waitForTimeout(130);
   const afterRestoreDAS=await page.evaluate(()=>({x:window.trainer.piece?.x,dir:window.trainer.moveState.dir}));
   assert(afterRestoreDAS.x>3&&afterRestoreDAS.dir===1,
