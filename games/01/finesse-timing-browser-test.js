@@ -19,14 +19,27 @@ function keyFor(action) {
     : 'a';
 }
 function keyOf(target) { return target.x+','+target.o+','+target.y; }
-function expectedCells(type,target) {
-  return REFERENCE_PIECES[type].orientations[target.o]
-    .map(([x,y])=>[target.x+x,target.y+y])
-    .sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+function expectedBoardAfterLock(board,type,target) {
+  const expected = board.map(row=>[...row]);
+  for (const [dx,dy] of REFERENCE_PIECES[type].orientations[target.o]) {
+    const x=target.x+dx, y=target.y+dy;
+    assert(x>=0&&x<10&&y>=0&&y<20,type+': reference target cell outside board: '+x+','+y);
+    assert(!expected[y][x],type+': reference target overlaps the initial stack at '+x+','+y);
+    expected[y][x]=1;
+  }
+  const kept=expected.filter(row=>!row.every(Boolean));
+  const linesCleared=expected.length-kept.length;
+  while(kept.length<20)kept.unshift(Array(10).fill(0));
+  return {board:kept,linesCleared};
 }
 
-const types = ['I','T'];
-const board = boardFor('empty');
+const scenarios = [
+  {type:'I',boardKind:'empty'},
+  {type:'T',boardKind:'empty'},
+  {type:'T',boardKind:'overhang'},
+  {type:'I',boardKind:'generated-0'},
+  {type:'J',boardKind:'generated-3'}
+];
 
 try {
   await page.goto(baseURL + (baseURL.includes('?')?'&':'?') + 'finesseTiming=1',{
@@ -34,12 +47,14 @@ try {
   });
   await page.waitForFunction(()=>!!window.trainer,null,{timeout:15000});
 
-  for (const type of types) {
+  for (const scenario of scenarios) {
+    const {type,boardKind}=scenario;
+    const board=boardFor(boardKind);
     const spawn = REFERENCE_PIECES[type].spawn;
     const start = {type,x:spawn.x,y:spawn.y,o:0};
     const oracle = referenceTargets({type,start,board,maxCost:2});
 
-    await page.evaluate(({type,spawn})=>{
+    await page.evaluate(({type,spawn,board})=>{
       const t=window.trainer;
       t.reset();
       t.rules.gravity=100;
@@ -47,7 +62,7 @@ try {
       t.rules.das=0;
       t.rules.arr=0;
       t.rules.dcd=0;
-      t.emptyBoard();
+      t.board=board.map(row=>[...row]);
       t.gameOver=false;
       t.piece={type,x:spawn.x,y:spawn.y,o:0};
       t.gravityAcc=0;
@@ -66,7 +81,7 @@ try {
       t.generateFinessePrompt();
       t.emitState();
       t.render();
-    },{type,spawn});
+    },{type,spawn,board});
 
     const planned=await page.evaluate(()=>{
       const t=window.trainer;
@@ -113,20 +128,21 @@ try {
     await page.waitForFunction(()=>window.trainer.stats.piecesPlaced===1,null,{timeout:5000});
     const locked=await page.evaluate(()=>{
       const t=window.trainer;
-      const cells=[];
-      for(let y=0;y<t.H;y++)for(let x=0;x<t.W;x++)if(t.board[y][x])cells.push([x,y]);
-      cells.sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
-      return {cells,perfect:t.stats.finessePerfect,faults:t.stats.finesseFaults,placed:t.stats.piecesPlaced};
+      return {board:t.board.map(row=>[...row]),perfect:t.stats.finessePerfect,faults:t.stats.finesseFaults,
+        placed:t.stats.piecesPlaced,linesCleared:t.stats.linesCleared};
     });
-    assert(JSON.stringify(locked.cells)===JSON.stringify(expectedCells(type,planned.target)),
-      type+': timed route locked unexpected cells '+JSON.stringify(locked.cells));
+    const expected=expectedBoardAfterLock(board,type,planned.target);
+    assert(JSON.stringify(locked.board)===JSON.stringify(expected.board),
+      type+' on '+boardKind+': timed route produced an unexpected final board');
+    assert(locked.linesCleared===expected.linesCleared,
+      type+' on '+boardKind+': line-clear count differs from independent board simulation');
     assert(locked.perfect===1&&locked.faults===0&&locked.placed===1,
-      type+': timing run did not score exactly once: '+JSON.stringify(locked));
-    console.log(JSON.stringify({type,passed:true,gravityMs:100,route:planned.actions,target:planned.target,minimumCost:minimum,lockedCells:locked.cells.length}));
+      type+' on '+boardKind+': timing run did not score exactly once: '+JSON.stringify(locked));
+    console.log(JSON.stringify({type,boardKind,passed:true,gravityMs:100,route:planned.actions,target:planned.target,minimumCost:minimum,linesCleared:locked.linesCleared}));
   }
 
   assert(pageErrors.length===0,'browser page errors: '+JSON.stringify(pageErrors));
-  console.log(JSON.stringify({ok:true,pieces:types.length,finiteGravity:true,pageErrors:pageErrors.length}));
+  console.log(JSON.stringify({ok:true,scenarios:scenarios.length,finiteGravity:true,stackBoards:3,pageErrors:pageErrors.length}));
 } finally {
   await browser.close();
 }
