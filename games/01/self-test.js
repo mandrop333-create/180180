@@ -121,6 +121,23 @@ export function runTrainerSelfTest(){
   assert(routeCost([{action:'hard'}],{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,hardDropCost:1})===1,
     'route cost must honor the active profile hard-drop cost');
   assert(finesseActionCost('left','invalid')===Infinity,'invalid finesse mode must be rejected');
+  assert(finesseActionCost('left','')===Infinity,'empty explicit input modes must be rejected');
+  assert(finesseActionCost('left',null)===Infinity,'null explicit input modes must be rejected');
+  assert(routeCost([{action:'left'}])===1,'omitted input mode must retain the documented tap default');
+  assert(routeCost([{action:'left',mode:''}])===Infinity,'an explicitly empty route mode must not be silently treated as tap');
+  assert(routeCost([{action:'left',mode:null}])===Infinity,'an explicitly null route mode must not be silently treated as tap');
+  assert(finesseActionCost('half','tap',{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,halfTurnCost:0})===Infinity,
+    'zero-cost direct 180 profiles must be rejected');
+  assert(finesseActionCost('half','tap',{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,halfTurnCost:-1})===Infinity,
+    'negative-cost direct 180 profiles must be rejected');
+  assert(finesseActionCost('hard','tap',{...FINESSE_PROFILES.SRS_NORMAL,hardDropCost:-1})===Infinity,
+    'negative hard-drop profile costs must be rejected');
+  assert(finesseActionCost('hard','tap',{...FINESSE_PROFILES.SRS_NORMAL,hardDropCost:0.5})===Infinity,
+    'fractional hard-drop profile costs must be rejected');
+  assert(finesseActionCost('cw','das')===Infinity,'DAS mode must be restricted to horizontal movement');
+  assert(finesseActionCost('half','das')===Infinity,'direct 180 must remain a tap, not a DAS input');
+  assert(finesseActionCost('hard','das')===0&&finesseActionCost('soft','das')===0,
+    'drop and vertical events must remain finesse-neutral regardless of input-mode annotation');
   assert(finesseActionCost('left','DAS',FINESSE_PROFILES.SRS_NORMAL)===1,'input modes must normalize case before profile checks');
   assert(finesseActionCost('left','das',{...FINESSE_PROFILES.SRS_NORMAL,dasCountsAsOneInput:false})===Infinity,
     'profiles without DAS-as-one-input must reject DAS routes');
@@ -227,6 +244,20 @@ export function runTrainerSelfTest(){
     tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf),
     maxCost:2
   });
+  const malformedLimitBase={
+    piece:{type:'O',x:4,y:0,o:0},board:routeRegressionBoard,W:10,H:20,cellsFor,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
+  };
+  assert(enumerateFinesseTargets({...malformedLimitBase,maxCost:-1}).length===0,
+    'negative finesse search limits must not produce zero-cost placements');
+  assert(enumerateFinesseTargets({...malformedLimitBase,maxCost:1.5}).length===0,
+    'fractional finesse search limits must be rejected rather than rounded implicitly');
+  assert(enumerateFinesseTargets({...malformedLimitBase,
+    profile:{...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxCost:1.5}}).length===0,
+    'fractional profile search limits must be rejected instead of silently using a default');
+  assert(planFinesse({...malformedLimitBase,maxCost:-1})===null,
+    'planFinesse must fail closed for an invalid explicit search limit');
   const rightWallTarget=routeRegressionTargets.find(t=>t.target.x===8&&t.target.o===0);
   assert(rightWallTarget&&rightWallTarget.cost===1&&rightWallTarget.route.length===1&&
     rightWallTarget.route[0].action==='right'&&rightWallTarget.route[0].mode==='das',
@@ -238,7 +269,37 @@ export function runTrainerSelfTest(){
   });
   assert(allRegressionRoutes.length===routeRegressionTargets.length,
     'minimumRoutesForTargets must return every reachable physical target, not just one selected plan');
+  assert(allRegressionRoutes.every(target=>Array.isArray(target.routes)&&target.routes.length>=1),
+    'every reachable target must expose at least one minimum-cost route');
+  assert(allRegressionRoutes.every(target=>target.routes.every(route=>route.length===target.cost)),
+    'every retained route must match the target minimum cost');
+  assert(allRegressionRoutes.every(target=>new Set(target.routes.map(route=>route.map(step=>step.action+':'+step.mode).join('|'))).size===target.routes.length),
+    'equal-cost route candidates must be distinct by action and input mode');
 
+  // Equivalent-route regression: the same physical target can be reached by
+  // moving then rotating or rotating then moving. Both routes are minimum-cost
+  // and must remain available to the runtime observer.
+  const equivalentStart={type:'T',x:3,y:0,o:0};
+  const equivalentProfile={...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,
+    supportsDirectHalfTurn:false,dasCountsAsOneInput:false};
+  const equivalentOptions={
+    piece:equivalentStart,board:routeRegressionBoard,W:10,H:20,cellsFor,maxCost:2,
+    profile:equivalentProfile,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
+  };
+  const equivalentTargets=enumerateFinesseTargets(equivalentOptions);
+  const hardestEquivalentTargets=equivalentTargets.filter(target=>target.cost===equivalentTargets[0]?.cost);
+  const alternativeTargetIndex=hardestEquivalentTargets.findIndex(target=>target.routes.length>1);
+  assert(alternativeTargetIndex>=0,
+    'planner must retain multiple equal-cost routes to at least one challenging physical target');
+  const equivalentPlan=planFinesse({...equivalentOptions,seed:alternativeTargetIndex});
+  assert(equivalentPlan&&equivalentPlan.routes?.length>1,
+    'planner must expose all equal-cost routes for the selected physical target');
+  const alternateRoute=equivalentPlan.routes.find(route=>
+    route.map(step=>step.action+':'+step.mode).join('|')!==equivalentPlan.actions.map(step=>step.action+':'+step.mode).join('|'));
+  assert(alternateRoute&&alternateRoute.length===equivalentPlan.cost,
+    'an alternative route must remain minimum-cost');
   // O-piece regression: a square has no meaningful rotation. Even when the
   // supplied rotation transition would mutate orientation metadata, the
   // planner must never include rotation in its recommended route.
@@ -323,9 +384,14 @@ export function runTrainerSelfTest(){
   // Finesse math contract: the scoring layer counts deliberate inputs, not
   // simulated frames or individual ARR movements. Hard drop remains free.
   assert(routeCost([{action:'left'},{action:'cw'}])===2,'finesse route cost must count deliberate inputs');
+  assert(routeCost(null)===Infinity,'a malformed route container must be rejected, not treated as a zero-cost route');
   assert(routeCost([{action:'left',mode:'das'}])===1,'DAS must count as one deliberate input');
   assert(placementKey({x:3,o:1,y:17})==='3,1,17','finesse placement key must include landing position');
   assert(isFinessePerfect([{action:'left'},{action:'cw'}],2),'minimum-cost route equality failed');
+  assert(!isFinessePerfect([{action:'invalid'}],Infinity),
+    'an invalid infinite-cost route must never be marked finesse-perfect');
+  assert(!isFinessePerfect([{action:'left'}],-1)&&!isFinessePerfect([{action:'left'}],NaN),
+    'finesse-perfect comparisons require a finite nonnegative target cost');
   const direct180Profile=profileFor();
   assert(direct180Profile===FINESSE_PROFILES.TETRIO_SRS_PLUS_180,'default finesse profile must match the game rotation system');
   assert(direct180Profile.supportsDirectHalfTurn===true,'direct 180 must be explicit in the game finesse profile');
@@ -366,6 +432,106 @@ export function runTrainerSelfTest(){
   // across all seven pieces, every recommended action must execute through the
   // game's actual collision and kick functions and land on the advertised target.
   const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
+  const alternateRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
+  alternateRuntime.emptyBoard();
+  alternateRuntime.piece={...equivalentStart};
+  alternateRuntime.placed=alternativeTargetIndex;
+  alternateRuntime.generateFinessePrompt();
+  assert(alternateRuntime.finesseTarget.x===equivalentPlan.target.x&&
+    alternateRuntime.finesseTarget.o===equivalentPlan.target.o&&
+    alternateRuntime.finesseTarget.y===equivalentPlan.target.y,
+    'runtime must select the same physical target as the planner');
+  for(const step of alternateRoute){
+    const code=alternateRuntime.binds[step.action];
+    alternateRuntime.handleKeydown(keyEvent(code));
+    alternateRuntime.handleKeyup(keyEvent(code));
+  }
+  alternateRuntime.hardDrop();
+  assert(alternateRuntime.stats.finessePerfect===1&&alternateRuntime.stats.finesseFaults===0,
+    'runtime must accept an alternate equal-cost route and confirm its physical landing');
+
+  // DAS runtime regression: a held horizontal input must remain pending until
+  // the piece reaches the wall, then count as one deliberate finesse input.
+  const dasProfile={...FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxCost:1};
+  const dasOptions={
+    piece:{type:'O',x:7,y:0,o:0},board:emptyBoard,W:10,H:20,cellsFor,maxCost:1,profile:dasProfile,
+    move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
+    tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
+  };
+  const dasTargets=enumerateFinesseTargets(dasOptions);
+  const hardestDAS=dasTargets.filter(target=>target.cost===dasTargets[0]?.cost);
+  const rightWallIndex=hardestDAS.findIndex(target=>target.target.x===8&&target.route.length===1&&target.route[0].mode==='das');
+  assert(rightWallIndex>=0,'DAS regression must identify the one-input right-wall target');
+  const dasRuntime=new Trainer(null,{mode:{id:'self-test-das',rules:{finesseProfile:dasProfile},hooks:{}},
+    generator:testGenerator,deferInit:true,finesseEnabled:true});
+  dasRuntime.emptyBoard();
+  dasRuntime.piece={type:'O',x:7,y:0,o:0};
+  dasRuntime.placed=rightWallIndex;
+  dasRuntime.rules.das=0;
+  dasRuntime.rules.arr=0;
+  dasRuntime.generateFinessePrompt();
+  assert(dasRuntime.finesseTarget.x===8&&dasRuntime.finesseActions[0]?.mode==='das',
+    'runtime must display the intended DAS wall route');
+  dasRuntime.handleKeydown(keyEvent(dasRuntime.binds.right));
+  assert(dasRuntime.finesseRouteCandidates.some(candidate=>
+    candidate.pendingDasAction==='right'&&candidate.progress===0),
+    'reaching the wall on the initial keydown must not prematurely confirm a held DAS route');
+  while(dasRuntime.movePiece(1,0)){}
+  dasRuntime.observeFinesseDAS('right',{confirmedHold:true});
+  dasRuntime.handleKeyup(keyEvent(dasRuntime.binds.right));
+  dasRuntime.hardDrop();
+  assert(dasRuntime.stats.finessePerfect===1&&dasRuntime.stats.finesseFaults===0,
+    'runtime must accept held-to-wall DAS as one deliberate input');
+
+
+  // DAS runtime timing regression: wall contact on keydown and a single
+  // animation frame must not confirm a held route before the configured DAS
+  // threshold. The same held input may confirm after the threshold is crossed.
+  const gatedDASRuntime=new Trainer(null,{mode:{id:'self-test-das-gated',rules:{finesseProfile:dasProfile},hooks:{}},
+    generator:testGenerator,deferInit:true,finesseEnabled:true});
+  gatedDASRuntime.emptyBoard();
+  gatedDASRuntime.piece={type:'O',x:7,y:0,o:0};
+  gatedDASRuntime.placed=rightWallIndex;
+  gatedDASRuntime.rules.das=100;
+  gatedDASRuntime.rules.arr=0;
+  gatedDASRuntime.rules.gravity=Infinity;
+  gatedDASRuntime.generateFinessePrompt();
+  gatedDASRuntime.handleKeydown(keyEvent(gatedDASRuntime.binds.right));
+  assert(gatedDASRuntime.finesseRouteCandidates.some(candidate=>
+    candidate.pendingDasAction==='right'&&candidate.progress===0),
+    'DAS interpretation must remain pending immediately after wall contact');
+  gatedDASRuntime.moveState.startedAt=1000;
+  gatedDASRuntime.moveState.nextRepeatAt=1100;
+  gatedDASRuntime.lastTime=1000;
+  // This unit test exercises the engine clock without constructing DOM nodes.
+  gatedDASRuntime.flushRender=()=>{};
+  gatedDASRuntime.tick(1050);
+  assert(gatedDASRuntime.finesseRouteCandidates.some(candidate=>
+    candidate.pendingDasAction==='right'&&candidate.progress===0),
+    'DAS must not confirm before the configured hold threshold');
+  gatedDASRuntime.tick(1101);
+  assert(!gatedDASRuntime.finesseRouteCandidates.some(candidate=>candidate.pendingDasAction==='right')&&
+    gatedDASRuntime.finesseRouteCandidates.some(candidate=>candidate.progress===candidate.route.length),
+    'DAS may confirm after the configured hold threshold while the key remains held');
+  gatedDASRuntime.handleKeyup(keyEvent(gatedDASRuntime.binds.right));
+  gatedDASRuntime.hardDrop();
+  assert(gatedDASRuntime.stats.finessePerfect===1&&gatedDASRuntime.stats.finesseFaults===0,
+    'DAS hold-threshold confirmation must preserve perfect lock-time scoring');
+
+  // Focus loss may not leave a pending DAS interpretation alive. Browsers do
+  // not guarantee keyup after blur, so blur must resolve pending modes itself.
+  const blurDASRuntime=new Trainer(null,{mode:{id:'self-test-das-blur',rules:{finesseProfile:dasProfile},hooks:{}},
+    generator:testGenerator,deferInit:true,finesseEnabled:true});
+  blurDASRuntime.emptyBoard();
+  blurDASRuntime.piece={type:'O',x:7,y:0,o:0};
+  blurDASRuntime.placed=rightWallIndex;
+  blurDASRuntime.rules.das=100;
+  blurDASRuntime.generateFinessePrompt();
+  blurDASRuntime.handleKeydown(keyEvent(blurDASRuntime.binds.right));
+  blurDASRuntime.handleBlur();
+  assert(!blurDASRuntime.finesseRouteCandidates.some(candidate=>candidate.pendingDasAction),
+    'focus loss must clear pending DAS candidates instead of falsely confirming a hold');
+
   let checkedPlans=0;
   for(const type of PIECE_TYPES){
     for(let o=0;o<(type==='O'?1:4);o++){

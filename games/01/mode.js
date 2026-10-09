@@ -1,4 +1,5 @@
 import { SevenBagGenerator } from './generator.js';
+import { FINESSE_PROFILES } from './finesse-rules.js';
 
 class JOLGenerator {
   constructor(){this.reset();}
@@ -17,7 +18,7 @@ const modeHooks={
 const meta={id:'mode-01',number:1,name:"180 Flip",description:"Train the 180° rotation as one deliberate movement"};
 export default {
   ...meta,
-  rules:{},
+  rules:{finesseProfile:FINESSE_PROFILES.TETRIO_SRS_PLUS_180},
   hooks:modeHooks,
   createSession:createBonusState,
   createGenerator:({seed}={})=>{try{if(localStorage.getItem('180180.jolOnly')==='1')return new JOLGenerator();}catch{}return new SevenBagGenerator({seed})}
