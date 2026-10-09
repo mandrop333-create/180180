@@ -80,6 +80,14 @@ function boardFor(kind) {
     for (let y = H - 2; y < H; y++) board[y][1] = 1;
     for (let y = H - 3; y < H; y++) board[y][8] = 1;
     for (let y = H - 5; y < H; y++) board[y][9] = 1;
+  } else if (kind === 'overhang') {
+    // A roof with a narrow opening, side walls, and a split floor.
+    for (let x = 2; x <= 7; x++) if (x !== 4 && x !== 5) board[H - 6][x] = 1;
+    for (let y = H - 5; y < H - 1; y++) {
+      board[y][2] = 1;
+      board[y][7] = 1;
+    }
+    for (let x = 0; x < W; x++) if (x !== 4 && x !== 5) board[H - 1][x] = 1;
   }
   return board;
 }
@@ -140,7 +148,7 @@ export function runIndependentFinesseOracleTests() {
       collisionStates++;
     }
   }
-  for (const boardKind of ['empty','split-well','side-towers']) {
+  for (const boardKind of ['empty','split-well','side-towers','overhang']) {
     const board = boardFor(boardKind);
     for (const type of TYPES) {
       const start = { type, x:4, y:0, o:0 };
@@ -164,7 +172,7 @@ export function runIndependentFinesseOracleTests() {
       fixtures++;
     }
   }
-  return { ok:true, fixtures, comparedTargets, collisionStates, boards:3, pieces:7, maxCost:2, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
+  return { ok:true, fixtures, comparedTargets, collisionStates, boards:4, pieces:7, maxCost:2, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
