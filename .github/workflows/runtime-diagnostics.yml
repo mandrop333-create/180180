@@ -2,7 +2,7 @@ name: Runtime diagnostics browser smoke test
 
 on:
   push:
-    branches: ["feature/runtime-diagnostics"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: runtime-diagnostics-${{ github.ref }}
+  group: runtime-diagnostics-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
