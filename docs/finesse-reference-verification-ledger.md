@@ -7,6 +7,8 @@ This ledger records what has been checked and what remains unproven. An in-repos
 - Added `games/01/finesse-reference-fixtures.js`: static expected cell coordinates and spawn origins for all seven pieces and four orientations.
 - Added `games/01/finesse-reference-test.js`: compares production geometry to separately authored constants, checks four cells per orientation, duplicate cells, spawn origins, and orientation arithmetic.
 - Added `.github/workflows/finesse-reference-tests.yml`.
+- Added `games/01/finesse-kick-reference-fixtures.js` and `games/01/finesse-kick-reference-test.js` for static SRS+ I-piece 90° and direct-180 kick-order fixtures.
+- Corrected the production I-piece kick arrays on this isolated branch to match the normalized reference fixture; updated the colocated regression expectations so the old vanilla-SRS I table is no longer mislabelled as SRS+.
 - **Verified CI:** [reference-fixture workflow](https://github.com/mandrop333-create/180180/actions/runs/37982829776) passed on commit `b6e54b8d8d091539e7322578ba2ee3f25fe67e26`. This proves the test ran and passed, not that every reference convention is externally canonical.
 - **Verified Playwright run:** [prompt-requested Playwright run](https://github.com/mandrop333-create/180180/actions/runs/37982829570) passed on the same isolated branch. It exercised the current game locally in Chromium, including finesse prompts, equal-cost alternate routes, tap-versus-DAS equivalence, and lock/scoring assertions across piece/board fixtures. It did not test the deployed live site.
 - **Important Playwright limitation:** the existing browser harness obtains targets/routes from production `enumerateFinesseTargets`, and installs alternate routes returned by that same planner. It is useful for checking UI/input-observer/lock integration, but it cannot independently prove that the planner found the true minimum or that its kick tables are correct. The harness must be extended to consume independent expected fixtures and to fail if the planner disagrees with them.
@@ -28,6 +30,8 @@ This ledger records what has been checked and what remains unproven. An in-repos
 
 ## Findings that need follow-up
 
+- The first run of the planner regression suite failed immediately after the kick change because the existing self-test still asserted the old I-kick table. That assertion was updated to the independent reference, and the latest run passed.
+
 - The current I-piece 90-degree arrays appear to follow a conventional SRS ordering in several transitions, while the third-party SRS+ reference documents a different order. This is a **candidate mismatch**, not yet a confirmed bug, because coordinate/origin conventions and transition naming must first be reconciled.
 - The current I-piece 180 arrays also look different from the third-party SRS+ reference at a raw-offset level. Do not copy values blindly: normalize rotation centers, piece origins, and screen-y-down versus mathematical-y-up coordinates first.
 - Current Playwright success is evidence that the existing implementation is internally consistent for its tested cases; it is not evidence that the underlying finesse minima or kick rules are correct.
@@ -38,8 +42,10 @@ This ledger records what has been checked and what remains unproven. An in-repos
 |---|---|---|
 | Seven piece shapes/orientations | Initial fixture test passes; external fixture provenance still needs review | Static cells are compared to production definitions; canonical diagram and pivot conventions still need review |
 | Spawn origins | Internal fixture test passes | External engine-specific spawn origin is not yet proven |
-| SRS+ 90-degree kicks | Not verified | Every transition and ordered test must be reconciled against reference data |
-| Direct 180 kicks | Not verified | Each piece/orientation's ordered tests must be transcribed and normalized |
+| SRS+ I-piece 90-degree kicks | Reference fixture added and CI passed | Eight ordered transitions match a third-party S-Finder SRS+ reference after vertical-coordinate normalization; this is a cross-check, not an official implementation |
+| SRS+ I-piece direct 180 kicks | Reference fixture added and CI passed | Four orientation-specific ordered tables match the same third-party source after vertical-coordinate normalization; full piece/pivot validation remains open |
+| JLSTZ 90-degree kicks | Not independently verified against a TETR.IO-specific fixture | Current table matches conventional SRS; confirm SRS+ semantics do not alter these transitions |
+| JLSTZ direct 180 kicks | Cross-checked, not fully independently tested | Current arrays align with the S-Finder SRSPlus table after vertical sign conversion; add a static fixture test for all ordered entries |
 | Collision/top-out behavior | Not independently verified | Need explicit boundary, stack, overhang, and top-out fixtures |
 | Minimum route/finesse cost | Not independently verified | Need a separate shortest-path oracle and curated board-state fixtures |
 | DAS/ARR/lock timing | Partially exercised by current Playwright; not independently verified | Need declared timing assumptions and tests against those assumptions |
