@@ -44,6 +44,10 @@ try {
   if (missing.length) throw new Error('Missing diagnostic event types: ' + missing.join(', '));
   if (report.schema !== '180180-runtime-diagnostics/v1') throw new Error('Unexpected diagnostics schema');
   if (report.eventCount < required.length) throw new Error('Diagnostic report is unexpectedly small');
+  const initialState = report.events.find(event => event.type === 'initial-state');
+  if (!initialState?.data?.finesse || typeof initialState.data.finesse.progress !== 'number' || typeof initialState.data.finesse.mistakes !== 'number') {
+    throw new Error('Initial report is missing Finesse progress/mistake state');
+  }
   if (pageErrors.length) throw new Error('Browser page errors: ' + pageErrors.join(' | '));
   if (report.events.some(event => event.type === 'runtime-error' || event.type === 'unhandled-rejection')) {
     throw new Error('Runtime error was captured during the browser smoke test');
