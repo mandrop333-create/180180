@@ -78,10 +78,18 @@ export function finesseActionCost(action,mode='tap',profile=FINESSE_PROFILES.TET
   if(normalizedMode==='das'&&
     !['left','right','hard','soft','gravity'].includes(normalizedAction))return Infinity;
   if(normalizedAction==='half'){
-    if(profile.supportsDirectHalfTurn!==true||!Number.isFinite(profile.halfTurnCost))return Infinity;
+    // Every deliberate rotation has a positive integer input cost. Reject
+    // malformed custom profiles rather than letting zero/negative costs break
+    // shortest-path ordering or make an invalid route look perfect.
+    if(profile.supportsDirectHalfTurn!==true||!Number.isInteger(profile.halfTurnCost)||profile.halfTurnCost<=0)return Infinity;
     return profile.halfTurnCost;
   }
-  if(normalizedAction==='hard')return Number.isFinite(profile.hardDropCost)?profile.hardDropCost:0;
+  if(normalizedAction==='hard'){
+    // Missing hardDropCost retains the legacy default of zero; an explicitly
+    // configured invalid cost is a profile error, not a free drop.
+    if(!Object.prototype.hasOwnProperty.call(profile,'hardDropCost'))return 0;
+    return Number.isInteger(profile.hardDropCost)&&profile.hardDropCost>=0?profile.hardDropCost:Infinity;
+  }
   return finesseInputCost(normalizedAction);
 }
 
@@ -269,7 +277,7 @@ export function routeCost(route=[],profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180)
   let cost=0;
   for(const step of route){
     const action=typeof step==='string'?step:step?.action;
-    const mode=typeof step==='string'?'tap':(step?.mode||'tap');
+    const mode=typeof step==='string'?'tap':(step&&Object.prototype.hasOwnProperty.call(step,'mode')?step.mode:'tap');
     const stepCost=finesseActionCost(action,mode,profile);
     if(!Number.isFinite(stepCost))return Infinity;
     cost+=stepCost;
