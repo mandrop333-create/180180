@@ -123,5 +123,5 @@ console.log(JSON.stringify({
   ok: true,
   cases: CASES.length + BLOCKED_CASES.length,
   sourceAsset: SOURCE_ASSET,
-  scope: '12 empty-board I turns plus 2 pinned blocked/floor-kick landing outcomes; candidate-index parity is not asserted'
+  scope: '12 empty-board I turns plus 6 pinned blocked/edge/floor landing outcomes; candidate-index parity is not asserted'
 }));
