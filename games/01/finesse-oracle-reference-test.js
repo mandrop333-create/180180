@@ -171,10 +171,9 @@ export function referenceTargets({ type, start, board, maxCost = 2 }) {
  * navigation before a horizontal move or rotation. Navigation steps are
  * recorded in executionRoute but excluded from finesseRoute and cost.
  *
- * This is kept separate from referenceTargets until the production planner
- * and browser observer support the same two-route contract.
+ * This independent oracle is used by both route-level and browser tests.
  */
-export export function referenceNavigationTargets({type,start,board,maxCost=2}) {
+export function referenceNavigationTargets({type,start,board,maxCost=2}) {
   const actions = [
     {action:'left',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,-1,0,board)?n:null;}},
     {action:'right',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,1,0,board)?n:null;}},
