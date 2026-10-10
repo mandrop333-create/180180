@@ -14,12 +14,13 @@ if (!homepageResponse.ok) {
   throw new Error('TETR.IO homepage request failed: HTTP ' + homepageResponse.status);
 }
 const homepage = await homepageResponse.text();
-const assets = [...new Set([...homepage.matchAll(/\/js\/tetrio\.js\?hv=([^"'&<>\\\s]+)/g)]
-  .map(match => 'https://tetr.io/js/tetrio.js?hv=' + match[1]))];
-if (assets.length !== 1) {
-  throw new Error('Expected exactly one advertised TETR.IO client asset; found ' + assets.length);
+// The homepage may advertise the version token outside a literal script URL.
+// Match the same hv token used by the freshness guard, then build the canonical URL.
+const versions = [...new Set([...homepage.matchAll(/\\bhv=([^"&<>]+)/g)].map(match => match[1]))];
+if (versions.length !== 1) {
+  throw new Error('Expected exactly one TETR.IO homepage asset version; found ' + versions.length);
 }
-const asset = new URL(assets[0]);
+const asset = new URL('https://tetr.io/js/tetrio.js?hv=' + versions[0]);
 if (asset.hostname !== 'tetr.io' || asset.pathname !== '/js/tetrio.js' || !asset.searchParams.get('hv')) {
   throw new Error('Homepage advertised an unexpected client asset URL: ' + asset.href);
 }
