@@ -49,9 +49,51 @@ for (const testCase of CASES) {
   );
 }
 
+
+const BLOCKED_CASES = [
+  {
+    name: 'I 1 CW wall/stack kick (pinned random-1718, source kick index 1)',
+    from: { rotation: 1, x: 1, y: 5 },
+    direction: 1,
+    rows: [789, 92, 400, 119, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    expected: { rotation: 2, x: 1, y: 6 }
+  },
+  {
+    name: 'I 2 CCW floor kick (pinned random-2021, source kick index 2)',
+    from: { rotation: 2, x: 6, y: 0 },
+    direction: -1,
+    rows: Array(20).fill(0),
+    expected: { rotation: 1, x: 6, y: 0 }
+  }
+];
+
+function boardFromNativeRows(rows) {
+  const board = Array.from({ length: TOTAL_HEIGHT }, () => Array(W).fill(0));
+  for (let nativeY = 0; nativeY < rows.length; nativeY += 1) {
+    for (let x = 0; x < W; x += 1) {
+      if ((rows[nativeY] & (1 << x)) !== 0) board[TOTAL_HEIGHT - 1 - nativeY][x] = 1;
+    }
+  }
+  return board;
+}
+
+for (const testCase of BLOCKED_CASES) {
+  const from = nativeToLocalOrigin('I', testCase.from);
+  const expected = nativeToLocalOrigin('I', testCase.expected);
+  const piece = { type: 'I', ...from, o: testCase.from.rotation };
+  const board = boardFromNativeRows(testCase.rows);
+  assert.equal(tryRotate(piece, testCase.direction, board, W, H, cellsForReference), true,
+    testCase.name + ': reference rotation should succeed');
+  assert.deepEqual(
+    { x: piece.x, y: piece.y, rotation: piece.o },
+    { ...expected, rotation: testCase.expected.rotation },
+    testCase.name + ': local landing must match pinned TETR.IO snapshot'
+  );
+}
+
 console.log(JSON.stringify({
   ok: true,
-  cases: CASES.length,
+  cases: CASES.length + BLOCKED_CASES.length,
   sourceAsset: SOURCE_ASSET,
   scope: 'empty-board I-piece quarter-turns and direct 180; no blocked-kick parity claim'
 }));
