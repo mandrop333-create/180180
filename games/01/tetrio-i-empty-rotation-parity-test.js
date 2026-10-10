@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { tryRotate } from './rotation.js';
+import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
 
 // These empty-board I-piece transitions are copied from the pinned TETR.IO
@@ -53,6 +54,7 @@ for (const testCase of CASES) {
 const BLOCKED_CASES = [
   {
     name: 'I 1 CW wall/stack kick (pinned random-1718, source kick index 1)',
+    sourceKickIndex: 1,
     from: { rotation: 1, x: 1, y: 5 },
     direction: 1,
     rows: [789, 92, 400, 119, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -60,6 +62,7 @@ const BLOCKED_CASES = [
   },
   {
     name: 'I 2 CCW floor kick (pinned random-2021, source kick index 2)',
+    sourceKickIndex: 2,
     from: { rotation: 2, x: 6, y: 0 },
     direction: -1,
     rows: Array(20).fill(0),
@@ -67,6 +70,7 @@ const BLOCKED_CASES = [
   },
   {
     name: 'I 0 180 floor kick (pinned random-1313, source kick index 0)',
+    sourceKickIndex: 0,
     from: { rotation: 0, x: 6, y: 0 },
     direction: 2,
     rows: [26, 2, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -74,6 +78,7 @@ const BLOCKED_CASES = [
   },
   {
     name: 'I 2 180 stack kick (pinned random-1478, source kick index 0)',
+    sourceKickIndex: 0,
     from: { rotation: 2, x: 2, y: 5 },
     direction: 2,
     rows: [412, 514, 640, 812, 688, 512, 848, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -81,6 +86,7 @@ const BLOCKED_CASES = [
   },
   {
     name: 'I 3 180 wall/stack kick (pinned random-1922, source kick index 0)',
+    sourceKickIndex: 0,
     from: { rotation: 3, x: 9, y: 2 },
     direction: 2,
     rows: [672, 360, 0, 150, 50, 2, 635, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -88,6 +94,7 @@ const BLOCKED_CASES = [
   },
   {
     name: 'I 2 180 stack kick (pinned random-2037, source kick index 0)',
+    sourceKickIndex: 0,
     from: { rotation: 2, x: 0, y: 1 },
     direction: 2,
     rows: [137, 160, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -117,11 +124,21 @@ for (const testCase of BLOCKED_CASES) {
     { ...expected, rotation: testCase.expected.rotation },
     testCase.name + ': local landing must match pinned TETR.IO snapshot'
   );
+
+  // The pinned client kickIndex counts only non-zero source candidates; the
+  // trainer's ordered arrays include the direct destination at index 0.
+  const candidates = testCase.direction === 2 || testCase.direction === -2
+    ? getTetrio180Kicks('I', testCase.from.rotation)
+    : getSrsKicks('I', testCase.from.rotation, testCase.expected.rotation);
+  const selectedLocalIndex = candidates.findIndex(([dx, dy]) =>
+    dx === piece.x - from.x && dy === piece.y - from.y);
+  assert.equal(selectedLocalIndex, testCase.sourceKickIndex + 1,
+    testCase.name + ': selected trainer candidate must correspond to pinned source kickIndex');
 }
 
 console.log(JSON.stringify({
   ok: true,
   cases: CASES.length + BLOCKED_CASES.length,
   sourceAsset: SOURCE_ASSET,
-  scope: '12 empty-board I turns plus 6 pinned blocked/edge/floor landing outcomes; candidate-index parity is not asserted'
+  scope: '12 empty-board I turns plus 6 pinned blocked/edge/floor outcomes; local selected-candidate indices map to pinned raw kickIndex + 1'
 }));
