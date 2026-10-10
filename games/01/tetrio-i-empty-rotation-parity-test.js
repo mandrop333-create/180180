@@ -64,6 +64,34 @@ const BLOCKED_CASES = [
     direction: -1,
     rows: Array(20).fill(0),
     expected: { rotation: 1, x: 6, y: 0 }
+  },
+  {
+    name: 'I 0 180 floor kick (pinned random-1313, source kick index 0)',
+    from: { rotation: 0, x: 6, y: 0 },
+    direction: 2,
+    rows: [26, 2, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    expected: { rotation: 2, x: 6, y: 0 }
+  },
+  {
+    name: 'I 2 180 stack kick (pinned random-1478, source kick index 0)',
+    from: { rotation: 2, x: 2, y: 5 },
+    direction: 2,
+    rows: [412, 514, 640, 812, 688, 512, 848, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    expected: { rotation: 0, x: 2, y: 5 }
+  },
+  {
+    name: 'I 3 180 wall/stack kick (pinned random-1922, source kick index 0)',
+    from: { rotation: 3, x: 9, y: 2 },
+    direction: 2,
+    rows: [672, 360, 0, 150, 50, 2, 635, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    expected: { rotation: 1, x: 9, y: 2 }
+  },
+  {
+    name: 'I 2 180 stack kick (pinned random-2037, source kick index 0)',
+    from: { rotation: 2, x: 0, y: 1 },
+    direction: 2,
+    rows: [137, 160, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    expected: { rotation: 0, x: 0, y: 1 }
   }
 ];
 
