@@ -68,3 +68,38 @@ jobs:
         env:
           FINESSE_BROWSER_BASE_URL: ${{ github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/playwright-live') && 'https://180436.xyz/' || 'http://127.0.0.1:4173/' }}
         run: node --experimental-default-type=module games/01/finesse-timing-browser-test.js
+
+  finesse-live-readonly-probe:
+    # Diagnostic only: exercise the existing production page without changing
+    # production files or persistent trainer data. Keep separate from local CI.
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout candidate test harness
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Probe current live site with independent route fixtures
+        env:
+          FINESSE_BROWSER_BASE_URL: https://180436.xyz/
+        run: node --experimental-default-type=module games/01/finesse-browser-reference-test.js
+      - name: Probe current live site against planner oracle
+        if: always()
+        env:
+          FINESSE_BROWSER_BASE_URL: https://180436.xyz/
+        run: node --experimental-default-type=module games/01/finesse-planner-browser-oracle-test.js
+      - name: Probe current live site with active gravity
+        if: always()
+        env:
+          FINESSE_BROWSER_BASE_URL: https://180436.xyz/
+        run: node --experimental-default-type=module games/01/finesse-timing-browser-test.js
