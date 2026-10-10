@@ -10,7 +10,7 @@ import {
 // This test now uses the matrices extracted from the exact pinned client asset.
 // It verifies all-piece coordinate round trips against real client matrix data;
 // it is not a movement/kick parity test.
-assert.match(TETRIO_MATRIX_SOURCE.asset, /tetrio\\.js\\?hv=7eebfc9cd/);
+assert.ok(TETRIO_MATRIX_SOURCE.asset.includes('/js/tetrio.js?hv=7eebfc9cd.'), 'must use the exact pinned TETR.IO asset');
 assert.equal(Object.keys(TETRIO_MATRIX_REFERENCE).length, 7);
 
 let checks = 0;
