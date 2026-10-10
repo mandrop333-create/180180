@@ -165,6 +165,68 @@ export function referenceTargets({ type, start, board, maxCost = 2 }) {
   return bestTarget;
 }
 
+
+/**
+ * Expanded independent oracle for routes that use deliberate soft-drop
+ * navigation before a horizontal move or rotation. Navigation steps are
+ * recorded in executionRoute but excluded from finesseRoute and cost.
+ *
+ * This is kept separate from referenceTargets until the production planner
+ * and browser observer support the same two-route contract.
+ */
+export function referenceNavigationTargets({type,start,board,maxCost=2}) {
+  const actions = [
+    {action:'left',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,-1,0,board)?n:null;}},
+    {action:'right',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,1,0,board)?n:null;}},
+    {action:'softDrop',mode:'navigation',cost:0,apply:p=>{const n=copy(p);return referenceMove(n,0,1,board)?n:null;}}
+  ];
+  if(type!=='O') actions.push(
+    {action:'cw',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceRotate(n,1,board)?n:null;}},
+    {action:'ccw',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceRotate(n,-1,board)?n:null;}},
+    {action:'half',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceRotate(n,2,board)?n:null;}}
+  );
+  const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
+    const n=copy(p);let moved=false;
+    for(let i=0;i<W+4;i++){if(!referenceMove(n,dir,0,board))break;moved=true;}
+    return moved?n:null;
+  }});
+  actions.push(wallAction(-1,'left'),wallAction(1,'right'));
+
+  const queue=[{piece:copy(start),cost:0,executionRoute:[],finesseRoute:[]}];
+  const bestState=new Map([[stateKey(start),0]]);
+  const bestTarget=new Map();
+  while(queue.length){
+    queue.sort((a,b)=>a.cost-b.cost||a.executionRoute.length-b.executionRoute.length);
+    const current=queue.shift();
+    const sk=stateKey(current.piece);
+    if(current.cost!==bestState.get(sk))continue;
+    const landing=referenceLanding(current.piece,board);
+    const lockCells=REFERENCE_PIECES[type].orientations[landing.o];
+    if(lockCells.every(([cx,cy])=>landing.y+cy>=0&&landing.y+cy<H)){
+      const target={x:landing.x,o:landing.o,y:landing.y},key=targetKey(target);
+      const candidate={target,cost:current.cost,executionRoute:current.executionRoute,finesseRoute:current.finesseRoute};
+      const prior=bestTarget.get(key);
+      if(!prior||candidate.cost<prior.cost||
+        (candidate.cost===prior.cost&&candidate.executionRoute.length<prior.executionRoute.length))bestTarget.set(key,candidate);
+    }
+    for(const action of actions){
+      const next=action.apply(current.piece);if(!next)continue;
+      const cost=current.cost+action.cost;
+      if(cost>maxCost)continue;
+      const key=stateKey(next),prior=bestState.get(key);
+      if(prior!==undefined&&prior<=cost)continue;
+      bestState.set(key,cost);
+      const step={action:action.action,mode:action.mode};
+      queue.push({
+        piece:next,cost,
+        executionRoute:[...current.executionRoute,step],
+        finesseRoute:action.cost===0?current.finesseRoute:[...current.finesseRoute,step]
+      });
+    }
+  }
+  return bestTarget;
+}
+
 function referenceWeightedTargets({type,start,board,maxCost,halfTurnCost=1}) {
   const actions = [
     {action:'left',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,-1,0,board)?n:null;}},
@@ -269,6 +331,22 @@ export function runIndependentFinesseOracleTests() {
       fixtures++;
     }
   }
+
+  // Navigation-oracle contract: soft-drop steps are preserved in the
+  // executable route but do not contribute to the finesse-scoring route.
+  const navigationTargets=referenceNavigationTargets({
+    type:'T',start:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
+    board:empty,maxCost:2
+  });
+  const navigationExample=[...navigationTargets.values()].find(item=>
+    item.executionRoute.some(step=>step.action==='softDrop'));
+  assert(navigationExample,'navigation oracle failed to preserve any executable soft-drop route');
+  assert(navigationExample.executionRoute.filter(step=>step.action!=='softDrop').length===
+    navigationExample.finesseRoute.length,
+    'navigation route and finesse route disagree about costed actions');
+  assert(navigationExample.finesseRoute.every(step=>step.action!=='softDrop'),
+    'soft-drop navigation leaked into the finesse-scoring route');
+
   // Weighted-cost regression: the search must not assume every action has
   // unit cost. A direct half-turn costing 3 must lose to two quarter-turns
   // costing 1 each for the same physical landing.
