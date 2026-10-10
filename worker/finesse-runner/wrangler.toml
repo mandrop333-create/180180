@@ -1,0 +1,8 @@
+name = "180180-finesse-runner-poc"
+main = "src/index.js"
+compatibility_date = "2026-10-09"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[browser]
+binding = "BROWSER"
