@@ -2,7 +2,7 @@
 
 This ledger records what has been checked and what remains unproven. An in-repository test passing is not the same as matching an external reference, and a browser test using the production planner is not an independent oracle.
 
-## Current verification status — documentation commit `9bddcfdb2ac94dcb4a2f604c2c685288c7164ed7`
+## Current verification status — tested code checkpoint `9bddcfdb2ac94dcb4a2f604c2c685288c7164ed7`; follow-up ledger-only commit `a19c21e2f3fed5afcd85f4b99c0562bc7fedb6b0` triggered a fresh CI cycle
 
 - **PR status:** draft PR [#8](https://github.com/mandrop333-create/180180/pull/8), branch `rebuild/finesse-core`; not merged or deployed.
 - **Current-head CI:** these relevant runs completed successfully against commit `9bddcfdb2ac94dcb4a2f604c2c685288c7164ed7` on 2026-10-10: [planner regressions](https://github.com/mandrop333-create/180180/actions/runs/38083961365), [independent reference fixtures](https://github.com/mandrop333-create/180180/actions/runs/38083961373), [pinned TETR.IO matrix extraction](https://github.com/mandrop333-create/180180/actions/runs/38083961404), [independent Playwright route fixtures](https://github.com/mandrop333-create/180180/actions/runs/38083961387), and [prompt-requested Playwright diagnostics](https://github.com/mandrop333-create/180180/actions/runs/38083961384). A duplicate independent Playwright run also passed: [run](https://github.com/mandrop333-create/180180/actions/runs/38083959414). These are branch CI results; the live-comment resolver was skipped, so they are not verified live-site tests.
