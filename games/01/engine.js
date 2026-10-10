@@ -33,7 +33,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.rhythm=new RhythmTracker(options.calculateRhythm===true);this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.finesseExecutionRoute=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -91,6 +91,7 @@ export class Trainer {
   setFinesseEnabled(enabled){
     this.finesseEnabled=!!enabled;
     this.finesseActions=[];
+    this.finesseExecutionRoute=[];
     this.finesseRouteCandidates=[];
     this.finesseProgress=0;
     this.finesseMistakes=0;
@@ -114,6 +115,7 @@ export class Trainer {
       a.route.map(step=>step.action+':'+step.mode).join('|').localeCompare(b.route.map(step=>step.action+':'+step.mode).join('|')));
     const chosen=ranked[0];
     this.finesseActions=chosen.route.map(step=>({...step}));
+    this.finesseExecutionRoute=(chosen.executionRoute||chosen.route).map(step=>({...step}));
     this.finesseProgress=chosen.progress;
     this.finesseDASPending=chosen.pendingDasAction?{action:chosen.pendingDasAction}:null;
   }
@@ -176,6 +178,7 @@ export class Trainer {
   }
   generateFinessePrompt(){
     this.finesseActions=[];
+    this.finesseExecutionRoute=[];
     this.finesseRouteCandidates=[];
     this.finesseProgress=0;
     this.finesseTarget=null;
@@ -201,9 +204,14 @@ export class Trainer {
     if(!plan)return;
     this.finesseTarget={...plan.target};
     this.finesseActions=plan.actions.map(step=>({...step}));
-    this.finesseRouteCandidates=(plan.routes?.length?plan.routes:[plan.actions]).map(route=>({
-      route:route.map(step=>({...step})),progress:0,pendingDasAction:null
+    const routes=plan.routes?.length?plan.routes:[plan.actions];
+    const executionRoutes=plan.executionRoutes?.length?plan.executionRoutes:[plan.executionRoute||plan.actions];
+    this.finesseRouteCandidates=routes.map((route,index)=>({
+      route:route.map(step=>({...step})),
+      executionRoute:(executionRoutes[index]||plan.executionRoute||route).map(step=>({...step})),
+      progress:0,pendingDasAction:null
     }));
+    this.finesseExecutionRoute=(plan.executionRoute||plan.actions).map(step=>({...step}));
   }
   reapplyHeldHorizontalInput(){
     if(this.gameOver||!this.piece)return;
