@@ -516,6 +516,47 @@ try {
   await page.keyboard.up('ArrowRight');
   console.log(JSON.stringify({oppositeDirections:true,passed:true,afterRestoreX:afterRestoreDAS.x}));
 
+  // Soft drop is a vertical navigation input, not a finesse step. Keep this
+  // invariant explicit before expanding the planner's route domain to include
+  // soft-drop-dependent tucks.
+  await page.evaluate(() => {
+    const t=window.trainer;
+    t.reset();
+    t.rules.gravity=Infinity;
+    t.rules.lockDelay=100000;
+    t.rules.softFactors[0]=1;
+    t.softScale=0;
+    t.rules.das=80;
+    t.rules.arr=0;
+    t.rules.dcd=0;
+    t.gameOver=false;
+    t.emptyBoard();
+    t.piece={type:'T',x:3,y:0,o:0};
+    t.finesseEnabled=true;
+    t.finesseFaulted=false;
+    t.finesseProgress=0;
+    t.generateFinessePrompt();
+    t.emitState();
+    t.render();
+  });
+  const beforeSoftDrop=await page.evaluate(()=>({
+    piece:window.trainer.piece?{...window.trainer.piece}:null,
+    progress:window.trainer.finesseProgress,
+    faulted:window.trainer.finesseFaulted
+  }));
+  await page.keyboard.press('ArrowDown');
+  const afterSoftDrop=await page.evaluate(()=>({
+    piece:window.trainer.piece?{...window.trainer.piece}:null,
+    progress:window.trainer.finesseProgress,
+    faulted:window.trainer.finesseFaulted
+  }));
+  assert(beforeSoftDrop.piece&&afterSoftDrop.piece&&
+    afterSoftDrop.piece.y===beforeSoftDrop.piece.y+1,
+    'single soft-drop press did not advance the active piece exactly one row: '+JSON.stringify({beforeSoftDrop,afterSoftDrop}));
+  assert(afterSoftDrop.progress===beforeSoftDrop.progress&&!afterSoftDrop.faulted,
+    'soft drop was incorrectly counted or faulted as a finesse input: '+JSON.stringify({beforeSoftDrop,afterSoftDrop}));
+  console.log(JSON.stringify({softDropVerticalNavigation:true,softDropExcludedFromFinesseCost:true,passed:true}));
+
   assert(pageErrors.length===0,'browser page errors: '+JSON.stringify(pageErrors));
   console.log(JSON.stringify({ok:true,scenarios:scenarios.length,finiteGravity:true,stackBoards:3,lockDelayReset:true,pageErrors:pageErrors.length}));
 } finally {
