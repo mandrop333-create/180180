@@ -19,14 +19,13 @@ export const REFERENCE_I_SRS_PLUS = Object.freeze({
 });
 
 export const REFERENCE_I_180_SRS_PLUS = Object.freeze({
-  // PROVISIONAL TRAINER-SPACE CANDIDATES, NOT A RAW CLIENT KICK-TABLE FIXTURE.
-  // The extra orientation-anchor candidates are supported by pinned final-state
-  // probes in tetrio-i-empty-rotation-parity-test.js. Candidate indices/order
-  // are still unverified against the raw client kickset.
-  0: [[0,0],[1,1],[1,0],[0,-1]],
-  1: [[0,0],[-1,1],[0,1],[1,0]],
-  2: [[0,0],[-1,-1],[-1,0],[0,1]],
-  3: [[0,0],[1,-1],[0,-1],[-1,0]]
+  // Raw pinned SRS+ I-piece candidates from the exact client kick table,
+  // converted to trainer-local origin offsets using the pinned matrix anchors.
+  // The direct destination is tried first, followed by this single candidate.
+  0: [[0,0],[0,-1]],
+  1: [[0,0],[1,0]],
+  2: [[0,0],[0,1]],
+  3: [[0,0],[-1,0]]
 });
 
  
