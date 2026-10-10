@@ -1,0 +1,16 @@
+{
+  "name": "180180-finesse-runner-poc",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy --config wrangler.toml",
+    "dev": "wrangler dev --config wrangler.toml",
+    "typecheck": "wrangler types --config wrangler.toml"
+  },
+  "dependencies": {
+    "@cloudflare/playwright": "^1.3.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
