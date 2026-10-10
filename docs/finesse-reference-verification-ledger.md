@@ -298,3 +298,18 @@ Added four execution assertions for I-piece direct 180° rotation, one from each
 Also clarified in `finesse-kick-reference-fixtures.js` that the current I direct-180 non-zero arrays are **provisional trainer-space candidates**, not independent TETR.IO client expected values. The pinned May 2026 SRS+ source has one explicit I direct-180 kick `[0,-1]` in client coordinates after the baseline. The remaining adapter must map matrix/pivot/anchor conventions before those values can be compared. Keep non-zero local offsets gated until that differential test exists.
 
 The change is isolated to test coverage and fixture labeling; no production kick values were changed. PR workflows for the new code commit are expected to be the verification gate before further implementation.
+
+## Coordinate-adapter derivation — 2026-10-09
+
+A second pass through the pinned snapshot generator now records the exact transformation to reproduce rather than only the broad requirement. At the client boundary, the generator derives the anchor from the piece's orientation-specific matrix data and `matrix.dx/dy`:
+
+- Native-to-client horizontal anchor: `clientX = nativeX - min(cellX - matrix.dx)`.
+- Native-to-client vertical anchor: `clientY = TOTAL_HEIGHT - 1 - nativeY - max(cellY - matrix.dy) - 0.999999`.
+- Client candidate cell coordinates use `ceil(clientY) + cellY - matrix.dy`; the matrix x coordinate is `clientX + cellX - matrix.dx`.
+- The direct rotation candidate first applies the difference between the destination and source `additional_offsets`. If that candidate is blocked, each ordered kick is combined with the same anchor delta; client kick y uses the generator's `floor(clientY) + 0.1 + kickY` path.
+- Client-to-native conversion is based on the resulting occupied cells, not by copying the client anchor into the trainer origin.
+
+These equations are pinned to `scripts/generate-tetrio-movement-snapshots.ts` at `EdamAme-x/tetris-analyzes@712dc10be43d5a6c54a35b62608ab9f4a2eaa324`. They expose why a generic `piece.x += kickX; piece.y += kickY` port is insufficient: the anchor delta and matrix bounding geometry participate before collision testing.
+
+**Implementation decision:** do not yet port these equations directly into production rotation. The generator's raw matrix is extracted from the pinned JavaScript bundle at generation time and is not present in the checked-in generated kick table; the adapter needs a versioned, auditable per-piece matrix fixture or a reproducible extraction step. Next, add that matrix fixture from the pinned source and unit-test native/client/native round trips for every orientation before differential rotation tests. Keep the production kick tables unchanged until round-trip and occupied-cell parity pass. No merge or deployment.
+
