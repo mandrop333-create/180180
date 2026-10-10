@@ -137,28 +137,49 @@ for (const testCase of BLOCKED_CASES) {
     testCase.name + ': selected trainer candidate must correspond to pinned source kickIndex');
 }
 
-// Synthetic regression: the orientation-1 I-piece 180 turn must use its
-// non-zero [+1, 0] candidate when the direct destination is blocked. The pinned
-// corpus above does not exercise this particular direct-180 orientation.
-{
-  const piece = { type: 'I', x: 3, y: 10, o: 1 };
+// Synthetic regression matrix: force a non-zero I-piece direct-180 kick from
+// every starting orientation. The pinned corpus above does not cover every
+// blocked baseline orientation, so construct one blocker that invalidates the
+// unshifted destination while leaving both the source and first kick legal.
+let syntheticHalfTurnCases = 0;
+for (let fromRotation = 0; fromRotation < 4; fromRotation += 1) {
+  const toRotation = (fromRotation + 2) % 4;
+  const piece = { type: 'I', x: 3, y: 10, o: fromRotation };
+  const kicks = getTetrio180Kicks('I', fromRotation);
+  const [kickX, kickY] = kicks[1];
+  const sourceCells = new Set(cellsForReference('I', fromRotation)
+    .map(([x, y]) => (piece.x + x) + ',' + (piece.y + y)));
+  const baselineCells = cellsForReference('I', toRotation)
+    .map(([x, y]) => [piece.x + x, piece.y + y]);
+  const kickedCells = new Set(cellsForReference('I', toRotation)
+    .map(([x, y]) => (piece.x + kickX + x) + ',' + (piece.y + kickY + y)));
+  const blocker = baselineCells.find(([x, y]) =>
+    !sourceCells.has(x + ',' + y) && !kickedCells.has(x + ',' + y));
+  assert.ok(blocker, 'synthetic I ' + fromRotation + ' 180: must find a blocker unique to the baseline destination');
+
   const board = Array.from({ length: H }, () => Array(W).fill(0));
-  board[11][4] = 1; // Blocks orientation 3 at the unshifted origin, not the source.
-  assert.equal(collides(piece.x, piece.y, 1, board, W, H, cellsForReference, 'I'), false,
-    'synthetic I 1 180: starting piece must be legal');
-  assert.equal(collides(piece.x, piece.y, 3, board, W, H, cellsForReference, 'I'), true,
-    'synthetic I 1 180: baseline destination must be blocked');
-  assert.equal(collides(piece.x + 1, piece.y, 3, board, W, H, cellsForReference, 'I'), false,
-    'synthetic I 1 180: expected +1 kick destination must be legal');
+  board[blocker[1]][blocker[0]] = 1;
+  assert.equal(collides(piece.x, piece.y, fromRotation, board, W, H, cellsForReference, 'I'), false,
+    'synthetic I ' + fromRotation + ' 180: starting piece must be legal');
+  assert.equal(collides(piece.x, piece.y, toRotation, board, W, H, cellsForReference, 'I'), true,
+    'synthetic I ' + fromRotation + ' 180: baseline destination must be blocked');
+  assert.equal(collides(piece.x + kickX, piece.y + kickY, toRotation, board, W, H, cellsForReference, 'I'), false,
+    'synthetic I ' + fromRotation + ' 180: first non-zero kick destination must be legal');
+
   assert.equal(tryRotate(piece, 2, board, W, H, cellsForReference), true,
-    'synthetic I 1 180: direct half-turn should succeed via non-zero kick');
-  assert.deepEqual({ x: piece.x, y: piece.y, rotation: piece.o }, { x: 4, y: 10, rotation: 3 },
-    'synthetic I 1 180: must select the orientation-1 [+1, 0] candidate');
+    'synthetic I ' + fromRotation + ' 180: direct half-turn should succeed via non-zero kick');
+  assert.deepEqual(
+    { x: piece.x, y: piece.y, rotation: piece.o },
+    { x: 3 + kickX, y: 10 + kickY, rotation: toRotation },
+    'synthetic I ' + fromRotation + ' 180: must select the pinned non-zero kick'
+  );
+  syntheticHalfTurnCases += 1;
 }
+assert.equal(syntheticHalfTurnCases, 4, 'all four I-piece direct-180 orientations must be exercised');
 
 console.log(JSON.stringify({
   ok: true,
   cases: CASES.length + BLOCKED_CASES.length + 1,
   sourceAsset: SOURCE_ASSET,
-  scope: '12 empty-board I turns, 6 pinned blocked/edge/floor outcomes, plus a synthetic orientation-1 I half-turn kick regression; pinned outcomes map local candidate index to raw kickIndex + 1'
+  scope: '12 empty-board I turns, 6 pinned blocked/edge/floor outcomes, plus synthetic blocked-baseline direct-180 kick regressions for all four I orientations; pinned outcomes map local candidate index to raw kickIndex + 1'
 }));
