@@ -1,31 +1,55 @@
 #!/usr/bin/env node
-// Fetch the exact pinned TETR.IO bundle and extract matrix fixtures.
+// Fetch the TETR.IO bundle advertised by its live homepage and extract matrix fixtures.
+// By default this creates a review candidate, never the accepted reference fixture.
 // Usage: node scripts/fetch-tetrio-matrix-fixtures.mjs [output-path]
+import { createHash } from 'node:crypto';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-const asset = 'https://tetr.io/js/tetrio.js?hv=7eebfc9cd.987f91854aad.20260504T210001';
-const output = resolve(process.argv[2] ?? 'games/01/tetrio-matrix-reference-fixtures.js');
-const temp = await mkdtemp(join(tmpdir(), 'tetrio-pinned-matrix-'));
+const homepageResponse = await fetch('https://tetr.io/');
+if (!homepageResponse.ok) {
+  throw new Error('TETR.IO homepage request failed: HTTP ' + homepageResponse.status);
+}
+const homepage = await homepageResponse.text();
+const assets = [...new Set([...homepage.matchAll(/\/js\/tetrio\.js\?hv=([^"'&<>\\\s]+)/g)]
+  .map(match => 'https://tetr.io/js/tetrio.js?hv=' + match[1]))];
+if (assets.length !== 1) {
+  throw new Error('Expected exactly one advertised TETR.IO client asset; found ' + assets.length);
+}
+const asset = new URL(assets[0]);
+if (asset.hostname !== 'tetr.io' || asset.pathname !== '/js/tetrio.js' || !asset.searchParams.get('hv')) {
+  throw new Error('Homepage advertised an unexpected client asset URL: ' + asset.href);
+}
+const output = resolve(process.argv[2] ?? 'games/01/tetrio-matrix-reference-candidate.js');
+const temp = await mkdtemp(join(tmpdir(), 'tetrio-current-matrix-'));
 const bundlePath = join(temp, 'tetrio.js');
 try {
-  const response = await fetch(asset, { redirect: 'follow' });
+  const response = await fetch(asset.href, { redirect: 'follow' });
   if (!response.ok) {
-    throw new Error('Pinned asset request failed: HTTP ' + response.status + ' ' + response.statusText);
+    throw new Error('Current asset request failed: HTTP ' + response.status + ' ' + response.statusText);
   }
-  const body = await response.text();
-  if (!body.includes('tetrominoes')) {
-    throw new Error('Pinned asset response does not contain the expected tetrominoes table; refusing to extract.');
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const body = bytes.toString('utf8');
+  if (!body.includes('tetrominoes') || !body.includes('kicksets')) {
+    throw new Error('Current asset is missing expected movement tables; refusing to extract.');
   }
-  await writeFile(bundlePath, body, 'utf8');
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  const fetchedAt = new Date().toISOString();
+  await writeFile(bundlePath, bytes);
   const extractor = fileURLToPath(new URL('./extract-tetrio-matrix-fixtures.mjs', import.meta.url));
-  const result = spawnSync(process.execPath, [extractor, bundlePath, output], { stdio: 'inherit' });
+  const result = spawnSync(process.execPath, [
+    extractor, bundlePath, output, asset.href, fetchedAt, sha256
+  ], { stdio: 'inherit' });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error('Matrix extraction failed with exit code ' + result.status);
-  console.log('Pinned bundle fetched and processed: ' + asset);
+  console.log('Current TETR.IO matrix candidate generated: ' + output);
+  console.log('Asset: ' + asset.href);
+  console.log('Fetched at: ' + fetchedAt);
+  console.log('Bundle SHA-256: ' + sha256);
+  console.log('Review candidate against movement snapshots before promoting it to the accepted fixture.');
 } finally {
   await rm(temp, { recursive: true, force: true });
 }
