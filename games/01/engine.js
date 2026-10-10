@@ -172,8 +172,11 @@ export class Trainer {
   }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
-    const code=this.binds?.[action];
-    const key=keyNames[code]||String(code||action).replace(/^Key/,'').replace(/^Digit/,'');
+    // Navigation routes call this step "softDrop", while the player's
+    // configured input binding is named "soft".
+    const bindAction=action==='softDrop'?'soft':action;
+    const code=this.binds?.[bindAction];
+    const key=keyNames[code]||String(code||bindAction).replace(/^Key/,'').replace(/^Digit/,'');
     return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
   }
   generateFinessePrompt(){

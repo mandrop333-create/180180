@@ -389,6 +389,8 @@ try {
           route:window.trainer.finesseActions.map(step=>({...step})),
           executionRoute:(window.trainer.finesseExecutionRoute||[]).map(step=>({...step})),
           navigationPromptSteps:document.querySelectorAll('#finessePrompt .navigation').length,
+          navigationPromptLabels:[...document.querySelectorAll('#finessePrompt .navigation')].map(el=>el.textContent),
+          expectedSoftLabel:window.trainer.finesseLabel({action:'soft'}),
           promptText:document.querySelector('#finessePrompt')?.textContent||''
         }));
         const route=planned.executionRoute;
@@ -408,6 +410,10 @@ try {
   assert(promptDescentWitness.planned.navigationPromptSteps===
     promptDescentWitness.planned.executionRoute.filter(step=>step.action==='softDrop').length,
     'visible finesse prompt does not expose every executable soft-drop navigation step');
+  assert(promptDescentWitness.planned.navigationPromptLabels.length>0&&
+    promptDescentWitness.planned.navigationPromptLabels.every(label=>
+      label===promptDescentWitness.planned.expectedSoftLabel),
+    'soft-drop navigation prompt does not show the configured soft-drop key label');
   {
     const {boardKind,type,board,spawn,seed,planned}=promptDescentWitness;
     const {piece,target,route,executionRoute}=planned;
