@@ -2,6 +2,8 @@ name: Fetch pinned TETR.IO matrix fixture (manual)
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["rebuild/finesse-core"]
 
 permissions:
   contents: read
