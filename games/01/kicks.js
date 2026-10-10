@@ -40,14 +40,15 @@ const HALF_JLSTZ = {
 
 // Always test the unshifted destination first. The pinned TETR.IO snapshot
 // runner does this baseline attempt before iterating the non-zero kick data.
-// These are provisional trainer-space offsets. Additional anchor-compensation
-// candidates at the end of each orientation match pinned landing outcomes, but
-// their indices are not claimed to match raw TETR.IO kick candidate indices.
+// Pinned TETR.IO SRS+ I-piece direct-180 candidates, transformed through the
+// pinned matrix anchors into trainer-local origin offsets. The zero-offset
+// destination is checked first; each orientation then has exactly one source
+// candidate. Raw client kickIndex 0 therefore corresponds to local index 1.
 const HALF_I = {
- 0: [[0,0],[1,1],[1,0],[0,-1]],
- 1: [[0,0],[-1,1],[0,1],[1,0]],
- 2: [[0,0],[-1,-1],[-1,0],[0,1]],
- 3: [[0,0],[1,-1],[0,-1],[-1,0]]
+ 0: [[0,0],[0,-1]],
+ 1: [[0,0],[1,0]],
+ 2: [[0,0],[0,1]],
+ 3: [[0,0],[-1,0]]
 };
 
 export function getSrsKicks(type, from, to) {
