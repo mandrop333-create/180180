@@ -265,3 +265,18 @@ Inspection of production `games/01/kicks.js` against the pinned TETR.IO movement
 - JLSTZ 180 tables do include an explicit `[0,0]` entry; the omission is specifically visible in `HALF_I`.
 
 This is a stronger, targeted finding than the earlier raw-array comparison. It does not yet prove which non-zero normalized I kick should replace the existing offsets, so this commit records the bug and keeps the production change gated on a minimal differential test. The next implementation step should add a regression fixture that proves the direct-180 baseline succeeds on an empty board, then map the single client kick to trainer coordinates and verify blocked-baseline cases. The tests must check final occupied cells, not just orientation labels.
+
+## Browser regression after forcing the I-piece direct-180 kick — 2026-10-09
+
+At branch head `fb4dfc02532fca1afb318a168240260d6e29bc6f`, all four relevant pull-request workflows completed successfully:
+
+- Planner regression tests: passed.
+- Independent reference fixtures and planner oracle: passed.
+- Independent Playwright route fixtures: passed, including the corrected I-piece direct-180 scenario.
+- Prompt-requested Playwright diagnostics: passed, including Worker API checks and gameplay diagnostics.
+
+The direct-180 browser scenario now places a blocker at board cell `[4,2]`. With the scenario's I-piece starting at `(4,0)), orientation 0, the unshifted orientation-2 destination collides, so the test exercises the intended `[1,1]` kick and checks the resulting active state and locked cells. The scenario clears its synthetic blocker after the rotation and before hard drop to keep the lock assertion isolated.
+
+**Interpretation:** this fixes a test-coverage defect and the updated browser route passes. It does not validate the non-zero kick against TETR.IO. The local table, fixture, and expected browser route still share the same candidate offset; independent client movement snapshots remain the authority needed to establish numeric/pivot equivalence.
+
+**Current gates remain open:** (1) differential client-to-trainer geometry and direct-180 I kick mapping, (2) decide and implement the intended soft-drop/tuck domain if “full finesse” includes those routes, and (3) finish classifying all legacy `finesse.js` references before removing the compatibility facade. The successful workflows support the isolated planner/route implementation, not a claim of complete TETR.IO fidelity or production readiness. No merge or deployment.
