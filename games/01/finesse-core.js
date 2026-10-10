@@ -320,12 +320,17 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
       // route remains a deterministic canonical route for existing callers.
       if(!previous||candidate.cost<previous.cost){
         targets.set(key,{...candidate,routes:[current.route],executionRoutes:[current.executionRoute]});
-      }else if(candidate.cost===previous.cost&&previous.executionRoutes.length<MAX_ROUTES_PER_TARGET&&
+      }else if(candidate.cost===previous.cost&&
         !previous.executionRoutes.some(route=>routeKey(route)===candidate.routeKey)){
         const paired=[...previous.routes.map((route,i)=>({route,executionRoute:previous.executionRoutes[i]})),{route:current.route,executionRoute:current.executionRoute}];
-        paired.sort((a,b)=>routeKey(a.executionRoute).localeCompare(routeKey(b.executionRoute)));
-        previous.routes=paired.map(item=>item.route);
-        previous.executionRoutes=paired.map(item=>item.executionRoute);
+        // Prefer the shortest executable witness first, then deterministic
+        // lexical ordering. This keeps direct tap/DAS alternatives ahead of
+        // long free-descent variants when the target route cap is reached.
+        paired.sort((a,b)=>a.executionRoute.length-b.executionRoute.length||
+          routeKey(a.executionRoute).localeCompare(routeKey(b.executionRoute)));
+        const retained=paired.slice(0,MAX_ROUTES_PER_TARGET);
+        previous.routes=retained.map(item=>item.route);
+        previous.executionRoutes=retained.map(item=>item.executionRoute);
         previous.route=previous.routes[0];
         previous.executionRoute=previous.executionRoutes[0];
         previous.routeKey=routeKey(previous.executionRoute);
