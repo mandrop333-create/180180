@@ -204,6 +204,160 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
   })).sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.target.y-b.target.y||a.routeKey.localeCompare(b.routeKey));
 }
 
+
+// Expanded planner: physical execution retains soft-drop navigation while the
+// scoring route and Dijkstra cost include only finesse-counted inputs.
+export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
+  // Reject malformed spawn/input states before asking engine adapters to
+  // interpret them. In particular, pieces.js falls back to T geometry for an
+  // unknown type, which must never silently create a valid-looking route.
+  if(!validStartPiece(piece)||typeof move!=='function'||typeof tryRotate!=='function')return [];
+  const limit=costLimit(maxCost,profile);
+  if(limit===null)return [];
+  const start=copyPiece(piece);
+  // Enforce the movement contract at this boundary: a successful move
+  // must change exactly the requested coordinate and must not alter rotation.
+  // This prevents a broken adapter from creating phantom edges or infinite
+  // descent/wall-repeat loops.
+  const stepMove=(piece,dx,dy)=>{
+    const next=copyPiece(piece);
+    if(!move(next,dx,dy,board,W,H,cellsFor))return null;
+    if(next.x!==piece.x+dx||next.y!==piece.y+dy||next.o!==piece.o||next.type!==piece.type)return null;
+    return next;
+  };
+  const stepRotate=(piece,delta)=>{
+    const next=copyPiece(piece);
+    if(!tryRotate(next,delta,board,W,H,cellsFor))return null;
+    const expected=((piece.o+delta)%4+4)%4;
+    // A successful engine rotation must produce the requested orientation and
+    // a finite integer origin. Treat broken adapters as absent edges rather
+    // than allowing zero-change or malformed transitions into the search.
+    if(!Number.isInteger(next.x)||!Number.isInteger(next.y)||
+      !Number.isInteger(next.o)||next.o!==expected||next.type!==piece.type)return null;
+    // Rotation adapters must use one of the engine's documented kick offsets.
+    // Otherwise a buggy callback could teleport a piece and fabricate a route
+    // even while returning the correct orientation. Validate the actual delta
+    // against the same ordered kick table used by rotation.js.
+    const dx=next.x-piece.x,dy=next.y-piece.y;
+    const kicks=(delta===2||delta===-2)
+      ?getTetrio180Kicks(piece.type,piece.o)
+      :getSrsKicks(piece.type,piece.o,expected);
+    if(!kicks.some(([kickX,kickY])=>kickX===dx&&kickY===dy))return null;
+    return next;
+  };
+  const actions=[
+    {action:'left',mode:'tap',cost:1,apply:p=>stepMove(p,-1,0)},
+    {action:'right',mode:'tap',cost:1,apply:p=>stepMove(p,1,0)},
+    {action:'softDrop',mode:'navigation',cost:0,apply:p=>stepMove(p,0,1)}
+  ];
+  // The O piece is rotationally invariant. Never offer rotations as a
+  // finesse step when they cannot change its physical placement.
+  if(start.type!=='O')actions.push(
+    {action:'cw',mode:'tap',cost:1,apply:p=>stepRotate(p,1)},
+    {action:'ccw',mode:'tap',cost:1,apply:p=>stepRotate(p,-1)}
+  );
+  if(start.type!=='O'&&profile?.supportsDirectHalfTurn===true&&Number.isInteger(profile.halfTurnCost)&&profile.halfTurnCost>0){
+    actions.push({action:'half',mode:'tap',cost:profile.halfTurnCost,apply:p=>stepRotate(p,2)});
+  }
+  const wallAction=(dir,action)=>({action,mode:'das',cost:1,apply:p=>{
+    let n=copyPiece(p);let moved=false;
+    // At most the board width plus a piece-frame allowance is ever needed
+    // to reach a wall. The cap is defensive against malformed callbacks.
+    const maxSteps=(Number.isInteger(W)&&W>0?W:10)+4;
+    for(let i=0;i<maxSteps;i++){
+      const next=stepMove(n,dir,0);
+      if(!next)break;
+      n=next;moved=true;
+    }
+    return moved?n:null;
+  }});
+  if(profile?.dasCountsAsOneInput===true)actions.push(wallAction(-1,'left'),wallAction(1,'right'));
+
+  const landing=p=>{
+    let n=copyPiece(p);
+    const maxSteps=(Number.isInteger(H)&&H>0?H:20)+4;
+    for(let i=0;i<maxSteps;i++){
+      const next=stepMove(n,0,1);
+      if(!next)break;
+      n=next;
+    }
+    return n;
+  };
+  const stateKey=p=>p.x+','+p.y+','+p.o;
+  const queue=[];
+  heapPush(queue,{piece:start,cost:0,route:[],executionRoute:[]});
+  const best=new Map([[stateKey(start),0]]);
+  // Retain distinct equal-cost histories for a state. Positive action costs
+  // and the finite cost envelope bound this search; route keys prevent repeats.
+  const stateRoutes=new Map([[stateKey(start),new Set([''])]]);
+  const targets=new Map();
+
+  while(queue.length){
+    const current=heapPop(queue);
+    const currentStateKey=stateKey(current.piece);
+    const currentRouteKey=routeKey(current.executionRoute);
+    if(current.cost>best.get(currentStateKey)||
+      !stateRoutes.get(currentStateKey)?.has(currentRouteKey))continue;
+    const land=landing(current.piece);
+    // A resting piece with any mino above row zero cannot be locked: the
+    // engine top-outs before writing its cells to the board. Such a state is
+    // reachable as a rotation intermediate but is not a valid finesse target.
+    const lockCells=typeof cellsFor==='function'?cellsFor(land.type,land.o):null;
+    const lockable=Array.isArray(lockCells)&&lockCells.length>0&&
+      lockCells.every(([cx,cy])=>land.y+cy>=0&&land.y+cy<H);
+    const target=lockable
+      ?normalizeFinesseTarget({x:land.x,o:land.o,y:land.y},W,{allowNegativeX:true})
+      :null;
+    if(target){
+      const key=placementIdentity(target);
+      const candidate={route:current.route,executionRoute:current.executionRoute,target,cost:current.cost,landingY:land.y,routeKey:currentRouteKey};
+      const previous=targets.get(key);
+      // Preserve every distinct minimum-cost route to this physical landing.
+      // route remains a deterministic canonical route for existing callers.
+      if(!previous||candidate.cost<previous.cost){
+        targets.set(key,{...candidate,routes:[current.route],executionRoutes:[current.executionRoute]});
+      }else if(candidate.cost===previous.cost&&!previous.executionRoutes.some(route=>routeKey(route)===candidate.routeKey)){
+        const paired=[...previous.routes.map((route,i)=>({route,executionRoute:previous.executionRoutes[i]})),{route:current.route,executionRoute:current.executionRoute}];
+        paired.sort((a,b)=>routeKey(a.executionRoute).localeCompare(routeKey(b.executionRoute)));
+        previous.routes=paired.map(item=>item.route);
+        previous.executionRoutes=paired.map(item=>item.executionRoute);
+        previous.route=previous.routes[0];
+        previous.executionRoute=previous.executionRoutes[0];
+        previous.routeKey=routeKey(previous.executionRoute);
+      }
+    }
+    // Zero-cost navigation remains available at the finesse cost limit.
+    for(const step of actions){
+      const next=step.apply(current.piece);if(!next)continue;
+      const stepCost=Number.isFinite(step.cost)?step.cost:Infinity;
+      if(!Number.isFinite(stepCost)||stepCost<0||(stepCost===0&&step.action!=='softDrop')||current.cost+stepCost>limit||(current.cost>=limit&&stepCost>0))continue;
+      const cost=current.cost+stepCost,key=stateKey(next);
+      const stepRecord={action:step.action,mode:step.mode};
+      const nextExecutionRoute=[...current.executionRoute,stepRecord];
+      const nextRoute=step.action==='softDrop'?current.route:[...current.route,stepRecord];
+      const nextRouteKey=routeKey(nextExecutionRoute);
+      const priorCost=best.get(key);
+      if(priorCost!==undefined&&priorCost<cost)continue;
+      if(priorCost===undefined||cost<priorCost){
+        best.set(key,cost);
+        stateRoutes.set(key,new Set([nextRouteKey]));
+      }else{
+        const knownRoutes=stateRoutes.get(key)||new Set();
+        if(knownRoutes.has(nextRouteKey))continue;
+        knownRoutes.add(nextRouteKey);
+        stateRoutes.set(key,knownRoutes);
+      }
+      heapPush(queue,{piece:next,cost,route:nextRoute,executionRoute:nextExecutionRoute});
+    }
+  }
+
+  return [...targets.values()].map(candidate=>({
+    ...candidate,
+    routes:candidate.routes,
+    executionRoutes:candidate.executionRoutes
+  })).sort((a,b)=>b.cost-a.cost||a.target.x-b.target.x||a.target.o-b.target.o||a.target.y-b.target.y||a.routeKey.localeCompare(b.routeKey));
+}
+
 export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
   if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
   const limit=costLimit(maxCost,profile);
