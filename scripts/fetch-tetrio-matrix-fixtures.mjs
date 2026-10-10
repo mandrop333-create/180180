@@ -9,7 +9,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-const homepageResponse = await fetch('https://tetr.io/');
+const homepageResponse = await fetch('https://tetr.io/', {\n  headers: {\n    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',\n    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'\n  }\n});
 if (!homepageResponse.ok) {
   throw new Error('TETR.IO homepage request failed: HTTP ' + homepageResponse.status);
 }
