@@ -36,8 +36,8 @@ for (let rotation = 0; rotation < 4; rotation += 1) {
     assert.equal(native.rotation, state.rotation);
     assert.equal(native.x, state.x);
     assert.equal(native.y, state.y);
-    assert.ok(Math.abs(client.y - Math.floor(client.y) - 0.000001) < 1e-8 ||
-      Math.abs(client.y - Math.floor(client.y) - 0.000001) > 0); // retain explicit fractional-anchor assertion
+    assert.ok(Math.abs((client.y - Math.floor(client.y)) - 0.000001) < 1e-8,
+      'client anchor must preserve the pinned generator fractional-y convention');
     checks += 1;
   }
 }
