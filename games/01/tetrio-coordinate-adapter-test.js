@@ -38,8 +38,9 @@ for (const [type, piece] of Object.entries(REFERENCE_PIECES)) {
       const maxLocalY = Math.max(...localCells.map(([, y]) => y));
       // Native y is the bottom-up coordinate of the topmost occupied cell,
       // so rows within the piece are reflected around maxLocalY.
+      const minLocalX = Math.min(...localCells.map(([x]) => x));
       const expected = new Set(localCells.map(([x,y]) =>
-        (state.x + x) + ',' + (state.y + maxLocalY - y)));
+        (state.x + x - minLocalX) + ',' + (state.y + maxLocalY - y)));
       const actual = new Set(cells.map(({x,y}) =>
         x + ',' + (TETRIO_TOTAL_HEIGHT - 1 - y)));
       assert.deepEqual(actual, expected,
