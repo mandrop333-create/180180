@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
-import { boardFor, referenceTargets } from './finesse-oracle-reference-test.js';
+import { boardFor, referenceNavigationTargets } from './finesse-oracle-reference-test.js';
 import { cellsFor } from './pieces.js';
 import { move } from './collision.js';
 import { tryRotate } from './rotation.js';
@@ -45,7 +45,7 @@ try {
   for (const type of types) {
     const spawn = REFERENCE_PIECES[type].spawn;
     const start = {type,x:spawn.x,y:spawn.y,o:0};
-    const oracleTargets = referenceTargets({type,start,board:emptyBoard,maxCost:2});
+    const oracleTargets = referenceNavigationTargets({type,start,board:emptyBoard,maxCost:2});
 
     await page.evaluate(({type,spawn,W,H}) => {
       const t = window.trainer;
@@ -80,6 +80,7 @@ try {
         piece: t.piece ? {type:t.piece.type,x:t.piece.x,y:t.piece.y,o:t.piece.o} : null,
         target: t.finesseTarget ? {...t.finesseTarget} : null,
         actions: t.finesseActions.map(step => ({...step})),
+        executionRoute: (t.finesseExecutionRoute||[]).map(step => ({...step})),
         progress: t.finesseProgress,
         faulted: t.finesseFaulted,
         promptHidden: document.querySelector('#finessePrompt')?.hidden ?? true
@@ -92,7 +93,7 @@ try {
     const key = targetKey(planned.target);
     assert(oracleTargets.has(key),
       type + ': planner target is absent from independent reachable placements: ' + key);
-    const minimum = oracleTargets.get(key);
+    const minimum = oracleTargets.get(key)?.cost;
     assert(routeCost(planned.actions)===minimum,
       type + ': displayed route cost ' + routeCost(planned.actions) +
       ' differs from independent minimum ' + minimum + ' for ' + key);
@@ -103,15 +104,24 @@ try {
     // catches x/y/orientation drift at the exact action that introduces it,
     // rather than only discovering the mismatch at the final landing.
     let predicted = { ...planned.piece };
-    for (let stepIndex = 0; stepIndex < planned.actions.length; stepIndex++) {
-      const step = planned.actions[stepIndex];
+    const executionRoute=planned.executionRoute.length?planned.executionRoute:planned.actions;
+    assert(executionRoute.filter(step=>step.action!=='softDrop').length===planned.actions.length,
+      type+': execution route does not project to the scoring route');
+    for (let stepIndex = 0; stepIndex < executionRoute.length; stepIndex++) {
+      const step = executionRoute[stepIndex];
       const keyName = step.action==='left'?'ArrowLeft'
         : step.action==='right'?'ArrowRight'
         : step.action==='cw'?'x'
         : step.action==='ccw'?'z'
+        : step.action==='softDrop'?'ArrowDown'
         : 'a';
 
-      if (step.action==='left' || step.action==='right') {
+      if(step.action==='softDrop'){
+        const next={...predicted};
+        assert(move(next,0,1,emptyBoard,W,H,cellsFor),
+          type+': planned soft-drop '+stepIndex+' is blocked in predicted state');
+        predicted=next;
+      }else if (step.action==='left' || step.action==='right') {
         const direction = step.action==='left' ? -1 : 1;
         if (step.mode==='das') {
           let moved = false;
@@ -204,7 +214,7 @@ try {
     const testBoard=boardFor(boardKind);
     const spawn=REFERENCE_PIECES[type].spawn;
     const start={type,x:spawn.x,y:spawn.y,o:0};
-    const oracleTargets=referenceTargets({type,start,board:testBoard,maxCost:2});
+    const oracleTargets=referenceNavigationTargets({type,start,board:testBoard,maxCost:2});
     await page.evaluate(({type,spawn,board}) => {
       const t=window.trainer;
       t.reset();
@@ -243,7 +253,7 @@ try {
     const key=targetKey(planned.target);
     assert(oracleTargets.has(key),
       type+'/'+boardKind+': target absent from independent obstacle-board oracle: '+key);
-    assert(routeCost(planned.actions)===oracleTargets.get(key),
+    assert(routeCost(planned.actions)===oracleTargets.get(key)?.cost,
       type+'/'+boardKind+': route cost differs from independent oracle for '+key);
 
     let predicted={...planned.piece};
