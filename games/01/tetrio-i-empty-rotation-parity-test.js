@@ -95,5 +95,5 @@ console.log(JSON.stringify({
   ok: true,
   cases: CASES.length + BLOCKED_CASES.length,
   sourceAsset: SOURCE_ASSET,
-  scope: 'empty-board I-piece quarter-turns and direct 180; no blocked-kick parity claim'
+  scope: '12 empty-board I turns plus 2 pinned blocked/floor-kick landing outcomes; candidate-index parity is not asserted'
 }));
