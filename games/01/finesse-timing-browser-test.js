@@ -34,6 +34,12 @@ function expectedBoardAfterLock(board,type,target) {
 }
 
 const scenarios = [
+  // Map the rotationally invariant O piece independently before broadening
+  // coverage to asymmetric pieces and generated stacks.
+  {type:'O',boardKind:'empty'},
+  {type:'O',boardKind:'overhang'},
+  {type:'J',boardKind:'empty'},
+  {type:'J',boardKind:'overhang'},
   {type:'I',boardKind:'empty'},
   {type:'T',boardKind:'empty'},
   {type:'T',boardKind:'overhang'},
