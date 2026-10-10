@@ -347,73 +347,75 @@ try {
       minimumCost:oracleTargets.get(key)?.cost,route:planned.actions,lockedCells:locked.cells.length}));
   }
 
-  // Focused integration regression: find a real obstacle-board route that
-  // must descend before rotating, then replay that paired route through the
-  // browser engine and verify the actual lock and finesse result.
-  let descentRotationWitness=null;
+  // Prompt-path integration regression: do not inject a planner candidate
+  // into trainer state. Search real generateFinessePrompt() selections until
+  // its chosen executable route descends before rotating on an obstacle board.
+  let promptDescentWitness=null;
   for(const boardKind of ['side-towers','split-well','overhang','generated-4']){
-    const testBoard=boardFor(boardKind);
+    const board=boardFor(boardKind);
     for(const type of types){
       const spawn=REFERENCE_PIECES[type].spawn;
-      const start={type,x:spawn.x,y:spawn.y,o:0};
-      const candidates=enumerateFinesseNavigationTargets({
-        piece:start,board:testBoard,W,H,cellsFor,move,tryRotate,maxCost:2
-      });
-      for(const candidate of candidates){
-        const routes=candidate.executionRoutes||[candidate.executionRoute];
-        const scoringRoutes=candidate.routes||[candidate.route];
-        const index=routes.findIndex(route=>{
-          const rotationAt=route.findIndex(step=>['cw','ccw','half'].includes(step.action));
-          return rotationAt>0&&route.slice(0,rotationAt).some(step=>step.action==='softDrop');
-        });
-        if(index>=0){
-          descentRotationWitness={boardKind,type,board:testBoard,start,candidate,
-            executionRoute:routes[index],route:scoringRoutes[index]};
+      for(let seed=0;seed<32;seed++){
+        await page.evaluate(({board,type,spawn,seed})=>{
+          const t=window.trainer;
+          t.reset();
+          t.rules.gravity=Infinity;
+          t.rules.lockDelay=100000;
+          t.rules.das=80;
+          t.rules.arr=0;
+          t.rules.dcd=0;
+          t.board=board.map(row=>row.slice());
+          t.gameOver=false;
+          t.piece={type,x:spawn.x,y:spawn.y,o:0};
+          t.placed=seed;
+          t.lastRotation=false;
+          t.finesseEnabled=true;
+          t.finessePlacementResolved=false;
+          t.finesseMistakes=0;
+          t.finesseFaulted=false;
+          t.finesseProgress=0;
+          t.finesseDASPending=null;
+          t.stats.finessePerfect=0;
+          t.stats.finesseFaults=0;
+          t.stats.piecesPlaced=0;
+          t.stats.linesCleared=0;
+          t.generateFinessePrompt();
+          t.emitState();
+          t.render();
+        },{board,type,spawn,seed});
+        const planned=await page.evaluate(()=>({
+          piece:window.trainer.piece?{...window.trainer.piece}:null,
+          target:window.trainer.finesseTarget?{...window.trainer.finesseTarget}:null,
+          route:window.trainer.finesseActions.map(step=>({...step})),
+          executionRoute:(window.trainer.finesseExecutionRoute||[]).map(step=>({...step}))
+        }));
+        const route=planned.executionRoute;
+        const rotationAt=route.findIndex(step=>['cw','ccw','half'].includes(step.action));
+        if(planned.piece&&planned.target&&rotationAt>0&&
+          route.slice(0,rotationAt).some(step=>step.action==='softDrop')){
+          promptDescentWitness={boardKind,type,board,spawn,seed,planned};
           break;
         }
       }
-      if(descentRotationWitness)break;
+      if(promptDescentWitness)break;
     }
-    if(descentRotationWitness)break;
+    if(promptDescentWitness)break;
   }
-  assert(descentRotationWitness,
-    'no cost-2 obstacle route was found that descends before rotating');
+  assert(promptDescentWitness,
+    'generateFinessePrompt() did not select a descent-before-rotation route across obstacle fixtures/seeds');
   {
-    const {boardKind,type,board,start,candidate,executionRoute,route}=descentRotationWitness;
-    await page.evaluate(({board,type,start,target,route,executionRoute})=>{
-      const t=window.trainer;
-      t.reset();
-      t.rules.gravity=Infinity;
-      t.rules.lockDelay=100000;
-      t.rules.das=80;
-      t.rules.arr=0;
-      t.rules.dcd=0;
-      t.board=board.map(row=>row.slice());
-      t.gameOver=false;
-      t.piece={...start};
-      t.finesseEnabled=true;
-      t.finesseTarget={...target};
-      t.finesseActions=route.map(step=>({...step}));
-      t.finesseExecutionRoute=executionRoute.map(step=>({...step}));
-      t.finesseRouteCandidates=[{route:route.map(step=>({...step})),
-        executionRoute:executionRoute.map(step=>({...step})),progress:0,pendingDasAction:null}];
-      t.finesseProgress=0;
-      t.finesseFaulted=false;
-      t.finesseMistakes=0;
-      t.finessePlacementResolved=false;
-      t.stats.finessePerfect=0;
-      t.stats.finesseFaults=0;
-      t.stats.piecesPlaced=0;
-      t.stats.linesCleared=0;
-      t.emitState();
-      t.render();
-    },{board,type,start,target:candidate.target,route,executionRoute});
-    let predicted={...start};
+    const {boardKind,type,board,spawn,seed,planned}=promptDescentWitness;
+    const {piece,target,route,executionRoute}=planned;
+    assert(piece.type===type&&piece.x===spawn.x&&piece.y===spawn.y&&piece.o===0,
+      'prompt-path witness did not preserve the fixture spawn state');
+    assert(executionRoute.filter(step=>step.action!=='softDrop').length===route.length,
+      'prompt-path execution route does not project to its finesse scoring route');
+    let predicted={...piece};
     for(let i=0;i<executionRoute.length;i++){
       const step=executionRoute[i];
       if(step.action==='softDrop'){
         assert(move(predicted,0,1,board,W,H,cellsFor),
-          'descent-before-rotation witness has an invalid soft-drop transition');
+          'prompt-path witness has a blocked soft-drop transition');
       }else if(step.action==='left'||step.action==='right'){
         const direction=step.action==='left'?-1:1;
         if(step.mode==='das'){
@@ -423,13 +425,13 @@ try {
             if(!move(next,direction,0,board,W,H,cellsFor))break;
             predicted=next;moved=true;
           }
-          assert(moved,'descent-before-rotation witness DAS did not move');
+          assert(moved,'prompt-path witness DAS did not move');
         }else assert(move(predicted,direction,0,board,W,H,cellsFor),
-          'descent-before-rotation witness horizontal transition failed');
+          'prompt-path witness horizontal transition failed');
       }else{
         const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
         assert(tryRotate(predicted,delta,board,W,H,cellsFor),
-          'descent-before-rotation witness rotation failed after descent');
+          'prompt-path witness rotation failed after descent');
       }
       const keyName=step.action==='left'?'ArrowLeft':step.action==='right'?'ArrowRight'
         :step.action==='cw'?'x':step.action==='ccw'?'z'
@@ -446,11 +448,19 @@ try {
       });
       assert(observed&&observed.type===predicted.type&&observed.x===predicted.x&&
         observed.y===predicted.y&&observed.o===predicted.o,
-        'descent-before-rotation runtime drift at '+i+': expected '+JSON.stringify(predicted)+
+        'prompt-path action '+i+' runtime drift: expected '+JSON.stringify(predicted)+
         ', got '+JSON.stringify(observed));
     }
-    assert(predicted.x===candidate.target.x&&predicted.o===candidate.target.o,
-      'descent-before-rotation witness missed its advertised placement');
+    assert(predicted.x===target.x&&predicted.o===target.o&&
+      (!Number.isInteger(target.y)||predicted.y===target.y),
+      'prompt-path route missed its advertised target: '+JSON.stringify({predicted,target}));
+    const beforeLock=await page.evaluate(()=>({
+      progress:window.trainer.finesseProgress,
+      total:window.trainer.finesseActions.length,
+      faulted:window.trainer.finesseFaulted
+    }));
+    assert(!beforeLock.faulted&&beforeLock.progress===beforeLock.total,
+      'prompt-path observer rejected the selected route: '+JSON.stringify(beforeLock));
     await page.keyboard.press('Space');
     await page.waitForFunction(()=>window.trainer.stats.piecesPlaced===1,null,{timeout:5000});
     const locked=await page.evaluate(()=>{
@@ -460,16 +470,19 @@ try {
       return {cells,perfect:t.stats.finessePerfect,faults:t.stats.finesseFaults};
     });
     const expectedBoard=board.map(row=>row.slice());
-    for(const [x,y] of expectedLockedCells(type,candidate.target))expectedBoard[y][x]=1;
+    for(const [x,y] of expectedLockedCells(type,target)){
+      assert(y>=0&&y<H&&x>=0&&x<W,'prompt-path expected lock cell is outside the board');
+      expectedBoard[y][x]=1;
+    }
     const survivingRows=expectedBoard.filter(row=>!row.every(Boolean));
     while(survivingRows.length<H)survivingRows.unshift(Array(W).fill(0));
     const expected=survivingRows.flatMap((row,y)=>row.flatMap((cell,x)=>cell?[[x,y]]:[]))
       .sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
     assert(JSON.stringify(locked.cells)===JSON.stringify(expected),
-      'descent-before-rotation locked board mismatch');
+      'prompt-path locked board differs from fixture stack plus target cells');
     assert(locked.perfect===1&&locked.faults===0,
-      'descent-before-rotation route did not score one perfect placement: '+JSON.stringify(locked));
-    console.log(JSON.stringify({descentBeforeRotation:true,passed:true,type,boardKind,
+      'prompt-path descent-before-rotation placement was not perfect: '+JSON.stringify(locked));
+    console.log(JSON.stringify({promptPathDescentBeforeRotation:true,passed:true,type,boardKind,seed,
       route,executionRoute,lockedCells:locked.cells.length}));
   }
 
