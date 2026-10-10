@@ -382,3 +382,12 @@ Expanded `games/01/tetrio-coordinate-adapter-test.js` from I-only synthetic chec
 - Queried the raw GitHub Actions run/job endpoints. The job records have `runner_id: 0`, an empty `runner_name`, and `steps: []`; the run's log endpoint returned an empty response, and no artifact was created. The added diagnostic step therefore never had an opportunity to execute.
 - This is evidence of a job/runner startup or scheduling failure, **not evidence that the test commands themselves failed**. The exact GitHub-side reason is not exposed by the available run response, so do not assert a billing, permission, or runner-capacity cause without the run UI's failure annotation.
 - The diagnostics/artifact steps remain in the reference workflow to capture stdout/stderr once a runner can execute jobs. Next action is to inspect the run page's job-level startup annotation or restore GitHub Actions runner availability; then rerun the tests and address the first actual assertion or runtime failure. Do not change movement behavior based on these infrastructure-only failures.
+
+
+### Runner failure reproduced across the workflow suite — 2026-10-10, branch head `9c5f9f4d0c2f531f672b70bb9c5847e6613868c1`
+
+- Retried the failed reference-fixtures run once. The retry failed again without starting a job step.
+- The five PR-triggered workflows for the ledger-only commit `9c5f9f4` (planner tests, reference fixtures, browser route fixtures, prompt Playwright, and pinned-matrix acquisition) all failed within three seconds. Every raw job record reported `runner_id: 0`, an empty runner name, zero steps, and no artifacts.
+- Because unrelated Node, Playwright, and fixture-fetch jobs all fail in the same pre-step state, the evidence points to a shared Actions execution/runner problem rather than a demonstrated common application defect. The precise service/account cause is still unknown.
+- Compatibility-path audit: `games/01/finesse.js` remains a 310-byte re-export facade; `games/01/engine.js` imports `finesse-core.js` directly. Do not delete the facade until a complete repository-wide import/reference audit and compatibility decision are supported by evidence.
+- No movement or planner code changed in this iteration. Next: restore Actions execution or run the existing Node/browser suite in a working environment, then resume the highest-risk parity gap (I-piece 180-degree pivot/kick equivalence) with captured test evidence.
