@@ -50,9 +50,9 @@ const scenarios = [
     type: 'I', start: { x:4, y:0, o:0 },
     blockers: [[4,2]],
     route: [{ action:'half', mode:'tap' }],
-    target: { x:5, o:2, y:17 },
-    afterInput: { x:5, y:1, o:2 },
-    lockedCells: [[5,19],[6,19],[7,19],[8,19]]
+    target: { x:4, o:2, y:17 },
+    afterInput: { x:4, y:-1, o:2 },
+    lockedCells: [[4,19],[5,19],[6,19],[7,19]]
   }
 ];
 
