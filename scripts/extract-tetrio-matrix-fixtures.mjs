@@ -69,7 +69,7 @@ function extractObjectLiteralAfterKey(input, key) {
     const char = input[index];
     if (quote !== undefined) {
       if (escaped) escaped = false;
-      else if (char === '\\\\') escaped = true;
+      else if (char === '\\') escaped = true;
       else if (char === quote) quote = undefined;
       continue;
     }
