@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { TETRIO_MATRIX_REFERENCE, TETRIO_MATRIX_SOURCE } from './tetrio-matrix-reference-fixtures.js';
 import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
+import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import {
   nativeToTetrioState,
   tetrioBoardCells,
   tetrioToNativeState,
+  tetrioKickToLocalOriginOffset,
   TETRIO_TOTAL_HEIGHT
 } from './tetrio-coordinate-adapter.js';
 
@@ -66,13 +68,54 @@ for (const [type, matrix] of Object.entries(TETRIO_MATRIX_REFERENCE)) {
 }
 assert.equal(checks, 84);
 assert.equal(TETRIO_TOTAL_HEIGHT, 40);
+
+// Raw ordered SRS+ I kick candidates extracted from the pinned TETR.IO client
+// asset. These arrays intentionally omit the trainer's explicit direct-test
+// candidate [0,0]; the client tests the direct destination before this list.
+const PINNED_I_SRS_PLUS_KICKS = Object.freeze({
+  '0>1': [[1,0],[-2,0],[-2,1],[1,-2]],
+  '1>2': [[-1,0],[2,0],[-1,-2],[2,1]],
+  '2>3': [[2,0],[-1,0],[2,-1],[-1,2]],
+  '3>0': [[1,0],[-2,0],[1,2],[-2,-1]],
+  '0>3': [[-1,0],[2,0],[2,1],[-1,-2]],
+  '1>0': [[-1,0],[2,0],[-1,2],[2,-1]],
+  '2>1': [[-2,0],[1,0],[-2,-1],[1,2]],
+  '3>2': [[1,0],[-2,0],[1,-2],[-2,1]]
+});
+const PINNED_I_180_KICKS = Object.freeze({
+  '0>2': [[0,-1]],
+  '1>3': [[1,0]],
+  '2>0': [[0,1]],
+  '3>1': [[-1,0]]
+});
+let kickConversionChecks = 0;
+for (const [transition, rawKicks] of Object.entries(PINNED_I_SRS_PLUS_KICKS)) {
+  const [from, to] = transition.split('>').map(Number);
+  const converted = rawKicks.map(kick =>
+    tetrioKickToLocalOriginOffset(TETRIO_MATRIX_REFERENCE, REFERENCE_PIECES, 'I', from, to, kick)
+  );
+  assert.deepEqual(getSrsKicks('I', from, to).slice(1), converted,
+    'I SRS+ transition ' + transition + ' ordered kick offsets must match pinned client after anchor conversion');
+  kickConversionChecks += converted.length;
+}
+for (const [transition, rawKicks] of Object.entries(PINNED_I_180_KICKS)) {
+  const [from, to] = transition.split('>').map(Number);
+  const converted = rawKicks.map(kick =>
+    tetrioKickToLocalOriginOffset(TETRIO_MATRIX_REFERENCE, REFERENCE_PIECES, 'I', from, to, kick)
+  );
+  assert.deepEqual(getTetrio180Kicks('I', from).slice(1), converted,
+    'I SRS+ direct-180 transition ' + transition + ' ordered kick offsets must match pinned client after anchor conversion');
+  kickConversionChecks += converted.length;
+}
+assert.equal(kickConversionChecks, 36);
 console.log(JSON.stringify({
   ok: true,
   checks,
+  kickConversionChecks,
   pieces: 7,
   orientations: 28,
   source: TETRIO_MATRIX_SOURCE.asset,
-  note: 'real pinned client matrices; coordinate arithmetic only, not kick/movement parity'
+  note: 'real pinned client matrices plus SRS+ I kick offset/order parity; not full all-piece movement parity'
 }));
 
 function comparePair(a, b) {
