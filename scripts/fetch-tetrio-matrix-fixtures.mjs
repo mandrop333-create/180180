@@ -9,16 +9,22 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-const homepageResponse = await fetch('https://tetr.io/', {\n  headers: {\n    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',\n    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'\n  }\n});
+const homepageResponse = await fetch('https://tetr.io/', {
+  headers: {
+    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+  }
+});
 if (!homepageResponse.ok) {
   throw new Error('TETR.IO homepage request failed: HTTP ' + homepageResponse.status);
 }
 const homepage = await homepageResponse.text();
 // The homepage may advertise the version token outside a literal script URL.
 // Match the same hv token used by the freshness guard, then build the canonical URL.
-const versions = [...new Set([...homepage.matchAll(/\\bhv=([^"&<>]+)/g)].map(match => match[1]))];
+const versions = [...new Set([...homepage.matchAll(/\bhv=([^"&<>]+)/g)].map(match => match[1]))];
 if (versions.length !== 1) {
-  throw new Error('Expected exactly one TETR.IO homepage asset version; found ' + versions.length);
+  const title = homepage.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? '(no HTML title)';
+  throw new Error('Expected exactly one TETR.IO homepage asset version; found ' + versions.length + '; HTTP ' + homepageResponse.status + '; title=' + title + '; bodyLength=' + homepage.length + '. Refusing to fall back to a stale hardcoded asset.');
 }
 const asset = new URL('https://tetr.io/js/tetrio.js?hv=' + versions[0]);
 if (asset.hostname !== 'tetr.io' || asset.pathname !== '/js/tetrio.js' || !asset.searchParams.get('hv')) {
