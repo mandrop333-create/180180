@@ -19,15 +19,14 @@ export const REFERENCE_I_SRS_PLUS = Object.freeze({
 });
 
 export const REFERENCE_I_180_SRS_PLUS = Object.freeze({
-  // PROVISIONAL TRAINER-SPACE CANDIDATES, NOT AN INDEPENDENT CLIENT FIXTURE.
-  // The pinned May 2026 SRS+ source has one explicit I direct-180 kick [0,-1]
-  // in client coordinates after its no-kick baseline. Do not infer trainer
-  // offsets from these values until matrix/pivot/anchor conversion is tested.
-  // The zero-offset baseline is independently exercised by the execution test.
-  0: [[0,0],[1,1],[1,0]],
-  1: [[0,0],[-1,1],[0,1]],
-  2: [[0,0],[-1,-1],[-1,0]],
-  3: [[0,0],[1,-1],[0,-1]]
+  // PROVISIONAL TRAINER-SPACE CANDIDATES, NOT A RAW CLIENT KICK-TABLE FIXTURE.
+  // The extra orientation-anchor candidates are supported by pinned final-state
+  // probes in tetrio-i-empty-rotation-parity-test.js. Candidate indices/order
+  // are still unverified against the raw client kickset.
+  0: [[0,0],[1,1],[1,0],[0,-1]],
+  1: [[0,0],[-1,1],[0,1],[1,0]],
+  2: [[0,0],[-1,-1],[-1,0],[0,1]],
+  3: [[0,0],[1,-1],[0,-1],[-1,0]]
 });
 
  
