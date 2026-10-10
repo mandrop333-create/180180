@@ -618,7 +618,7 @@ export function runIndependentFinesseOracleTests() {
       extendedFixtures++;
     }
   }
-  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, extendedFixtures, extendedTargets, extendedMaxCost:4, navigationRoutesChecked, productionNavigationRoutesChecked, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
+  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, extendedFixtures, extendedTargets, extendedMaxCost:4, navigationRoutesChecked, productionNavigationRoutesChecked, obstacleNavigationFixtures, obstacleNavigationTargets, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
