@@ -115,7 +115,7 @@ export function boardFor(kind) {
   }
   return board;
 }
-export function referenceTargets({ type, start, board, maxCost = 2, allowVerticalTransitions = true }) {
+export function referenceTargets({ type, start, board, maxCost = 2 }) {
   const actions = [
     { action:'left', mode:'tap', apply:p=>{ const n=copy(p); return referenceMove(n,-1,0,board)?n:null; } },
     { action:'right', mode:'tap', apply:p=>{ const n=copy(p); return referenceMove(n,1,0,board)?n:null; } }
@@ -138,13 +138,8 @@ export function referenceTargets({ type, start, board, maxCost = 2, allowVertica
   const queue = [{ piece:copy(start), cost:0 }];
   const bestState = new Map([[stateKey(start),0]]);
   const bestTarget = new Map();
-  while (queue.length) {
-    // Independent sorted-list Dijkstra: vertical descent costs zero, while
-    // deliberate movement/rotation edges cost one.
-    queue.sort((a,b)=>a.cost-b.cost);
-    const current = queue.shift();
-    const currentKey = stateKey(current.piece);
-    if (current.cost !== bestState.get(currentKey)) continue;
+  for (let head=0; head<queue.length; head++) {
+    const current = queue[head];
     const landing = referenceLanding(current.piece,board);
     // Independent lockability check: TETR.IO top-outs instead of locking when
     // any mino remains above the visible field.
@@ -155,19 +150,6 @@ export function referenceTargets({ type, start, board, maxCost = 2, allowVertica
       const key = targetKey(target);
       if (!bestTarget.has(key) || current.cost < bestTarget.get(key)) bestTarget.set(key,current.cost);
     }
-    if (allowVerticalTransitions) {
-      const fallen = copy(current.piece);
-      if (referenceMove(fallen,0,1,board)) {
-        const keyState = stateKey(fallen);
-        const prior = bestState.get(keyState);
-        if (prior === undefined || current.cost < prior) {
-          bestState.set(keyState,current.cost);
-          queue.push({piece:fallen,cost:current.cost});
-        }
-      }
-    }
-    // A zero-cost vertical edge remains legal even when the input budget is
-    // exhausted; only positive-cost actions stop at maxCost.
     if (current.cost >= maxCost) continue;
     for (const action of actions) {
       const next = action.apply(current.piece);
@@ -175,8 +157,7 @@ export function referenceTargets({ type, start, board, maxCost = 2, allowVertica
       const cost = current.cost + 1;
       if (cost > maxCost) continue;
       const keyState = stateKey(next);
-      const prior = bestState.get(keyState);
-      if (prior !== undefined && prior <= cost) continue;
+      if (bestState.has(keyState) && bestState.get(keyState) <= cost) continue;
       bestState.set(keyState,cost);
       queue.push({ piece:next, cost });
     }
@@ -214,17 +195,6 @@ function referenceWeightedTargets({type,start,board,maxCost,halfTurnCost=1}) {
       const target={x:landing.x,o:landing.o,y:landing.y};
       const key=targetKey(target);
       if(!bestTarget.has(key)||current.cost<bestTarget.get(key))bestTarget.set(key,current.cost);
-    }
-    // Gravity/soft-drop descent is a zero-cost edge and remains available
-    // after the deliberate-input budget has been spent.
-    const fallen=copy(current.piece);
-    if(referenceMove(fallen,0,1,board)){
-      const key=stateKey(fallen);
-      const prior=bestState.get(key);
-      if(prior===undefined||current.cost<prior){
-        bestState.set(key,current.cost);
-        queue.push({piece:fallen,cost:current.cost});
-      }
     }
     if(current.cost>=maxCost)continue;
     for(const action of actions){
@@ -274,7 +244,6 @@ export function runIndependentFinesseOracleTests() {
   assert(!ceilingProduction.some(item=>targetKey(item.target)==='2,1,-1'),
     'production planner included a top-out landing as a legal target');
 
-  let verticalTuckDifferences = 0;
   const boardKinds = ['empty','split-well','side-towers','overhang', ...Array.from({length:8}, (_,i) => 'generated-' + i)];
   for (const boardKind of boardKinds) {
     const board = boardFor(boardKind);
@@ -283,10 +252,6 @@ export function runIndependentFinesseOracleTests() {
       assert(!referenceCollides(start.x,start.y,start.o,board,type),
         'invalid reference spawn state for ' + boardKind + '/' + type);
       const expected = referenceTargets({ type, start, board, maxCost:2 });
-      const noDescentExpected = referenceTargets({ type, start, board, maxCost:2, allowVerticalTransitions:false });
-      for (const [key,cost] of expected) {
-        if (!noDescentExpected.has(key) || noDescentExpected.get(key) > cost) verticalTuckDifferences++;
-      }
       const actual = enumerateFinesseTargets({
         piece:{...start}, board, W, H, cellsFor:productionCellsFor,
         move:productionMove, tryRotate:productionTryRotate,
@@ -304,8 +269,6 @@ export function runIndependentFinesseOracleTests() {
       fixtures++;
     }
   }
-  assert(verticalTuckDifferences > 0,
-    'reference corpus did not exercise any target newly reachable or cheaper after free vertical descent');
   // Weighted-cost regression: the search must not assume every action has
   // unit cost. A direct half-turn costing 3 must lose to two quarter-turns
   // costing 1 each for the same physical landing.

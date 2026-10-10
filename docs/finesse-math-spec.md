@@ -87,7 +87,7 @@ The default TETR.IO training profile uses these deliberate actions:
 
 Omit rotation actions for O. Do not allow DAS as a rotation mode. A failed move/rotation is not a legal graph edge and cannot appear in a route.
 
-The route-cost formula is `C(R)=Σ c(a_i)`. Every deliberate movement/rotation edge costs one, while a legal one-cell downward transition costs zero because automatic gravity and soft drop are excluded from the finesse input count. The solver therefore uses Dijkstra's algorithm, not FIFO BFS. It must continue exploring zero-cost downward transitions even after the deliberate-input budget is exhausted. This permits later horizontal movement or rotation after the piece has descended into a well or under an overhang. The route records only deliberate inputs; downward transitions are not added to the displayed sequence.
+The route-cost formula is `C(R)=Σ c(a_i)`. For this profile, every deliberate movement/rotation edge costs exactly one. The solver may therefore use breadth-first search (BFS) to find minimum cost. If a future profile introduces different positive edge costs, replace BFS with Dijkstra's algorithm; do not use FIFO BFS with non-unit weights.
 
 Important interpretation: this is the trainer's **minimum deliberate-input** score, not a claim that every route is executable in identical wall-clock time. DAS/ARR/DCD and key timing affect execution but are not added to the base input count. The live observer separately confirms that a held horizontal input qualifies as DAS; a keydown alone must not be assumed to be a completed DAS action.
 
@@ -99,14 +99,14 @@ For a target placement p and starting state S0:
 
 If no legal route reaches p within the configured cost envelope, p is not a candidate. A route is finesse-perfect for p exactly when its cost equals F(p), it reaches the selected physical placement, and the required action sequence is observed under the observer's rules.
 
-Search algorithm:
+Search algorithm for the current unit-cost profile:
 
-1. Put S0 in a minimum-cost priority queue with cost 0.
-2. Pop the lowest-cost state; ignore it if a cheaper path to the same state has already been recorded.
-3. Calculate its landing and record the least cost for that physical landing identity.
-4. If a legal one-cell downward transition exists, enqueue that state at the same cost, even when the deliberate-input budget has been reached.
-5. If the cost is below the configured limit, enumerate every legal deliberate action and enqueue each valid successor at its current cost plus the action cost.
-6. Return each target's minimum cost and deterministic minimum-cost route(s). Vertical transitions are internal reachability edges, not displayed or scored inputs.
+1. Put S0 in a FIFO queue with cost 0.
+2. Pop a state; calculate its landing and record the least cost for that landing identity.
+3. If the cost is at the configured limit, do not expand it.
+4. Otherwise enumerate every legal action from the action set.
+5. For each unseen state, or state found at a lower cost, store its cost and enqueue it.
+6. Return each target's minimum cost and deterministic minimum-cost route(s).
 
 The state key is `(type,x,y,o)` for a fixed board and fixed profile. The target key is `(x_land,o_land,y_land)`. Distinct equal-cost routes may be retained for observer matching; duplicate action histories must not create duplicate routes.
 
