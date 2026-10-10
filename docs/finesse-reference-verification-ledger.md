@@ -2,6 +2,16 @@
 
 This ledger records what has been checked and what remains unproven. An in-repository test passing is not the same as matching an external reference, and a browser test using the production planner is not an independent oracle.
 
+
+## Follow-up: historical Playwright timing failure reconciled — 2026-10-10
+
+- The notification for workflow run [38078505840](https://github.com/mandrop333-create/180180/actions/runs/38078505840) points to commit `c554bb08dfc92b8ac9108ea72ffe87406ac49157`. Its local branch route fixtures and planner-oracle steps passed; the active-gravity timing step failed at the spawn/DCD assertion because it required `dasCutRemaining === 180` immediately after spawn.
+- The captured value was approximately `163.3 ms`, with the new piece still at x=4, direction preserved, elapsed DAS reset, and no Finesse fault. A requestAnimationFrame tick can consume part of the DCD interval before the assertion reads it; this was an overly strict test timing assumption, not evidence that the game advanced the piece incorrectly.
+- The test was corrected to assert the invariant (`0 < remaining <= 180`) rather than an exact wall-clock value. On branch head `ccf45dd92ede08b73980744c9e0f7f9d16dfee38`, the local browser-reference job [run 38086385533](https://github.com/mandrop333-create/180180/actions/runs/38086385533) passed. Its logs confirm the full timing suite passed, including inherited held input during spawn DCD, gravity/lock-delay cases, and soft-drop handling.
+- **Separate live-site result:** the same workflow's read-only live probe still fails the planner-oracle and active-gravity checks because the deployed site does not select the expected descent-before-rotation route across the probe fixtures/seeds. This job tests the current live site, not the isolated rebuild branch; it is not evidence that the branch-local timing fix failed. Live parity remains open.
+- No engine behavior was changed for this fix in this iteration; the timing assertion had already been made tolerant in the branch. No merge or deployment.
+
+
 ## Current verification status — branch head `8855182957aa42831a962a31cd85f68f0441c6e0` (2026-10-10)
 
 - **Branch CI:** the current head's planner regression ([run 38085846449](https://github.com/mandrop333-create/180180/actions/runs/38085846449)), independent reference fixtures ([run 38085846440](https://github.com/mandrop333-create/180180/actions/runs/38085846440)), independent Playwright route fixtures ([run 38085846447](https://github.com/mandrop333-create/180180/actions/runs/38085846447)), prompt-requested Playwright diagnostics ([run 38085846468](https://github.com/mandrop333-create/180180/actions/runs/38085846468)), and pinned matrix fixture workflow ([run 38085846466](https://github.com/mandrop333-create/180180/actions/runs/38085846466)) completed successfully. These are branch checks, not proof that the deployed site is fixed.
