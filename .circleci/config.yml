@@ -1,0 +1,98 @@
+version: 2.1
+
+jobs:
+  finesse-validation:
+    docker:
+      - image: cimg/node:22.14
+    resource_class: medium
+    working_directory: ~/project
+    steps:
+      - checkout
+
+      - run:
+          name: Install Playwright and Chromium dependencies
+          command: |
+            npm init -y
+            npm install --no-save playwright
+            npx playwright install --with-deps chromium
+
+      - run:
+          name: Test pinned TETR.IO fixture extractor
+          command: node scripts/test-extract-tetrio-matrix-fixtures.mjs
+
+      - run:
+          name: Test coordinate adapter round trips
+          command: node --experimental-default-type=module games/01/tetrio-coordinate-adapter-test.js
+
+      - run:
+          name: Compare empty-board I-piece turns with pinned reference
+          command: node --experimental-default-type=module games/01/tetrio-i-empty-rotation-parity-test.js
+
+      - run:
+          name: Compare kicked SRS+ movement with pinned reference
+          command: node --experimental-default-type=module games/01/tetrio-srs-plus-movement-parity-test.js
+
+      - run:
+          name: Check T-piece rotation geometry
+          command: node --experimental-default-type=module -e "import('./games/01/finesse-t-rotation-reference-test.js').then(({runFinesseTRotationReferenceTest}) => console.log(JSON.stringify(runFinesseTRotationReferenceTest()))).catch(error => { console.error(error); process.exit(1); })"
+
+      - run:
+          name: Check independent geometry and orientation fixtures
+          command: node --experimental-default-type=module -e "import('./games/01/finesse-reference-test.js').then(({runFinesseReferenceTests}) => console.log(JSON.stringify(runFinesseReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+
+      - run:
+          name: Check independent SRS+ I-piece kick fixtures
+          command: node --experimental-default-type=module -e "import('./games/01/finesse-kick-reference-test.js').then(({runFinesseKickReferenceTests}) => console.log(JSON.stringify(runFinesseKickReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+
+      - run:
+          name: Compare planner with independent shortest-path oracle
+          command: node --experimental-default-type=module -e "import('./games/01/finesse-oracle-reference-test.js').then(({runIndependentFinesseOracleTests}) => console.log(JSON.stringify(runIndependentFinesseOracleTests()))).catch(error => { console.error(error); process.exit(1); })"
+
+      - run:
+          name: Force ordered rotation kicks against independent fixtures
+          command: node --experimental-default-type=module -e "import('./games/01/finesse-kick-execution-reference-test.js').then(({runFinesseKickExecutionReferenceTests}) => console.log(JSON.stringify(runFinesseKickExecutionReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+
+      - run:
+          name: Run trainer self-tests
+          command: node --experimental-default-type=module -e "import('./games/01/self-test.js').then(({runTrainerSelfTest}) => console.log(JSON.stringify(runTrainerSelfTest()))).catch(error => { console.error(error); process.exit(1); })"
+
+      - run:
+          name: Start isolated local game server
+          command: |
+            python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-browser.log 2>&1 &
+            for i in $(seq 1 30); do
+              if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then
+                echo "Local game server is ready."
+                exit 0
+              fi
+              sleep 1
+            done
+            cat /tmp/180180-browser.log
+            exit 1
+
+      - run:
+          name: Run independent Playwright route fixtures
+          command: |
+            export FINESSE_BROWSER_BASE_URL=http://127.0.0.1:4173/
+            node --experimental-default-type=module games/01/finesse-browser-reference-test.js
+
+      - run:
+          name: Verify planner prompts against independent browser oracle
+          command: |
+            export FINESSE_BROWSER_BASE_URL=http://127.0.0.1:4173/
+            node --experimental-default-type=module games/01/finesse-planner-browser-oracle-test.js
+
+      - run:
+          name: Verify finesse routes with active gravity
+          command: |
+            export FINESSE_BROWSER_BASE_URL=http://127.0.0.1:4173/
+            node --experimental-default-type=module games/01/finesse-timing-browser-test.js
+
+      - store_artifacts:
+          path: /tmp/180180-browser.log
+          destination: browser-server.log
+
+workflows:
+  finesse-validation:
+    jobs:
+      - finesse-validation
