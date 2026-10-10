@@ -313,3 +313,11 @@ These equations are pinned to `scripts/generate-tetrio-movement-snapshots.ts` at
 
 **Implementation decision:** do not yet port these equations directly into production rotation. The generator's raw matrix is extracted from the pinned JavaScript bundle at generation time and is not present in the checked-in generated kick table; the adapter needs a versioned, auditable per-piece matrix fixture or a reproducible extraction step. Next, add that matrix fixture from the pinned source and unit-test native/client/native round trips for every orientation before differential rotation tests. Keep the production kick tables unchanged until round-trip and occupied-cell parity pass. No merge or deployment.
 
+## Matrix-fixture acquisition gate — 2026-10-09
+
+The pinned source repository contains the movement-snapshot generator and generated outcomes, but its checked-in generated table exports kick tables, not the extracted `tetrominoes.matrix` object. The generator obtains that object by fetching the pinned TETR.IO JavaScript asset and evaluating its `tetrominoes` literal. A direct attempt to open that asset through the available source retrieval route was inaccessible; therefore no client matrix coordinates were copied or reconstructed by guesswork.
+
+This narrows the next safe implementation step: add a deterministic matrix-fixture export mode to the pinned generator (or a companion script) that serializes only the seven pieces' `matrix.dx`, `matrix.dy`, and four `matrix.data` orientations from the exact pinned asset. Check that generated file into the trainer branch with the asset identifier and fetch timestamp, then write adapter round-trip tests against that fixture. The extractor should fail closed if a piece/orientation is missing and should never silently substitute trainer geometry.
+
+Until the matrix fixture is available, a new adapter test built from `finesse-reference-fixtures.js` would only prove the trainer is consistent with itself, not client parity. That would create false confidence, so it is deliberately not being added. Existing production rotation and kick values remain unchanged.
+
