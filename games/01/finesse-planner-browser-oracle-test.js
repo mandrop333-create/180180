@@ -235,7 +235,8 @@ try {
     const planned=await page.evaluate(()=>({
       piece:window.trainer.piece?{...window.trainer.piece}:null,
       target:window.trainer.finesseTarget?{...window.trainer.finesseTarget}:null,
-      actions:window.trainer.finesseActions.map(step=>({...step}))
+      actions:window.trainer.finesseActions.map(step=>({...step})),
+      executionRoute:(window.trainer.finesseExecutionRoute||[]).map(step=>({...step}))
     }));
     assert(planned.piece&&planned.target,
       type+'/'+boardKind+': planner failed to produce an obstacle-board target');
@@ -246,13 +247,22 @@ try {
       type+'/'+boardKind+': route cost differs from independent oracle for '+key);
 
     let predicted={...planned.piece};
-    for(let stepIndex=0;stepIndex<planned.actions.length;stepIndex++){
-      const step=planned.actions[stepIndex];
+    const executionRoute=planned.executionRoute.length?planned.executionRoute:planned.actions;
+    assert(executionRoute.filter(step=>step.action!=='softDrop').length===planned.actions.length,
+      type+'/'+boardKind+': executable route does not project to the finesse-scoring route');
+    for(let stepIndex=0;stepIndex<executionRoute.length;stepIndex++){
+      const step=executionRoute[stepIndex];
       const keyName=step.action==='left'?'ArrowLeft'
         :step.action==='right'?'ArrowRight'
         :step.action==='cw'?'x'
-        :step.action==='ccw'?'z':'a';
-      if(step.action==='left'||step.action==='right'){
+        :step.action==='ccw'?'z'
+        :step.action==='softDrop'?'ArrowDown':'a';
+      if(step.action==='softDrop'){
+        const next={...predicted};
+        assert(move(next,0,1,testBoard,W,H,cellsFor),
+          type+'/'+boardKind+': planned soft-drop is blocked at action '+stepIndex);
+        predicted=next;
+      }else if(step.action==='left'||step.action==='right'){
         const direction=step.action==='left'?-1:1;
         if(step.mode==='das'){
           let moved=false;
