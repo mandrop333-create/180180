@@ -34,8 +34,12 @@ for (const [type, piece] of Object.entries(REFERENCE_PIECES)) {
       assert.equal(new Set(cells.map(({x,y}) => x + ',' + y)).size, 4,
         type + ' orientation ' + rotation + ' must have unique cells');
 
-      const expected = new Set(piece.orientations[rotation].map(([x,y]) =>
-        (state.x + x) + ',' + (state.y + y)));
+      const localCells = piece.orientations[rotation];
+      const maxLocalY = Math.max(...localCells.map(([, y]) => y));
+      // Native y is the bottom-up coordinate of the topmost occupied cell,
+      // so rows within the piece are reflected around maxLocalY.
+      const expected = new Set(localCells.map(([x,y]) =>
+        (state.x + x) + ',' + (state.y + maxLocalY - y)));
       const actual = new Set(cells.map(({x,y}) =>
         x + ',' + (TETRIO_TOTAL_HEIGHT - 1 - y)));
       assert.deepEqual(actual, expected,
