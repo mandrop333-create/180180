@@ -343,7 +343,7 @@ try {
     assert(locked.perfect===1&&locked.faults===0&&locked.placed===1,
       type+'/'+boardKind+': obstacle placement scoring mismatch '+JSON.stringify(locked));
     console.log(JSON.stringify({type,boardKind,passed:true,target:planned.target,
-      minimumCost:oracleTargets.get(key),route:planned.actions,lockedCells:locked.cells.length}));
+      minimumCost:oracleTargets.get(key)?.cost,route:planned.actions,lockedCells:locked.cells.length}));
   }
 
   // Regression: placement-resolution state must reset for each real spawn.
