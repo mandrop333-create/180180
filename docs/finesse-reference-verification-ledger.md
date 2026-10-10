@@ -9,6 +9,13 @@ This ledger records what has been checked and what remains unproven. An in-repos
 - **Soft-drop scope:** the rule vocabulary classifies soft drop as zero finesse cost, but the core planner's action graph contains horizontal taps, rotations, direct 180, and optional wall-directed DAS; it does not model a soft-drop input transition. Landing is simulated by repeatedly moving down after a route state. Soft-drop-dependent timing/tucks are therefore outside the proven planner domain; current browser coverage is not evidence of complete soft-drop parity.
 - **Kick parity boundary:** the pinned SRS+ I-piece 180 candidate list is now converted using the exact matrix anchors, and the six local blocked/edge/floor probes assert both final states and candidate-index mapping. This narrows the earlier discrepancy but does not prove all TETR.IO kicksets or all rotations. The next extension should differential-test every SRS+ I transition and add representative stack/edge probes for the remaining piece types before claiming full kick parity.
 
+## Follow-up: pinned I-piece kick-coordinate parity
+
+- Added `tetrioKickToLocalOriginOffset` to `games/01/tetrio-coordinate-adapter.js`. It derives the displacement between orientation-specific trainer origins from pinned client matrix-relative bounds, trainer geometry bounds, the raw kick offset, and optional client anchor-offset deltas.
+- Extended `games/01/tetrio-coordinate-adapter-test.js` to compare the exact ordered raw SRS+ I-piece kick arrays from the pinned client against all eight trainer quarter-turn tables and all four direct-180 tables after coordinate conversion. The test covers 36 kick entries and does not derive its expected values from production `kicks.js`.
+- Corrected the I direct-180 trainer candidates to the pinned SRS+ table: orientation 0 `[0,-1]`, orientation 1 `[1,0]`, orientation 2 `[0,1]`, orientation 3 `[-1,0]`, each after the unshifted destination check. Removed the earlier extra guessed offsets.
+- Updated `games/01/tetrio-i-empty-rotation-parity-test.js` to assert the selected local candidate index corresponds to the pinned raw client `kickIndex` plus one (the local list explicitly includes the direct destination first).
+
 ## Completed on `rebuild/finesse-core`
 
 - Added `games/01/finesse-reference-fixtures.js`: static expected cell coordinates and spawn origins for all seven pieces and four orientations.
