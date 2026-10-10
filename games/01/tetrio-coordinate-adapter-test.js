@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { TETRIO_MATRIX_REFERENCE, TETRIO_MATRIX_SOURCE } from './tetrio-matrix-reference-fixtures.js';
+import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
 import {
   nativeToTetrioState,
   tetrioBoardCells,
@@ -19,6 +20,19 @@ for (const [type, matrix] of Object.entries(TETRIO_MATRIX_REFERENCE)) {
   for (let rotation = 0; rotation < 4; rotation += 1) {
     const clientCells = matrix.orientations[rotation];
     assert.equal(clientCells.length, 4, type + ' orientation ' + rotation + ' must have four cells');
+
+    // Compare normalized occupied-cell shapes from the pinned client matrices
+    // against the independently authored trainer reference, not just round trips.
+    const normalize = (cells) => {
+      const minX = Math.min(...cells.map(([x]) => x));
+      const minY = Math.min(...cells.map(([, y]) => y));
+      return cells.map(([x,y]) => [x - minX, y - minY]).sort(comparePair);
+    };
+    assert.deepEqual(
+      normalize(clientCells),
+      normalize(REFERENCE_PIECES[type].orientations[rotation]),
+      type + ' orientation ' + rotation + ' pinned client shape must match trainer reference'
+    );
     assert.equal(new Set(clientCells.map(([x,y]) => x + ',' + y)).size, 4,
       type + ' orientation ' + rotation + ' must have unique matrix cells');
 
