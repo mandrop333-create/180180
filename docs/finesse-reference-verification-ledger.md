@@ -2,9 +2,17 @@
 
 This ledger records what has been checked and what remains unproven. An in-repository test passing is not the same as matching an external reference, and a browser test using the production planner is not an independent oracle.
 
-## Latest audit — branch head `ddd7200bad21f2a7830ee2e97e30d3e194015861`
+## Current verification status — branch head `b1449023c08dd8b65f9c89850fdffa12932356dc`
 
-- **CI status:** planner regression, independent reference fixtures, pinned matrix fixture, independent Playwright route fixtures, and prompt-requested Playwright all completed successfully on this exact head. This is branch CI evidence, not production verification.
+- **PR status:** draft PR [#8](https://github.com/mandrop333-create/180180/pull/8), branch `rebuild/finesse-core`; not merged or deployed.
+- **Current-head CI status:** unverified. The five workflows triggered by `b144902` failed before their first step. Raw job records showed `runner_id: 0`, an empty runner name, and `steps: []`; retrying the planner and independent-reference jobs reproduced that same pre-step failure. No test command ran, so these failures do not establish a code regression or a pass.
+- **Last known green baseline:** `146ffdc220bc495d66036afae440690adaba177f`. Subsequent code/test changes still require execution on a working runner, especially the pinned coordinate/kick parity suite and Playwright timing/gameplay checks.
+- **Current I-piece direct-180 table:** each orientation explicitly checks `[0,0]` first, then one matrix-anchor-transformed candidate: orientation 0 `[0,-1]`, 1 `[1,0]`, 2 `[0,1]`, 3 `[-1,0]`. The independent adapter test compares these against the pinned client's raw direct-180 offsets. This is source/test coverage, not current-head runtime verification.
+- **Next gate:** restore or diagnose GitHub Actions job startup using the job-level failure annotation, then execute the existing reference, planner, and Playwright suites. Do not change gameplay behavior solely in response to pre-step runner failures.
+
+## Historical audit — branch head `ddd7200bad21f2a7830ee2e97e30d3e194015861`
+
+- **CI status at that historical head:** planner regression, independent reference fixtures, pinned matrix fixture, independent Playwright route fixtures, and prompt-requested Playwright completed successfully on that exact head. This is historical branch CI evidence, not verification of the current head or production.
 - **Runtime import path:** `index.html` loads `games/01/game.js`; that entry constructs `games/01/engine.js`, and the engine imports `planFinesse` directly from `games/01/finesse-core.js`. `games/01/finesse.js` is a compatibility re-export facade, not the runtime implementation. The separate `js/app.js` imports the older `js/trainer/core-engine.js` path and is not the root page's current script entry.
 - **Soft-drop scope:** the rule vocabulary classifies soft drop as zero finesse cost, but the core planner's action graph contains horizontal taps, rotations, direct 180, and optional wall-directed DAS; it does not model a soft-drop input transition. Landing is simulated by repeatedly moving down after a route state. Soft-drop-dependent timing/tucks are therefore outside the proven planner domain; current browser coverage is not evidence of complete soft-drop parity.
 - **Kick parity boundary:** the exact pinned SRS+ I kick arrays are converted through client matrix anchors, and the six I blocked/edge/floor probes assert final states plus selected-candidate indices. Commit `146ffdc220bc495d66036afae440690adaba177f` adds 39 pinned SRS+ kicked outcomes across I/T/S/Z/J/L, asserting both final local-origin state and selected candidate index. The adapter test also checks 36 I kick entries and 260 JLSTZ-family entries against the pinned client tables after coordinate conversion. This substantially broadens parity evidence, but does not establish all kicksets, all source configurations, or full gameplay timing parity.
