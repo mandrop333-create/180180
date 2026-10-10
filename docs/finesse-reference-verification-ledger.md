@@ -7,7 +7,7 @@ This ledger records what has been checked and what remains unproven. An in-repos
 - **CI status:** planner regression, independent reference fixtures, pinned matrix fixture, independent Playwright route fixtures, and prompt-requested Playwright all completed successfully on this exact head. This is branch CI evidence, not production verification.
 - **Runtime import path:** `index.html` loads `games/01/game.js`; that entry constructs `games/01/engine.js`, and the engine imports `planFinesse` directly from `games/01/finesse-core.js`. `games/01/finesse.js` is a compatibility re-export facade, not the runtime implementation. The separate `js/app.js` imports the older `js/trainer/core-engine.js` path and is not the root page's current script entry.
 - **Soft-drop scope:** the rule vocabulary classifies soft drop as zero finesse cost, but the core planner's action graph contains horizontal taps, rotations, direct 180, and optional wall-directed DAS; it does not model a soft-drop input transition. Landing is simulated by repeatedly moving down after a route state. Soft-drop-dependent timing/tucks are therefore outside the proven planner domain; current browser coverage is not evidence of complete soft-drop parity.
-- **Kick parity boundary:** the pinned SRS+ I-piece 180 candidate list is now converted using the exact matrix anchors, and the six local blocked/edge/floor probes assert both final states and candidate-index mapping. This narrows the earlier discrepancy but does not prove all TETR.IO kicksets or all rotations. The next extension should differential-test every SRS+ I transition and add representative stack/edge probes for the remaining piece types before claiming full kick parity.
+- **Kick parity boundary:** the exact pinned SRS+ I kick arrays are converted through client matrix anchors, and the six I blocked/edge/floor probes assert final states plus selected-candidate indices. Commit `146ffdc220bc495d66036afae440690adaba177f` adds 39 pinned SRS+ kicked outcomes across I/T/S/Z/J/L, asserting both final local-origin state and selected candidate index. The adapter test also checks 36 I kick entries and 260 JLSTZ-family entries against the pinned client tables after coordinate conversion. This substantially broadens parity evidence, but does not establish all kicksets, all source configurations, or full gameplay timing parity.
 
 ## Follow-up: pinned I-piece kick-coordinate parity
 
@@ -15,6 +15,13 @@ This ledger records what has been checked and what remains unproven. An in-repos
 - Extended `games/01/tetrio-coordinate-adapter-test.js` to compare the exact ordered raw SRS+ I-piece kick arrays from the pinned client against all eight trainer quarter-turn tables and all four direct-180 tables after coordinate conversion. The test covers 36 kick entries and does not derive its expected values from production `kicks.js`.
 - Corrected the I direct-180 trainer candidates to the pinned SRS+ table: orientation 0 `[0,-1]`, orientation 1 `[1,0]`, orientation 2 `[0,1]`, orientation 3 `[-1,0]`, each after the unshifted destination check. Removed the earlier extra guessed offsets.
 - Updated `games/01/tetrio-i-empty-rotation-parity-test.js` to assert the selected local candidate index corresponds to the pinned raw client `kickIndex` plus one (the local list explicitly includes the direct destination first).
+
+## Follow-up: broader pinned SRS+ movement parity
+
+- Added `games/01/tetrio-srs-plus-movement-parity-test.js`, generated from the pinned upstream movement snapshot fixture at commit `712dc10be43d5a6c54a35b62608ab9f4a2eaa324`. It exercises 39 blocked/stack/edge SRS+ turns for I/T/S/Z/J/L and checks the resulting native-to-local landing state plus the selected kick candidate index.
+- Wired the new movement differential test into `.github/workflows/finesse-reference-tests.yml`.
+- Extended `games/01/tetrio-coordinate-adapter-test.js` to validate ordered JLSTZ-family SRS+ 90° and direct-180 candidates for T/S/Z/J/L in addition to I. The coordinate-adapter/reference workflow passed with the new 39-case corpus and 260 converted JLSTZ-family kick entries.
+- On code commit `146ffdc220bc495d66036afae440690adaba177f`, planner regression, independent reference fixtures, pinned matrix fixture, and independent Playwright route fixtures passed. The prompt-requested Playwright run was still in progress at the last status check. This evidence is branch-only and does not verify production.
 
 ## Completed on `rebuild/finesse-core`
 
