@@ -451,9 +451,10 @@ try {
         'prompt-path action '+i+' runtime drift: expected '+JSON.stringify(predicted)+
         ', got '+JSON.stringify(observed));
     }
-    assert(predicted.x===target.x&&predicted.o===target.o&&
-      (!Number.isInteger(target.y)||predicted.y===target.y),
-      'prompt-path route missed its advertised target: '+JSON.stringify({predicted,target}));
+    // The route ends at a reachable airborne state; target.y is the landing
+    // row reached by hard drop, so only x/orientation must match before lock.
+    assert(predicted.x===target.x&&predicted.o===target.o,
+      'prompt-path route missed its advertised target column/orientation: '+JSON.stringify({predicted,target}));
     const beforeLock=await page.evaluate(()=>({
       progress:window.trainer.finesseProgress,
       total:window.trainer.finesseActions.length,
