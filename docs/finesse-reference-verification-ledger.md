@@ -2,6 +2,13 @@
 
 This ledger records what has been checked and what remains unproven. An in-repository test passing is not the same as matching an external reference, and a browser test using the production planner is not an independent oracle.
 
+## Latest audit — branch head `ddd7200bad21f2a7830ee2e97e30d3e194015861`
+
+- **CI status:** planner regression, independent reference fixtures, pinned matrix fixture, independent Playwright route fixtures, and prompt-requested Playwright all completed successfully on this exact head. This is branch CI evidence, not production verification.
+- **Runtime import path:** `index.html` loads `games/01/game.js`; that entry constructs `games/01/engine.js`, and the engine imports `planFinesse` directly from `games/01/finesse-core.js`. `games/01/finesse.js` is a compatibility re-export facade, not the runtime implementation. The separate `js/app.js` imports the older `js/trainer/core-engine.js` path and is not the root page's current script entry.
+- **Soft-drop scope:** the rule vocabulary classifies soft drop as zero finesse cost, but the core planner's action graph contains horizontal taps, rotations, direct 180, and optional wall-directed DAS; it does not model a soft-drop input transition. Landing is simulated by repeatedly moving down after a route state. Soft-drop-dependent timing/tucks are therefore outside the proven planner domain; current browser coverage is not evidence of complete soft-drop parity.
+- **Kick parity boundary:** the pinned movement fixture supplies native-client final states and kick indices, while the current local I-piece parity test asserts converted final states only. The extra I-piece 180 offsets remain provisional trainer-space candidates; no exact mapping to the raw client kick sequence is asserted. Do not label the kick/pivot issue fixed until an independently derived coordinate/pivot adapter and differential candidate-order test pass.
+
 ## Completed on `rebuild/finesse-core`
 
 - Added `games/01/finesse-reference-fixtures.js`: static expected cell coordinates and spawn origins for all seven pieces and four orientations.
