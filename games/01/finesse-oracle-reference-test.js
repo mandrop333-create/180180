@@ -9,7 +9,7 @@ import {
   REFERENCE_JLSTZ_SRS,
   REFERENCE_JLSTZ_180_SRS_PLUS
 } from './finesse-kick-reference-fixtures.js';
-import { enumerateFinesseTargets } from './finesse-core.js';
+import { enumerateFinesseTargets, enumerateFinesseNavigationTargets } from './finesse-core.js';
 import { cellsFor as productionCellsFor } from './pieces.js';
 import { collides as productionCollides, move as productionMove } from './collision.js';
 import { tryRotate as productionTryRotate } from './rotation.js';
@@ -386,6 +386,55 @@ export function runIndependentFinesseOracleTests() {
     navigationRoutesChecked++;
   }
 
+  // Production navigation planner must match the independent reference target
+  // set while exposing paired physical/scoring routes for every target.
+  const productionNavigation=enumerateFinesseNavigationTargets({
+    piece:{type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0},
+    board:empty,W,H,cellsFor:productionCellsFor,move:productionMove,
+    tryRotate:productionTryRotate,maxCost:2,profile:PROFILE
+  });
+  const expectedNavigationMap=new Map([...navigationTargets].map(([key,item])=>[key,item.cost]));
+  const actualNavigationMap=new Map(productionNavigation.map(item=>[targetKey(item.target),item.cost]));
+  assert(actualNavigationMap.size===expectedNavigationMap.size,
+    'production navigation planner target count differs from independent oracle: expected '+expectedNavigationMap.size+', got '+actualNavigationMap.size);
+  let productionNavigationRoutesChecked=0;
+  for(const candidate of productionNavigation){
+    const key=targetKey(candidate.target);
+    assert(expectedNavigationMap.has(key),
+      'production navigation planner exposed target absent from independent oracle: '+key);
+    assert(candidate.cost===expectedNavigationMap.get(key),
+      'production navigation minimum cost differs at '+key);
+    assert(candidate.routes.length===candidate.executionRoutes.length,
+      'production navigation scoring/execution route pairs are misaligned at '+key);
+    assert(JSON.stringify(candidate.route)===JSON.stringify(candidate.executionRoute.filter(step=>step.action!=='softDrop')),
+      'canonical scoring route is not the costed-action projection at '+key);
+    assert(candidate.route.length===candidate.cost,
+      'canonical finesse route cost differs from its costed action count at '+key);
+    const state=copy({type:'T',...REFERENCE_PIECES.T.spawn,o:0});
+    for(const step of candidate.executionRoute){
+      if(step.action==='softDrop'){
+        assert(referenceMove(state,0,1,empty),'production route has blocked soft-drop at '+key);
+      }else if(step.action==='left'||step.action==='right'){
+        const dir=step.action==='left'?-1:1;
+        if(step.mode==='das'){
+          let moved=false;
+          for(let guard=0;guard<W+4;guard++){
+            if(!referenceMove(state,dir,0,empty))break;
+            moved=true;
+          }
+          assert(moved,'production route has blocked DAS action at '+key);
+        }else assert(referenceMove(state,dir,0,empty),'production route has blocked horizontal tap at '+key);
+      }else{
+        const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
+        assert(referenceRotate(state,delta,empty),'production route has invalid rotation at '+key);
+      }
+    }
+    const landed=referenceLanding(state,empty);
+    assert(landed.x===candidate.target.x&&landed.o===candidate.target.o&&landed.y===candidate.target.y,
+      'production execution route does not reach its advertised landing at '+key);
+    productionNavigationRoutesChecked++;
+  }
+
 
   // Weighted-cost regression: the search must not assume every action has
   // unit cost. A direct half-turn costing 3 must lose to two quarter-turns
@@ -509,7 +558,7 @@ export function runIndependentFinesseOracleTests() {
       extendedFixtures++;
     }
   }
-  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, extendedFixtures, extendedTargets, extendedMaxCost:4, navigationRoutesChecked, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
+  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, extendedFixtures, extendedTargets, extendedMaxCost:4, navigationRoutesChecked, productionNavigationRoutesChecked, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
