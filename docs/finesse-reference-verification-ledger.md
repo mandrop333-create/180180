@@ -2,6 +2,14 @@
 
 This ledger records what has been checked and what remains unproven. An in-repository test passing is not the same as matching an external reference, and a browser test using the production planner is not an independent oracle.
 
+## Current verification status — branch head `8855182957aa42831a962a31cd85f68f0441c6e0` (2026-10-10)
+
+- **Branch CI:** the current head's planner regression ([run 38085846449](https://github.com/mandrop333-create/180180/actions/runs/38085846449)), independent reference fixtures ([run 38085846440](https://github.com/mandrop333-create/180180/actions/runs/38085846440)), independent Playwright route fixtures ([run 38085846447](https://github.com/mandrop333-create/180180/actions/runs/38085846447)), prompt-requested Playwright diagnostics ([run 38085846468](https://github.com/mandrop333-create/180180/actions/runs/38085846468)), and pinned matrix fixture workflow ([run 38085846466](https://github.com/mandrop333-create/180180/actions/runs/38085846466)) completed successfully. These are branch checks, not proof that the deployed site is fixed.
+- **Pinned movement coverage:** the current tests include 84 pinned-matrix coordinate round trips, 36 converted I-piece kick entries, 260 converted JLSTZ-family kick entries, 12 empty-board I rotations, six blocked/edge/floor I outcomes, and 39 pinned kicked SRS+ movement outcomes. Passing these fixtures supports the covered cases only; it does not close the live-site mismatch or prove every movement/tuck configuration.
+- **Cloudflare preview:** the PR's Cloudflare bot reports failed preview builds for commit `8855182` and several earlier branch commits. The bot comment links to [the Cloudflare build log](https://dash.cloudflare.com/?to=/9965aaa4ea53734bec1392b232330098/workers/services/view/180trainertool/production/builds/341ae271-a9ea-4aba-af54-89f7eaff29c7), but the detailed log is not exposed in the GitHub PR data available for this check. The failure cause therefore remains unknown; do not infer it is caused by the Finesse code or make a speculative config change.
+- **Live site:** the existing `/playwright-live` workflow is diagnostic only and does not provide a verified current live-site result in this pass. Production parity remains an open gate.
+- **Next gate:** obtain the Cloudflare build's first actionable error from its log, then fix only a demonstrated build/config cause. In parallel, keep the pinned movement parity gate open until the original I-piece discrepancy can be captured and compared against an exact fixture. Keep this PR draft isolated; no merge or deployment.
+
 ## Current verification status — tested code checkpoint `9bddcfdb2ac94dcb4a2f604c2c685288c7164ed7`; follow-up ledger-only commit `a19c21e2f3fed5afcd85f4b99c0562bc7fedb6b0` triggered a fresh CI cycle
 
 - **PR status:** draft PR [#8](https://github.com/mandrop333-create/180180/pull/8), branch `rebuild/finesse-core`; not merged or deployed.
