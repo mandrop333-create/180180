@@ -442,6 +442,7 @@ export function runIndependentFinesseOracleTests() {
   // this route model into gameplay.
   let obstacleNavigationFixtures=0;
   let obstacleNavigationTargets=0;
+  let descentBeforeRotationWitnesses=0;
   for(const boardKind of ['split-well','side-towers','overhang','generated-4']){
     const board=boardFor(boardKind);
     const start={type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0};
@@ -463,6 +464,10 @@ export function runIndependentFinesseOracleTests() {
       obstacleNavigationTargets++;
     }
     for(const candidate of actual){
+      const descentIndex=candidate.executionRoute.findIndex(step=>step.action==='softDrop');
+      if(descentIndex>=0&&candidate.executionRoute.slice(descentIndex+1).some(step=>['cw','ccw','half'].includes(step.action))){
+        descentBeforeRotationWitnesses++;
+      }
       const key=targetKey(candidate.target);
       assert(candidate.routes.length===candidate.executionRoutes.length,
         'obstacle navigation route pairs are misaligned for '+boardKind+'/'+key);
@@ -495,6 +500,8 @@ export function runIndependentFinesseOracleTests() {
     }
     obstacleNavigationFixtures++;
   }
+  assert(descentBeforeRotationWitnesses>0,
+    'obstacle navigation fixtures never exercise a route that descends before rotating');
 
   // Weighted-cost regression: the search must not assume every action has
   // unit cost. A direct half-turn costing 3 must lose to two quarter-turns
