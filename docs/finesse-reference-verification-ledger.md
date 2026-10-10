@@ -290,3 +290,11 @@ The trainer currently expresses I direct-180 kicks as local-origin offsets: orie
 **Next implementation gate:** build a small fixture adapter that converts the pinned client's matrix cells and native states into this trainer's world-cell convention, then compare `tryRotate` on identical empty, kick-required, and failed-rotation boards. The first assertions should cover all seven pieces × four orientations × CW/CCW/direct-180 where supported, and compare success/failure, final occupied world cells, and kick index/order where that information is available. Add randomized-board cases only after the empty-board anchor mapping passes. Keep the current local table unchanged until the adapter isolates whether the difference is anchor conversion, table semantics, or both.
 
 This audit does not update the target-client date: the pinned asset is from May 2026, not proof of the live October 2026 client. The previously observed live-site I-piece mismatch remains a separate production-parity gate. No merge or deployment.
+
+## Direct-180 baseline regression hardening — 2026-10-09
+
+Added four execution assertions for I-piece direct 180° rotation, one from each starting orientation, on empty boards. Each assertion verifies that rotation succeeds, the piece origin remains unchanged for the no-kick baseline, and the final occupied world-cell set matches the independently specified trainer geometry. This closes a narrow baseline-coverage gap; it is not a client-equivalence test.
+
+Also clarified in `finesse-kick-reference-fixtures.js` that the current I direct-180 non-zero arrays are **provisional trainer-space candidates**, not independent TETR.IO client expected values. The pinned May 2026 SRS+ source has one explicit I direct-180 kick `[0,-1]` in client coordinates after the baseline. The remaining adapter must map matrix/pivot/anchor conventions before those values can be compared. Keep non-zero local offsets gated until that differential test exists.
+
+The change is isolated to test coverage and fixture labeling; no production kick values were changed. PR workflows for the new code commit are expected to be the verification gate before further implementation.
