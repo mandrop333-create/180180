@@ -436,6 +436,66 @@ export function runIndependentFinesseOracleTests() {
   }
 
 
+  // Obstacle navigation regression: descent changes which rotations and
+  // wall-adjacent states are reachable. Compare the new production planner to
+  // the independent oracle on representative non-empty boards before wiring
+  // this route model into gameplay.
+  let obstacleNavigationFixtures=0;
+  let obstacleNavigationTargets=0;
+  for(const boardKind of ['split-well','side-towers','overhang','generated-4']){
+    const board=boardFor(boardKind);
+    const start={type:'T',x:REFERENCE_PIECES.T.spawn.x,y:REFERENCE_PIECES.T.spawn.y,o:0};
+    assert(!referenceCollides(start.x,start.y,start.o,board,'T'),
+      'obstacle navigation spawn is invalid for '+boardKind);
+    const expected=referenceNavigationTargets({type:'T',start,board,maxCost:3});
+    const actual=enumerateFinesseNavigationTargets({
+      piece:{...start},board,W,H,cellsFor:productionCellsFor,move:productionMove,
+      tryRotate:productionTryRotate,maxCost:3,profile:PROFILE
+    });
+    const expectedMap=new Map([...expected].map(([key,item])=>[key,item.cost]));
+    const actualMap=new Map(actual.map(item=>[targetKey(item.target),item.cost]));
+    assert(actualMap.size===expectedMap.size,
+      'obstacle navigation target count differs for '+boardKind+': expected '+expectedMap.size+', got '+actualMap.size);
+    for(const [key,cost] of expectedMap){
+      assert(actualMap.has(key),'obstacle navigation missing '+boardKind+' target '+key);
+      assert(actualMap.get(key)===cost,
+        'obstacle navigation cost differs for '+boardKind+'/'+key+': expected '+cost+', got '+actualMap.get(key));
+      obstacleNavigationTargets++;
+    }
+    for(const candidate of actual){
+      const key=targetKey(candidate.target);
+      assert(candidate.routes.length===candidate.executionRoutes.length,
+        'obstacle navigation route pairs are misaligned for '+boardKind+'/'+key);
+      assert(JSON.stringify(candidate.route)===JSON.stringify(candidate.executionRoute.filter(step=>step.action!=='softDrop')),
+        'obstacle scoring route is not paired with execution route for '+boardKind+'/'+key);
+      const state=copy(start);
+      for(const step of candidate.executionRoute){
+        if(step.action==='softDrop'){
+          assert(referenceMove(state,0,1,board),'obstacle execution route has blocked descent for '+boardKind+'/'+key);
+        }else if(step.action==='left'||step.action==='right'){
+          const dir=step.action==='left'?-1:1;
+          if(step.mode==='das'){
+            let moved=false;
+            for(let guard=0;guard<W+4;guard++){
+              if(!referenceMove(state,dir,0,board))break;
+              moved=true;
+            }
+            assert(moved,'obstacle execution route has blocked DAS for '+boardKind+'/'+key);
+          }else assert(referenceMove(state,dir,0,board),
+            'obstacle execution route has blocked horizontal tap for '+boardKind+'/'+key);
+        }else{
+          const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
+          assert(referenceRotate(state,delta,board),
+            'obstacle execution route has invalid rotation for '+boardKind+'/'+key);
+        }
+      }
+      const landed=referenceLanding(state,board);
+      assert(landed.x===candidate.target.x&&landed.o===candidate.target.o&&landed.y===candidate.target.y,
+        'obstacle execution route does not reproduce landing for '+boardKind+'/'+key);
+    }
+    obstacleNavigationFixtures++;
+  }
+
   // Weighted-cost regression: the search must not assume every action has
   // unit cost. A direct half-turn costing 3 must lose to two quarter-turns
   // costing 1 each for the same physical landing.
