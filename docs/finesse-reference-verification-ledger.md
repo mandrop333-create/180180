@@ -2,13 +2,19 @@
 
 This ledger records what has been checked and what remains unproven. An in-repository test passing is not the same as matching an external reference, and a browser test using the production planner is not an independent oracle.
 
-## Current verification status — branch head `b1449023c08dd8b65f9c89850fdffa12932356dc`
+## Current verification status — code state `7e14c1a57804e73cb8334ab980f9fe963094da06`
 
 - **PR status:** draft PR [#8](https://github.com/mandrop333-create/180180/pull/8), branch `rebuild/finesse-core`; not merged or deployed.
-- **Current-head CI status:** unverified. The five workflows triggered by `b144902` failed before their first step. Raw job records showed `runner_id: 0`, an empty runner name, and `steps: []`; retrying the planner and independent-reference jobs reproduced that same pre-step failure. No test command ran, so these failures do not establish a code regression or a pass.
+- **Current code-state CI status:** unverified. The five workflows triggered by `7e14c1a` failed before their first step. Raw job records showed `runner_id: 0`, an empty runner name, and `steps: []`; retries of the planner and independent-reference jobs reproduced that pre-step failure. No test command ran, so these failures do not establish a code regression or a pass.
 - **Last known green baseline:** `146ffdc220bc495d66036afae440690adaba177f`. Subsequent code/test changes still require execution on a working runner, especially the pinned coordinate/kick parity suite and Playwright timing/gameplay checks.
+- **Repository-wide legacy import audit:** completed against the 135 tracked `.js`, `.mjs`, and `.html` paths in the current branch tree. Each file was retrieved and scanned for the literal `finesse.js`. The only match was a comment in `games/01/finesse-core.js` describing the compatibility facade; no executable legacy-path imports/references were found. This closes the source-reference inventory gate for the scanned file types. Keep `games/01/finesse.js` until the facade-removal decision is separately approved; there is no reason to remove it as part of this audit.
 - **Current I-piece direct-180 table:** each orientation explicitly checks `[0,0]` first, then one matrix-anchor-transformed candidate: orientation 0 `[0,-1]`, 1 `[1,0]`, 2 `[0,1]`, 3 `[-1,0]`. The independent adapter test compares these against the pinned client's raw direct-180 offsets. This is source/test coverage, not current-head runtime verification.
-- **Next gate:** restore or diagnose GitHub Actions job startup using the job-level failure annotation, then execute the existing reference, planner, and Playwright suites. Do not change gameplay behavior solely in response to pre-step runner failures.
+- **Next gate:** obtain a GitHub Actions run that actually starts steps, then execute the existing reference, planner, and Playwright suites. Do not change gameplay behavior solely in response to pre-step runner failures. Soft-drop-dependent tucks remain outside the planner's modeled route domain.
+
+## Completed source audit — 2026-10-10
+
+The repository-wide source scan used the current branch tree at code commit `7e14c1a57804e73cb8334ab980f9fe963094da06`, which listed 135 tracked JavaScript, module, and HTML files. All 135 were retrieved and scanned for the exact legacy module-path string `finesse.js`. The sole match was a non-executable comment in `games/01/finesse-core.js`; no executable imports or dynamic-import references to `finesse.js` were found. This audit does not justify deleting the facade: retaining it is the safer compatibility choice, and this finding does not affect the open CI or movement-parity gates.
+
 
 ## Historical audit — branch head `ddd7200bad21f2a7830ee2e97e30d3e194015861`
 
