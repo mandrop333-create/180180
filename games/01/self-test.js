@@ -107,7 +107,7 @@ export function runTrainerSelfTest(){
     2:[[0,0],[0,1],[-1,1],[1,1],[-1,0],[1,0]],
     3:[[0,0],[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
   };
-  const expectedHalfI={0:[[0,0],[1,1],[1,0]],1:[[0,0],[-1,1],[0,1]],2:[[0,0],[-1,-1],[-1,0]],3:[[0,0],[1,-1],[0,-1]]};
+  const expectedHalfI={0:[[0,0],[1,1],[1,0],[0,-1]],1:[[0,0],[-1,1],[0,1],[1,0]],2:[[0,0],[-1,-1],[-1,0],[0,1]],3:[[0,0],[1,-1],[0,-1],[-1,0]]};
   for(let o=0;o<4;o++){
     assert(JSON.stringify(getTetrio180Kicks('T',o))===JSON.stringify(expectedHalfJLSTZ[o]),
       'JLSTZ 180 kick order mismatch for orientation '+o);
