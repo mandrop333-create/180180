@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify pinned TETR.IO reference is still current
+        run: node scripts/check-tetrio-reference-freshness.mjs
       - name: Test pinned TETR.IO matrix fixture extractor
         run: node scripts/test-extract-tetrio-matrix-fixtures.mjs
       - name: Test TETR.IO coordinate adapter round trips
