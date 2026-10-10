@@ -491,8 +491,10 @@ export function runTrainerSelfTest(){
     alternateRuntime.finesseTarget.o===equivalentPlan.target.o&&
     alternateRuntime.finesseTarget.y===equivalentPlan.target.y,
     'runtime must select the same physical target as the planner');
-  for(const step of alternateRoute){
-    const code=alternateRuntime.binds[step.action];
+  const alternateRouteIndex=equivalentPlan.routes.indexOf(alternateRoute);
+  const alternateExecutionRoute=equivalentPlan.executionRoutes?.[alternateRouteIndex]||alternateRoute;
+  for(const step of alternateExecutionRoute){
+    const code=alternateRuntime.binds[step.action==='softDrop'?'soft':step.action];
     alternateRuntime.handleKeydown(keyEvent(code));
     alternateRuntime.handleKeyup(keyEvent(code));
   }
