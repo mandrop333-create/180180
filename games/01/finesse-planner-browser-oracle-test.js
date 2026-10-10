@@ -295,8 +295,25 @@ try {
     }
     assert(predicted.x===planned.target.x&&predicted.o===planned.target.o,
       type+'/'+boardKind+': executed route missed its target');
+
+    // Lock on the real runtime and ensure pre-existing stack cells are
+    // preserved alongside exactly the independently expected piece cells.
+    await page.keyboard.press('Space');
+    await page.waitForFunction(()=>window.trainer.stats.piecesPlaced===1,null,{timeout:5000});
+    const locked=await page.evaluate(()=>{
+      const t=window.trainer,cells=[];
+      for(let y=0;y<t.H;y++)for(let x=0;x<t.W;x++)if(t.board[y][x])cells.push([x,y]);
+      cells.sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+      return {cells,perfect:t.stats.finessePerfect,faults:t.stats.finesseFaults,placed:t.stats.piecesPlaced};
+    });
+    const expected=[...testBoard.flatMap((row,y)=>row.flatMap((cell,x)=>cell?[[x,y]]:[])),
+      ...expectedLockedCells(type,planned.target)].sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+    assert(JSON.stringify(locked.cells)===JSON.stringify(expected),
+      type+'/'+boardKind+': locked board differs from initial stack plus target cells');
+    assert(locked.perfect===1&&locked.faults===0&&locked.placed===1,
+      type+'/'+boardKind+': obstacle placement scoring mismatch '+JSON.stringify(locked));
     console.log(JSON.stringify({type,boardKind,passed:true,target:planned.target,
-      minimumCost:oracleTargets.get(key),route:planned.actions}));
+      minimumCost:oracleTargets.get(key),route:planned.actions,lockedCells:locked.cells.length}));
   }
 
   // Regression: placement-resolution state must reset for each real spawn.
