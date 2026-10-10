@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
+import { TETRIO_MATRIX_REFERENCE, TETRIO_MATRIX_SOURCE } from './tetrio-matrix-reference-fixtures.js';
 import {
   nativeToTetrioState,
   tetrioBoardCells,
@@ -7,49 +7,43 @@ import {
   TETRIO_TOTAL_HEIGHT
 } from './tetrio-coordinate-adapter.js';
 
-// This deliberately uses trainer geometry as synthetic input. It validates
-// coordinate arithmetic across all pieces; it is NOT a TETR.IO client parity
-// test. Client parity requires the generated pinned matrix fixture.
-const matrices = Object.fromEntries(Object.entries(REFERENCE_PIECES).map(([type, piece], index) => {
-  const dx = index % 3;
-  const dy = (index + 1) % 4;
-  return [type, {
-    dx,
-    dy,
-    orientations: piece.orientations.map((cells) => cells.map(([x, y]) => [x + dx, y + dy]))
-  }];
-}));
+// This test now uses the matrices extracted from the exact pinned client asset.
+// It verifies all-piece coordinate round trips against real client matrix data;
+// it is not a movement/kick parity test.
+assert.match(TETRIO_MATRIX_SOURCE.asset, /tetrio\\.js\\?hv=7eebfc9cd/);
+assert.equal(Object.keys(TETRIO_MATRIX_REFERENCE).length, 7);
 
 let checks = 0;
-for (const [type, piece] of Object.entries(REFERENCE_PIECES)) {
+for (const [type, matrix] of Object.entries(TETRIO_MATRIX_REFERENCE)) {
+  assert.equal(matrix.orientations.length, 4, type + ' must provide four client orientations');
   for (let rotation = 0; rotation < 4; rotation += 1) {
+    const clientCells = matrix.orientations[rotation];
+    assert.equal(clientCells.length, 4, type + ' orientation ' + rotation + ' must have four cells');
+    assert.equal(new Set(clientCells.map(([x,y]) => x + ',' + y)).size, 4,
+      type + ' orientation ' + rotation + ' must have unique matrix cells');
+
     for (const state of [
       { rotation, x: 0, y: 0 },
       { rotation, x: 3, y: 5 },
       { rotation, x: 6, y: 17 }
     ]) {
-      const client = nativeToTetrioState(matrices, type, state);
-      const cells = tetrioBoardCells(matrices, type, rotation, client.x, client.y);
-      assert.equal(cells.length, 4, type + ' orientation ' + rotation + ' must have four cells');
-      assert.equal(new Set(cells.map(({x,y}) => x + ',' + y)).size, 4,
-        type + ' orientation ' + rotation + ' must have unique cells');
+      const client = nativeToTetrioState(TETRIO_MATRIX_REFERENCE, type, state);
+      const cells = tetrioBoardCells(TETRIO_MATRIX_REFERENCE, type, rotation, client.x, client.y);
+      assert.equal(cells.length, 4);
+      assert.equal(new Set(cells.map(({x,y}) => x + ',' + y)).size, 4);
 
-      const localCells = piece.orientations[rotation];
-      const maxLocalY = Math.max(...localCells.map(([, y]) => y));
-      // Native y is the bottom-up coordinate of the topmost occupied cell,
-      // so rows within the piece are reflected around maxLocalY.
-      const minLocalX = Math.min(...localCells.map(([x]) => x));
-      const expected = new Set(localCells.map(([x,y]) =>
-        (state.x + x - minLocalX) + ',' + (state.y + maxLocalY - y)));
-      const actual = new Set(cells.map(({x,y}) =>
-        x + ',' + (TETRIO_TOTAL_HEIGHT - 1 - y)));
-      assert.deepEqual(actual, expected,
-        type + ' orientation ' + rotation + ' occupied cells must survive conversion');
+      const expectedClientCells = clientCells.map(([cellX, cellY]) => ({
+        x: client.x + (cellX - matrix.dx),
+        y: Math.ceil(client.y) + (cellY - matrix.dy)
+      }));
+      assert.deepEqual(
+        cells.map(({x,y}) => [x,y]).sort(comparePair),
+        expectedClientCells.map(({x,y}) => [x,y]).sort(comparePair),
+        type + ' orientation ' + rotation + ' must use exact pinned matrix cells'
+      );
 
-      const native = tetrioToNativeState(matrices, type, rotation, client.x, client.y);
-      assert.equal(native.rotation, state.rotation);
-      assert.equal(native.x, state.x);
-      assert.equal(native.y, state.y);
+      const native = tetrioToNativeState(TETRIO_MATRIX_REFERENCE, type, rotation, client.x, client.y);
+      assert.deepEqual(native, state, type + ' orientation ' + rotation + ' must round-trip native state');
       assert.ok(Math.abs((client.y - Math.floor(client.y)) - 0.000001) < 1e-8,
         'client anchor must preserve the pinned generator fractional-y convention');
       checks += 1;
@@ -57,10 +51,16 @@ for (const [type, piece] of Object.entries(REFERENCE_PIECES)) {
   }
 }
 assert.equal(checks, 84);
+assert.equal(TETRIO_TOTAL_HEIGHT, 40);
 console.log(JSON.stringify({
   ok: true,
   checks,
   pieces: 7,
   orientations: 28,
-  note: 'synthetic trainer geometry only; not TETR.IO client parity'
+  source: TETRIO_MATRIX_SOURCE.asset,
+  note: 'real pinned client matrices; coordinate arithmetic only, not kick/movement parity'
 }));
+
+function comparePair(a, b) {
+  return a[0] - b[0] || a[1] - b[1];
+}
