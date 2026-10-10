@@ -333,7 +333,9 @@ try {
   // Once DCD expires, ARR=0 can move multiple cells in the same browser
   // scheduling interval. Do not assert an impossible intermediate frame where
   // the DCD timer is zero but no repeat has happened yet.
-  await page.waitForTimeout(120);
+  // Wait for the runtime's scheduled repeat rather than assuming a fixed
+  // browser sleep spans the preserved DAS remainder plus the DCD pause.
+  await page.waitForFunction(()=>window.trainer.piece?.x>4,null,{timeout:1500});
   const afterDcd=await page.evaluate(()=>({
     x:window.trainer.piece?.x,
     remaining:window.trainer.dasCutRemaining,
