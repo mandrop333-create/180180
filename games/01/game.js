@@ -46,7 +46,9 @@ const rhythmReport=document.getElementById('rhythmReport');
 function clearRhythmReport(){if(rhythmCard)rhythmCard.hidden=true;if(rhythmReport)rhythmReport.innerHTML='';}
 function renderFinesse(state){
   if(!finessePrompt)return;
-  const steps=state.finesse||[];
+  // Prefer the executable guide when available so soft-drop navigation
+  // appears in the right order without becoming a finesse-scoring action.
+  const steps=state.finesseGuide?.length?state.finesseGuide:(state.finesse||[]);
   if(!steps.length){
     finessePrompt.hidden=true;
     finessePrompt.innerHTML='';

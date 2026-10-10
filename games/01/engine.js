@@ -293,9 +293,25 @@ export class Trainer {
       mode:typeof step==='string'?'tap':(step.mode||'tap'),
       label:this.finesseLabel(step),
       state:i<this.finesseProgress?'done':i===this.finesseProgress&&!this.finesseFaulted?'next':'pending'
-    })):[];
+    })):[]; 
+    // The guide follows the physical execution sequence, including zero-cost
+    // soft-drop navigation. Scoring progress still advances only for finesse
+    // actions, so navigation steps are shown without inflating finesse cost.
+    let finesseGuideIndex=0;
+    const finesseGuide=this.finesseEnabled?this.finesseExecutionRoute.map(step=>{
+      if(step.action==='softDrop')return {
+        action:step.action,mode:'navigation',label:this.finesseLabel({action:'soft'}),
+        state:'navigation'
+      };
+      const index=finesseGuideIndex++;
+      return {
+        action:step.action,mode:step.mode||'tap',label:this.finesseLabel(step),
+        state:index<this.finesseProgress?'done':index===this.finesseProgress&&!this.finesseFaulted?'next':'pending'
+      };
+    }):[];
     this.options.onState({
       finesse:finesseSteps,
+      finesseGuide,
       finesseState:this.finesseEnabled?{
         target:this.finesseTarget?{...this.finesseTarget}:null,
         progress:this.finesseProgress,
