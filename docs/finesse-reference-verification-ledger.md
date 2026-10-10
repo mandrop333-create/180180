@@ -365,3 +365,12 @@ Expanded `games/01/tetrio-coordinate-adapter-test.js` from I-only synthetic chec
 - The first all-piece adapter test exposed a bad test assumption about native x anchoring (state x is the leftmost occupied cell, not the 4x4 local origin). Corrected that expectation; the prior full reference workflow then passed on commit `1b0986b`.
 - Scope boundary: this verifies matrix extraction and coordinate arithmetic against the pinned matrix data. It does **not** yet prove rotation-kick/movement parity, and no production kick tables were changed based on this work.
 
+
+
+## CI triage — 2026-10-10, branch head `d9dc7e7f088b046b225ed01fb3589ed5f9613e96`
+
+- The latest observed runs for planner regression (`38018937575`), independent reference fixtures (`38018937543`), pinned-matrix acquisition (`38018937609`), prompt-requested Playwright (`38018937577`), and independent Playwright route fixtures (`38018937552`) all concluded failure.
+- The GitHub connector returned job summaries but no step details. Requests for the five corresponding job logs failed with a missing log-blob response, so the first failing command/assertion cannot be established from the available evidence. Do not treat these runs as passing or infer that all failures share one cause.
+- The Cloudflare preview bot also reported failed builds for `d9dc7e7` and several immediately preceding commits. That repeated preview failure is separate from the GitHub Actions evidence; without the Cloudflare build logs, the configured build failure cannot be attributed to this branch's movement code.
+- The last recorded green baseline remains `fb4dfc02532fca1afb318a168240260d6e29bc6f`, before the added pinned-client movement cases and adapter changes. The 39-case movement parity suite and the expanded adapter checks therefore still require a green run on the current branch before their results can be called verified.
+- No kick table, planner rule, production file, or workflow assertion was changed as part of this triage. Do not weaken tests or guess at kick offsets to make CI green. Next diagnostic requirement: restore access to actionable CI/Cloudflare logs or reproduce the test commands in an environment where their stdout/stderr can be captured, then fix the first demonstrated failure.
