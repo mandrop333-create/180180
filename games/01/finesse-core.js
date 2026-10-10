@@ -175,6 +175,28 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
         previous.routeKey=routeKey(previous.route);
       }
     }
+    // Gravity and soft drop are finesse-cost-neutral. Explore one legal
+    // downward cell at the same cost so later taps/rotations can happen after
+    // the piece descends into wells or under overhangs. This is reachability
+    // modeling, not frame-accurate gravity timing; browser tests cover timing.
+    const fallen=stepMove(current.piece,0,1);
+    if(fallen){
+      const fallenKey=stateKey(fallen);
+      const priorCost=best.get(fallenKey);
+      if(priorCost===undefined||current.cost<priorCost){
+        best.set(fallenKey,current.cost);
+        stateRoutes.set(fallenKey,new Set([currentRouteKey]));
+        heapPush(queue,{piece:fallen,cost:current.cost,route:current.route});
+      }else if(priorCost===current.cost){
+        const knownRoutes=stateRoutes.get(fallenKey)||new Set();
+        if(!knownRoutes.has(currentRouteKey)){
+          knownRoutes.add(currentRouteKey);
+          stateRoutes.set(fallenKey,knownRoutes);
+          heapPush(queue,{piece:fallen,cost:current.cost,route:current.route});
+        }
+      }
+    }
+    // Free descent must still expand when the input-cost budget is exhausted.
     if(current.cost>=limit)continue;
     for(const step of actions){
       const next=step.apply(current.piece);if(!next)continue;
