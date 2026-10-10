@@ -105,6 +105,26 @@ function makeCase(spec) {
 }
 
 export function runFinesseKickExecutionReferenceTests() {
+  // Verify the direct-180 no-kick baseline independently of any blocker-built
+  // kick fixture. This checks actual occupied cells, not only the orientation
+  // number, and runs every I-piece starting orientation.
+  let baselineChecks = 0;
+  for (let from = 0; from < 4; from++) {
+    const x = 3;
+    const y = 5;
+    const board = Array.from({ length:H }, () => Array(W).fill(0));
+    const piece = { type:'I', x, y, o:from };
+    const succeeded = tryRotate(piece, 2, board, W, H, cellsFor);
+    assert(succeeded, 'I direct-180 baseline failed on an empty board from orientation ' + from);
+    assert(piece.x === x && piece.y === y && piece.o === (from + 2) % 4,
+      'I direct-180 baseline unexpectedly translated the piece from orientation ' + from);
+    const expected = new Set(worldCells('I', (from + 2) % 4, x, y).map(([cx,cy]) => key(cx,cy)));
+    const actual = new Set(worldCells('I', piece.o, piece.x, piece.y).map(([cx,cy]) => key(cx,cy)));
+    assert(expected.size === actual.size && [...expected].every(cell => actual.has(cell)),
+      'I direct-180 baseline occupied-cell set differs from the independent geometry fixture from orientation ' + from);
+    baselineChecks++;
+  }
+
   let checked = 0;
   let structurallyUnreachable = 0;
   let blockerCount = 0;
@@ -151,7 +171,7 @@ export function runFinesseKickExecutionReferenceTests() {
     }
   }
   assert(checked + structurallyUnreachable > 0, 'no kick candidates were exercised');
-  return {ok:true,checked,structurallyUnreachable,blockerCount,
+  return {ok:true,checked,structurallyUnreachable,blockerCount,baselineChecks,
     coverage:'all reachable ordered kick candidates forced through production rotation/collision; unreachable candidates have a cell-set proof',
     originsSearched:'10 columns × 11 spawn heights as needed',unreachableReasons};
 }
