@@ -19,8 +19,11 @@ export const REFERENCE_I_SRS_PLUS = Object.freeze({
 });
 
 export const REFERENCE_I_180_SRS_PLUS = Object.freeze({
-  // The zero-offset baseline is attempted before explicit kicks by the
-  // pinned TETR.IO movement algorithm. Non-zero offsets remain under audit.
+  // PROVISIONAL TRAINER-SPACE CANDIDATES, NOT AN INDEPENDENT CLIENT FIXTURE.
+  // The pinned May 2026 SRS+ source has one explicit I direct-180 kick [0,-1]
+  // in client coordinates after its no-kick baseline. Do not infer trainer
+  // offsets from these values until matrix/pivot/anchor conversion is tested.
+  // The zero-offset baseline is independently exercised by the execution test.
   0: [[0,0],[1,1],[1,0]],
   1: [[0,0],[-1,1],[0,1]],
   2: [[0,0],[-1,-1],[-1,0]],
