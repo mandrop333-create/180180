@@ -335,3 +335,11 @@ Added `scripts/fetch-tetrio-matrix-fixtures.mjs` to request the exact pinned ass
 
 Expanded `games/01/tetrio-coordinate-adapter-test.js` from I-only synthetic checks to all seven trainer piece shapes, four orientations, and three native positions per orientation (84 round-trip cases). It verifies unique occupied cells, the native/client vertical-anchor transform, x/y round trips, and the fractional-y convention. The fixture is intentionally derived from `finesse-reference-fixtures.js` and explicitly labels itself synthetic; this increases arithmetic coverage but does not substitute for the still-missing pinned-client matrix fixture. No production movement or kick table changed.
 
+## Pinned TETR.IO client matrix acquisition — 2026-10-10
+
+- Successfully fetched the exact pinned client asset `https://tetr.io/js/tetrio.js?hv=7eebfc9cd.987f91854aad.20260504T210001` in GitHub Actions run `38008216050`.
+- The extractor validated all seven tetrominoes and all 28 orientations, and the artifact was uploaded as `tetrio-pinned-matrix-fixture` (artifact ID `11651884215`, SHA-256 `e2e18ad99cfcec20b5a06604a862dc47039d7806b43923b84b53cd5a55762d6b`).
+- Added `games/01/tetrio-matrix-reference-fixtures.js` from that generated artifact. The coordinate-adapter test now imports these real pinned matrices and checks 84 native/client coordinate round trips across all pieces and orientations.
+- The first all-piece adapter test exposed a bad test assumption about native x anchoring (state x is the leftmost occupied cell, not the 4x4 local origin). Corrected that expectation; the prior full reference workflow then passed on commit `1b0986b`.
+- Scope boundary: this verifies matrix extraction and coordinate arithmetic against the pinned matrix data. It does **not** yet prove rotation-kick/movement parity, and no production kick tables were changed based on this work.
+
