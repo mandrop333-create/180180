@@ -5,7 +5,7 @@ import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { enumerateFinesseTargets, minimumRoutesForTargets, planFinesse } from './finesse-core.js';
+import { enumerateFinesseTargets, enumerateFinesseNavigationTargets, minimumRoutesForTargets, planFinesse } from './finesse-core.js';
 import { collides, move } from './collision.js';
 import { tryRotate } from './rotation.js';
 import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,FINESSE_INPUT_MODES,finesseActionCost,wallX } from './finesse-rules.js';
@@ -510,7 +510,7 @@ export function runTrainerSelfTest(){
     move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
     tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
   };
-  const dasTargets=enumerateFinesseTargets(dasOptions);
+  const dasTargets=enumerateFinesseNavigationTargets(dasOptions);
   const hardestDAS=dasTargets.filter(target=>target.cost===dasTargets[0]?.cost);
   const rightWallIndex=hardestDAS.findIndex(target=>target.target.x===8&&target.route.length===1&&target.route[0].mode==='das');
   assert(rightWallIndex>=0,'DAS regression must identify the one-input right-wall target');
