@@ -374,3 +374,11 @@ Expanded `games/01/tetrio-coordinate-adapter-test.js` from I-only synthetic chec
 - The Cloudflare preview bot also reported failed builds for `d9dc7e7` and several immediately preceding commits. That repeated preview failure is separate from the GitHub Actions evidence; without the Cloudflare build logs, the configured build failure cannot be attributed to this branch's movement code.
 - The last recorded green baseline remains `fb4dfc02532fca1afb318a168240260d6e29bc6f`, before the added pinned-client movement cases and adapter changes. The 39-case movement parity suite and the expanded adapter checks therefore still require a green run on the current branch before their results can be called verified.
 - No kick table, planner rule, production file, or workflow assertion was changed as part of this triage. Do not weaken tests or guess at kick offsets to make CI green. Next diagnostic requirement: restore access to actionable CI/Cloudflare logs or reproduce the test commands in an environment where their stdout/stderr can be captured, then fix the first demonstrated failure.
+
+
+## CI execution failure isolated — 2026-10-10, branch head `dc818bf453a5d860de24bf5aaf88fadcaffbba09`
+
+- Rechecked the runs triggered by `dc818bf`. The reference-fixtures run `38020198430` and planner run `38020198411` completed as failures within roughly three seconds of creation.
+- Queried the raw GitHub Actions run/job endpoints. The job records have `runner_id: 0`, an empty `runner_name`, and `steps: []`; the run's log endpoint returned an empty response, and no artifact was created. The added diagnostic step therefore never had an opportunity to execute.
+- This is evidence of a job/runner startup or scheduling failure, **not evidence that the test commands themselves failed**. The exact GitHub-side reason is not exposed by the available run response, so do not assert a billing, permission, or runner-capacity cause without the run UI's failure annotation.
+- The diagnostics/artifact steps remain in the reference workflow to capture stdout/stderr once a runner can execute jobs. Next action is to inspect the run page's job-level startup annotation or restore GitHub Actions runner availability; then rerun the tests and address the first actual assertion or runtime failure. Do not change movement behavior based on these infrastructure-only failures.
