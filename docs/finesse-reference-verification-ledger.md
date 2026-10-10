@@ -331,3 +331,7 @@ Added `scripts/test-extract-tetrio-matrix-fixtures.mjs` using a synthetic bundle
 
 Added `scripts/fetch-tetrio-matrix-fixtures.mjs` to request the exact pinned asset URL directly, check HTTP status and the expected `tetrominoes` marker, then invoke the local extractor. It writes the generated fixture to the requested output path (default `games/01/tetrio-matrix-reference-fixtures.js`) and removes its temporary bundle copy. This removes the manual download step if the pinned URL is reachable from the execution environment. It has not yet been run successfully against the real asset in this session, so the actual matrix fixture and parity claim remain outstanding.
 
+### Expanded coordinate-adapter arithmetic coverage — 2026-10-09
+
+Expanded `games/01/tetrio-coordinate-adapter-test.js` from I-only synthetic checks to all seven trainer piece shapes, four orientations, and three native positions per orientation (84 round-trip cases). It verifies unique occupied cells, the native/client vertical-anchor transform, x/y round trips, and the fractional-y convention. The fixture is intentionally derived from `finesse-reference-fixtures.js` and explicitly labels itself synthetic; this increases arithmetic coverage but does not substitute for the still-missing pinned-client matrix fixture. No production movement or kick table changed.
+
