@@ -387,7 +387,9 @@ try {
           piece:window.trainer.piece?{...window.trainer.piece}:null,
           target:window.trainer.finesseTarget?{...window.trainer.finesseTarget}:null,
           route:window.trainer.finesseActions.map(step=>({...step})),
-          executionRoute:(window.trainer.finesseExecutionRoute||[]).map(step=>({...step}))
+          executionRoute:(window.trainer.finesseExecutionRoute||[]).map(step=>({...step})),
+          navigationPromptSteps:document.querySelectorAll('#finessePrompt .navigation').length,
+          promptText:document.querySelector('#finessePrompt')?.textContent||''
         }));
         const route=planned.executionRoute;
         const rotationAt=route.findIndex(step=>['cw','ccw','half'].includes(step.action));
@@ -403,6 +405,9 @@ try {
   }
   assert(promptDescentWitness,
     'generateFinessePrompt() did not select a descent-before-rotation route across obstacle fixtures/seeds');
+  assert(promptDescentWitness.planned.navigationPromptSteps===
+    promptDescentWitness.planned.executionRoute.filter(step=>step.action==='softDrop').length,
+    'visible finesse prompt does not expose every executable soft-drop navigation step');
   {
     const {boardKind,type,board,spawn,seed,planned}=promptDescentWitness;
     const {piece,target,route,executionRoute}=planned;
