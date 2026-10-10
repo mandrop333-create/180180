@@ -207,7 +207,7 @@ export function enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate
 
 // Expanded planner: physical execution retains soft-drop navigation while the
 // scoring route and Dijkstra cost include only finesse-counted inputs.
-export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180}={}){
+export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost,profile=FINESSE_PROFILES.TETRIO_SRS_PLUS_180,maxRoutesPerState=8,maxRoutesPerTarget=8}={}){
   // Reject malformed spawn/input states before asking engine adapters to
   // interpret them. In particular, pieces.js falls back to T geometry for an
   // unknown type, which must never silently create a valid-looking route.
@@ -291,8 +291,10 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
   // creates a combinatorial number of equivalent descent/action interleavings.
   // Preserve a bounded set of distinct histories per state: this retains useful
   // alternate finesse routes without allowing the free-descent graph to explode.
-  const MAX_ROUTES_PER_STATE=8;
-  const MAX_ROUTES_PER_TARGET=8;
+  const stateRouteLimit=Number.isInteger(maxRoutesPerState)&&maxRoutesPerState>0
+    ?Math.min(maxRoutesPerState,16):8;
+  const targetRouteLimit=Number.isInteger(maxRoutesPerTarget)&&maxRoutesPerTarget>0
+    ?Math.min(maxRoutesPerTarget,16):8;
   const stateRoutes=new Map([[stateKey(start),new Set([''])]]);
   const targets=new Map();
 
@@ -328,7 +330,7 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
         // long free-descent variants when the target route cap is reached.
         paired.sort((a,b)=>a.executionRoute.length-b.executionRoute.length||
           routeKey(a.executionRoute).localeCompare(routeKey(b.executionRoute)));
-        const retained=paired.slice(0,MAX_ROUTES_PER_TARGET);
+        const retained=paired.slice(0,targetRouteLimit);
         previous.routes=retained.map(item=>item.route);
         previous.executionRoutes=retained.map(item=>item.executionRoute);
         previous.route=previous.routes[0];
@@ -353,7 +355,7 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
         stateRoutes.set(key,new Set([nextRouteKey]));
       }else{
         const knownRoutes=stateRoutes.get(key)||new Set();
-        if(knownRoutes.has(nextRouteKey)||knownRoutes.size>=MAX_ROUTES_PER_STATE)continue;
+        if(knownRoutes.has(nextRouteKey)||knownRoutes.size>=stateRouteLimit)continue;
         knownRoutes.add(nextRouteKey);
         stateRoutes.set(key,knownRoutes);
       }
@@ -374,7 +376,13 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   if(limit===null)return null;
   // Navigation-aware search preserves descent as an executable transition
   // while exposing its zero-cost projection for finesse scoring.
-  const candidates=enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile});
+  const candidates=enumerateFinesseNavigationTargets({
+    piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile,
+    // Gameplay needs a small set of alternate routes, not the full oracle
+    // coverage set. Keep spawn-time planning bounded so it cannot stall the
+    // frame loop or perturb DAS/DCD timing.
+    maxRoutesPerState:2,maxRoutesPerTarget:4
+  });
   // No valid lockable target means the spawn/top-out state is not a usable
   // finesse prompt. Fail closed instead of inventing an invalid zero-cost target.
   if(!candidates.length)return null;
