@@ -62,7 +62,7 @@ function renderFinesse(state){
     const el=document.createElement('span');
     el.className='finesse-key '+step.state+(faulted?' faulted':'');
     el.textContent=step.label;
-    const status=step.state==='done'?'Completed ':step.state==='next'?'Required ':'Pending ';
+    const status=step.state==='done'?'Completed ':step.state==='next'?'Required ':step.state==='navigation'?'Navigation ':'Pending ';
     el.setAttribute('aria-label',status+step.label+(faulted?' — placement has a finesse fault':''));
     finessePrompt.appendChild(el);
   });

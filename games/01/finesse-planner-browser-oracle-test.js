@@ -390,6 +390,7 @@ try {
           executionRoute:(window.trainer.finesseExecutionRoute||[]).map(step=>({...step})),
           navigationPromptSteps:document.querySelectorAll('#finessePrompt .navigation').length,
           navigationPromptLabels:[...document.querySelectorAll('#finessePrompt .navigation')].map(el=>el.textContent),
+          navigationPromptAria:[...document.querySelectorAll('#finessePrompt .navigation')].map(el=>el.getAttribute('aria-label')),
           expectedSoftLabel:window.trainer.finesseLabel({action:'soft'}),
           promptText:document.querySelector('#finessePrompt')?.textContent||''
         }));
@@ -414,6 +415,10 @@ try {
     promptDescentWitness.planned.navigationPromptLabels.every(label=>
       label===promptDescentWitness.planned.expectedSoftLabel),
     'soft-drop navigation prompt does not show the configured soft-drop key label');
+  assert(promptDescentWitness.planned.navigationPromptAria.length>0&&
+    promptDescentWitness.planned.navigationPromptAria.every(label=>
+      label?.startsWith('Navigation: ')),
+    'soft-drop navigation prompt is not announced as a navigation step');
   {
     const {boardKind,type,board,spawn,seed,planned}=promptDescentWitness;
     const {piece,target,route,executionRoute}=planned;
