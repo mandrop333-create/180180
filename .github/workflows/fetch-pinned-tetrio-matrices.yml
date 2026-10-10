@@ -20,21 +20,16 @@ jobs:
         run: node scripts/fetch-tetrio-matrix-fixtures.mjs /tmp/tetrio-matrix-reference-fixtures.js
       - name: Validate generated fixture shape
         run: |
-          node --input-type=module -e "
-            import fs from 'node:fs';
-            const source = fs.readFileSync('/tmp/tetrio-matrix-reference-fixtures.js', 'utf8');
-            const required = ['TETRIO_MATRIX_SOURCE', 'TETRIO_MATRIX_REFERENCE'];
-            for (const name of required) {
-              if (!source.includes(name)) throw new Error('Missing export: ' + name);
+          test -s /tmp/tetrio-matrix-reference-fixtures.js
+          grep -q 'TETRIO_MATRIX_SOURCE' /tmp/tetrio-matrix-reference-fixtures.js
+          grep -q 'TETRIO_MATRIX_REFERENCE' /tmp/tetrio-matrix-reference-fixtures.js
+          for piece in I O T S Z J L; do
+            grep -q "\"$piece\":" /tmp/tetrio-matrix-reference-fixtures.js || {
+              echo "Missing piece in generated fixture: $piece"
+              exit 1
             }
-            for (const piece of ['I','O','T','S','Z','J','L']) {
-              if (!source.includes('\\\"' + piece + '\\\"')) {
-                // The generator serializes uppercase piece keys as quoted JSON keys.
-                throw new Error('Missing piece in generated fixture: ' + piece);
-              }
-            }
-            console.log('Generated fixture exports and all seven piece keys are present.');
-          "
+          done
+          echo "Generated fixture exports and all seven piece keys are present."
       - name: Upload generated fixture for review
         uses: actions/upload-artifact@v4
         with:
