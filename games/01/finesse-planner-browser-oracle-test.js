@@ -306,8 +306,18 @@ try {
       cells.sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
       return {cells,perfect:t.stats.finessePerfect,faults:t.stats.finesseFaults,placed:t.stats.piecesPlaced};
     });
-    const expected=[...testBoard.flatMap((row,y)=>row.flatMap((cell,x)=>cell?[[x,y]]:[])),
-      ...expectedLockedCells(type,planned.target)].sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+    const expectedBoard=testBoard.map(row=>row.slice());
+    for(const [x,y] of expectedLockedCells(type,planned.target)){
+      assert(y>=0&&y<H&&x>=0&&x<W,
+        type+'/'+boardKind+': expected lock cell lies outside visible board');
+      expectedBoard[y][x]=1;
+    }
+    // The engine clears complete rows after lock. Model that board mutation
+    // explicitly so generated stacks can legitimately exercise line clears.
+    const survivingRows=expectedBoard.filter(row=>!row.every(Boolean));
+    while(survivingRows.length<H)survivingRows.unshift(Array(W).fill(0));
+    const expected=survivingRows.flatMap((row,y)=>row.flatMap((cell,x)=>cell?[[x,y]]:[]))
+      .sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
     assert(JSON.stringify(locked.cells)===JSON.stringify(expected),
       type+'/'+boardKind+': locked board differs from initial stack plus target cells');
     assert(locked.perfect===1&&locked.faults===0&&locked.placed===1,
