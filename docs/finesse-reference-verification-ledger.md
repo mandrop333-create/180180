@@ -327,3 +327,7 @@ Added `scripts/extract-tetrio-matrix-fixtures.mjs` to extract the exact `matrix.
 
 Added `scripts/test-extract-tetrio-matrix-fixtures.mjs` using a synthetic bundle to exercise extraction, shape validation, and metadata output, and wired that check into `.github/workflows/finesse-reference-tests.yml`. This test validates the extractor plumbing only; it does **not** claim that the actual pinned client matrices have been extracted or that coordinate parity is established. The actual asset still needs to be saved locally and passed to the extractor before the generated reference fixture can be committed. Production rotation and kick tables remain unchanged.
 
+### Pinned asset acquisition command — follow-up
+
+Added `scripts/fetch-tetrio-matrix-fixtures.mjs` to request the exact pinned asset URL directly, check HTTP status and the expected `tetrominoes` marker, then invoke the local extractor. It writes the generated fixture to the requested output path (default `games/01/tetrio-matrix-reference-fixtures.js`) and removes its temporary bundle copy. This removes the manual download step if the pinned URL is reachable from the execution environment. It has not yet been run successfully against the real asset in this session, so the actual matrix fixture and parity claim remain outstanding.
+
