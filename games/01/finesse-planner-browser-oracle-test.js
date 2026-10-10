@@ -189,6 +189,116 @@ try {
     console.log(JSON.stringify({type,passed:true,target:planned.target,minimumCost:minimum,route:planned.actions,lockedCells:locked.cells.length}));
   }
 
+  // Obstacle-board regression: the planner's selected target must remain
+  // independently reachable, and every real key transition must match the
+  // collision/kick model on the same occupied board. These cases specifically
+  // exercise wall-adjacent kicks and non-flat landing geometry.
+  const obstacleScenarios = [
+    {type:'I',boardKind:'side-towers'},
+    {type:'T',boardKind:'split-well'},
+    {type:'J',boardKind:'overhang'},
+    {type:'L',boardKind:'generated-4'}
+  ];
+  for (const scenario of obstacleScenarios) {
+    const {type,boardKind}=scenario;
+    const testBoard=boardFor(boardKind);
+    const spawn=REFERENCE_PIECES[type].spawn;
+    const start={type,x:spawn.x,y:spawn.y,o:0};
+    const oracleTargets=referenceTargets({type,start,board:testBoard,maxCost:2});
+    await page.evaluate(({type,spawn,board}) => {
+      const t=window.trainer;
+      t.reset();
+      t.rules.gravity=Infinity;
+      t.rules.lockDelay=100000;
+      t.rules.das=80;
+      t.rules.arr=0;
+      t.rules.dcd=0;
+      t.board=board.map(row=>row.slice());
+      t.gameOver=false;
+      t.piece={type,x:spawn.x,y:spawn.y,o:0};
+      t.lastRotation=false;
+      t.finesseEnabled=true;
+      t.finessePlacementResolved=false;
+      t.finesseMistakes=0;
+      t.finesseFaulted=false;
+      t.finesseProgress=0;
+      t.finesseDASPending=null;
+      t.stats.finessePerfect=0;
+      t.stats.finesseFaults=0;
+      t.stats.piecesPlaced=0;
+      t.stats.linesCleared=0;
+      t.generateFinessePrompt();
+      t.emitState();
+      t.render();
+    },{type,spawn,board:testBoard});
+
+    const planned=await page.evaluate(()=>({
+      piece:window.trainer.piece?{...window.trainer.piece}:null,
+      target:window.trainer.finesseTarget?{...window.trainer.finesseTarget}:null,
+      actions:window.trainer.finesseActions.map(step=>({...step}))
+    }));
+    assert(planned.piece&&planned.target,
+      type+'/'+boardKind+': planner failed to produce an obstacle-board target');
+    const key=targetKey(planned.target);
+    assert(oracleTargets.has(key),
+      type+'/'+boardKind+': target absent from independent obstacle-board oracle: '+key);
+    assert(routeCost(planned.actions)===oracleTargets.get(key),
+      type+'/'+boardKind+': route cost differs from independent oracle for '+key);
+
+    let predicted={...planned.piece};
+    for(let stepIndex=0;stepIndex<planned.actions.length;stepIndex++){
+      const step=planned.actions[stepIndex];
+      const keyName=step.action==='left'?'ArrowLeft'
+        :step.action==='right'?'ArrowRight'
+        :step.action==='cw'?'x'
+        :step.action==='ccw'?'z':'a';
+      if(step.action==='left'||step.action==='right'){
+        const direction=step.action==='left'?-1:1;
+        if(step.mode==='das'){
+          let moved=false;
+          for(let guard=0;guard<W+4;guard++){
+            const next={...predicted};
+            if(!move(next,direction,0,testBoard,W,H,cellsFor))break;
+            predicted=next;moved=true;
+          }
+          assert(moved,type+'/'+boardKind+': DAS action '+stepIndex+' made no predicted movement');
+        }else{
+          const next={...predicted};
+          assert(move(next,direction,0,testBoard,W,H,cellsFor),
+            type+'/'+boardKind+': tap blocked at action '+stepIndex);
+          predicted=next;
+        }
+      }else{
+        const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
+        const next={...predicted};
+        assert(tryRotate(next,delta,testBoard,W,H,cellsFor),
+          type+'/'+boardKind+': '+step.action+' kick failed at action '+stepIndex+
+          ' from '+JSON.stringify(predicted));
+        predicted=next;
+      }
+      if(step.mode==='das'){
+        await page.keyboard.down(keyName);
+        await page.waitForTimeout(100);
+        await page.keyboard.up(keyName);
+        await page.waitForTimeout(30);
+      }else{
+        await page.keyboard.press(keyName);
+      }
+      const observed=await page.evaluate(()=>{
+        const p=window.trainer.piece;
+        return p?{type:p.type,x:p.x,y:p.y,o:p.o}:null;
+      });
+      assert(observed&&observed.type===predicted.type&&observed.x===predicted.x&&
+        observed.y===predicted.y&&observed.o===predicted.o,
+        type+'/'+boardKind+': action '+stepIndex+' ('+step.action+'/'+step.mode+
+        ') predicted '+JSON.stringify(predicted)+' but observed '+JSON.stringify(observed));
+    }
+    assert(predicted.x===planned.target.x&&predicted.o===planned.target.o,
+      type+'/'+boardKind+': executed route missed its target');
+    console.log(JSON.stringify({type,boardKind,passed:true,target:planned.target,
+      minimumCost:oracleTargets.get(key),route:planned.actions}));
+  }
+
   // Regression: placement-resolution state must reset for each real spawn.
   await page.evaluate(() => {
     const t = window.trainer;
