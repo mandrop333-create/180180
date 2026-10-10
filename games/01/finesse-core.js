@@ -287,20 +287,20 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
   const queue=[];
   heapPush(queue,{piece:start,cost:0,route:[],executionRoute:[]});
   const best=new Map([[stateKey(start),0]]);
-  // Keep one canonical minimum-cost history per movement state. Soft-drop
-  // is a zero-cost edge, so retaining every equal-cost history creates a
-  // combinatorial number of equivalent descent/action interleavings. A single
-  // executable witness per state preserves reachability and route fidelity
-  // while keeping planning bounded for browser use.
-  const bestRouteKey=new Map([[stateKey(start),'']]);
+  // Soft-drop is a zero-cost edge, so retaining every equal-cost history
+  // creates a combinatorial number of equivalent descent/action interleavings.
+  // Preserve a bounded set of distinct histories per state: this retains useful
+  // alternate finesse routes without allowing the free-descent graph to explode.
+  const MAX_ROUTES_PER_STATE=8;
+  const stateRoutes=new Map([[stateKey(start),new Set([''])]]);
   const targets=new Map();
 
   while(queue.length){
     const current=heapPop(queue);
     const currentStateKey=stateKey(current.piece);
     const currentRouteKey=routeKey(current.executionRoute);
-    if(current.cost!==best.get(currentStateKey)||
-      currentRouteKey!==bestRouteKey.get(currentStateKey))continue;
+    if(current.cost>best.get(currentStateKey)||
+      !stateRoutes.get(currentStateKey)?.has(currentRouteKey))continue;
     const land=landing(current.piece);
     // A resting piece with any mino above row zero cannot be locked: the
     // engine top-outs before writing its cells to the board. Such a state is
@@ -340,12 +340,16 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
       const nextRoute=step.action==='softDrop'?current.route:[...current.route,stepRecord];
       const nextRouteKey=routeKey(nextExecutionRoute);
       const priorCost=best.get(key);
-      // Equal-cost arrivals do not replace the first canonical witness. The
-      // queue and action order are deterministic, and all target costs remain
-      // independently checked against the reference shortest-path oracle.
-      if(priorCost!==undefined&&priorCost<=cost)continue;
-      best.set(key,cost);
-      bestRouteKey.set(key,nextRouteKey);
+      if(priorCost!==undefined&&priorCost<cost)continue;
+      if(priorCost===undefined||cost<priorCost){
+        best.set(key,cost);
+        stateRoutes.set(key,new Set([nextRouteKey]));
+      }else{
+        const knownRoutes=stateRoutes.get(key)||new Set();
+        if(knownRoutes.has(nextRouteKey)||knownRoutes.size>=MAX_ROUTES_PER_STATE)continue;
+        knownRoutes.add(nextRouteKey);
+        stateRoutes.set(key,knownRoutes);
+      }
       heapPush(queue,{piece:next,cost,route:nextRoute,executionRoute:nextExecutionRoute});
     }
   }
