@@ -361,7 +361,9 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   if(!piece||typeof move!=='function'||typeof tryRotate!=='function')return null;
   const limit=costLimit(maxCost,profile);
   if(limit===null)return null;
-  const candidates=enumerateFinesseTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile});
+  // Navigation-aware search preserves descent as an executable transition
+  // while exposing its zero-cost projection for finesse scoring.
+  const candidates=enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move,tryRotate,maxCost:limit,profile});
   // No valid lockable target means the spawn/top-out state is not a usable
   // finesse prompt. Fail closed instead of inventing an invalid zero-cost target.
   if(!candidates.length)return null;
@@ -372,7 +374,15 @@ export function planFinesse({piece,board,W,H,cellsFor,move,tryRotate,seed=0,maxC
   const hardest=candidates.filter(candidate=>candidate.cost===highestCost);
   const offset=Math.abs(Number(seed)||0)%hardest.length;
   const chosen=hardest[offset];
-  return {actions:chosen.route,routes:chosen.routes,target:chosen.target,cost:chosen.cost,landingY:chosen.landingY};
+  return {
+    actions:chosen.route,
+    routes:chosen.routes,
+    executionRoute:chosen.executionRoute,
+    executionRoutes:chosen.executionRoutes,
+    target:chosen.target,
+    cost:chosen.cost,
+    landingY:chosen.landingY
+  };
 }
 
 export function minimumRoutesForTargets(options={}){
