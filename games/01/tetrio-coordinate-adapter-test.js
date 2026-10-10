@@ -107,15 +107,58 @@ for (const [transition, rawKicks] of Object.entries(PINNED_I_180_KICKS)) {
     'I SRS+ direct-180 transition ' + transition + ' ordered kick offsets must match pinned client after anchor conversion');
   kickConversionChecks += converted.length;
 }
+// Pinned TETR.IO SRS+ default (JLSTZ-family) kick data. These are raw
+// client offsets from the pinned generated table, not copied from kicks.js.
+// Convert independently for each piece because matrix/trainer anchor transforms
+// are piece- and orientation-specific.
+const PINNED_JLSTZ_SRS_PLUS_KICKS = Object.freeze({
+  '0>1': [[-1,0],[-1,-1],[0,2],[-1,2]],
+  '1>2': [[1,0],[1,1],[0,-2],[1,-2]],
+  '2>3': [[1,0],[1,-1],[0,2],[1,2]],
+  '3>0': [[-1,0],[-1,1],[0,-2],[-1,-2]],
+  '0>3': [[1,0],[1,-1],[0,2],[1,2]],
+  '1>0': [[1,0],[1,1],[0,-2],[1,-2]],
+  '2>1': [[-1,0],[-1,-1],[0,2],[-1,2]],
+  '3>2': [[-1,0],[-1,1],[0,-2],[-1,-2]]
+});
+const PINNED_JLSTZ_180_KICKS = Object.freeze({
+  '0>2': [[0,-1],[1,-1],[-1,-1],[1,0],[-1,0]],
+  '1>3': [[1,0],[1,-2],[1,-1],[0,-2],[0,-1]],
+  '2>0': [[0,1],[-1,1],[1,1],[-1,0],[1,0]],
+  '3>1': [[-1,0],[-1,-2],[-1,-1],[0,-2],[0,-1]]
+});
+let jlstzKickConversionChecks = 0;
+for (const type of ['T','S','Z','J','L']) {
+  for (const [transition, rawKicks] of Object.entries(PINNED_JLSTZ_SRS_PLUS_KICKS)) {
+    const [from, to] = transition.split('>').map(Number);
+    const converted = rawKicks.map(kick =>
+      tetrioKickToLocalOriginOffset(TETRIO_MATRIX_REFERENCE, REFERENCE_PIECES, type, from, to, kick)
+    );
+    assert.deepEqual(getSrsKicks(type, from, to).slice(1), converted,
+      type + ' SRS+ transition ' + transition + ' ordered offsets must match pinned client after anchor conversion');
+    jlstzKickConversionChecks += converted.length;
+  }
+  for (const [transition, rawKicks] of Object.entries(PINNED_JLSTZ_180_KICKS)) {
+    const [from, to] = transition.split('>').map(Number);
+    const converted = rawKicks.map(kick =>
+      tetrioKickToLocalOriginOffset(TETRIO_MATRIX_REFERENCE, REFERENCE_PIECES, type, from, to, kick)
+    );
+    assert.deepEqual(getTetrio180Kicks(type, from).slice(1), converted,
+      type + ' direct-180 transition ' + transition + ' ordered offsets must match pinned client after anchor conversion');
+    jlstzKickConversionChecks += converted.length;
+  }
+}
+assert.equal(jlstzKickConversionChecks, 260);
 assert.equal(kickConversionChecks, 36);
 console.log(JSON.stringify({
   ok: true,
   checks,
   kickConversionChecks,
+  jlstzKickConversionChecks,
   pieces: 7,
   orientations: 28,
   source: TETRIO_MATRIX_SOURCE.asset,
-  note: 'real pinned client matrices plus SRS+ I kick offset/order parity; not full all-piece movement parity'
+  note: 'real pinned client matrices plus converted SRS+ I and JLSTZ-family kick offset/order parity; movement outcomes remain sampled'
 }));
 
 function comparePair(a, b) {
