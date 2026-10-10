@@ -377,7 +377,11 @@ try {
     progress:window.trainer.finesseProgress,
     faulted:window.trainer.finesseFaulted
   }));
-  assert(afterSpawn.x===4&&afterSpawn.remaining===180&&afterSpawn.elapsed===0&&afterSpawn.dir===1,
+  // A requestAnimationFrame tick can consume part of DCD between spawn()
+  // and this read. Assert the invariant (positive remaining cut, reset DAS
+  // elapsed time, direction preserved) rather than an exact wall-clock value.
+  assert(afterSpawn.x===4&&afterSpawn.remaining>0&&afterSpawn.remaining<=180&&
+    afterSpawn.elapsed===0&&afterSpawn.dir===1,
     'spawn did not preserve held input while starting DCD: '+JSON.stringify(afterSpawn));
   assert(afterSpawn.progress===0&&!afterSpawn.faulted,
     'inherited held input was incorrectly counted as a new finesse action: '+JSON.stringify(afterSpawn));
