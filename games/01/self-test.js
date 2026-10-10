@@ -480,6 +480,10 @@ export function runTrainerSelfTest(){
   const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
   const alternateRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
   alternateRuntime.emptyBoard();
+  // Use the same obstacle geometry as the independent plan under test.
+  // An empty board can coincidentally select the same target today, but the
+  // assertion must remain meaningful if reachability expands in future.
+  alternateRuntime.board=routeRegressionBoard.map(row=>row.slice());
   alternateRuntime.piece={...equivalentStart};
   alternateRuntime.placed=alternativeTargetIndex;
   alternateRuntime.generateFinessePrompt();
