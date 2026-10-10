@@ -16,7 +16,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify pinned TETR.IO reference is still current
+      - name: Acquire current TETR.IO matrix candidate (never overwrite accepted reference)
+        run: node scripts/fetch-tetrio-matrix-fixtures.mjs games/01/tetrio-matrix-reference-candidate.js
+      - name: Upload current matrix candidate for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetrio-current-matrix-candidate-${{ github.run_id }}
+          path: games/01/tetrio-matrix-reference-candidate.js
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Verify accepted TETR.IO reference is still current
         run: node scripts/check-tetrio-reference-freshness.mjs
       - name: Test pinned TETR.IO matrix fixture extractor
         run: node scripts/test-extract-tetrio-matrix-fixtures.mjs
