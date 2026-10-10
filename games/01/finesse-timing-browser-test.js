@@ -141,6 +141,114 @@ try {
     console.log(JSON.stringify({type,boardKind,passed:true,gravityMs:100,route:planned.actions,target:planned.target,minimumCost:minimum,linesCleared:locked.linesCleared}));
   }
 
+  // Prompt-path descent-before-rotation integration under finite gravity.
+  // Use the real prompt generator, then execute its navigation route through
+  // browser input while the frame loop is allowed to apply gravity.
+  let gravityDescentWitness=null;
+  for(const boardKind of ['side-towers','split-well','overhang','generated-4']){
+    const board=boardFor(boardKind);
+    for(const type of ['I','T','J','L','S','Z','O']){
+      const spawn=REFERENCE_PIECES[type].spawn;
+      for(let seed=0;seed<32;seed++){
+        await page.evaluate(({board,type,spawn,seed})=>{
+          const t=window.trainer;
+          t.reset();
+          t.rules.gravity=500;
+          t.rules.lockDelay=100000;
+          t.rules.das=80;
+          t.rules.arr=0;
+          t.rules.dcd=0;
+          t.board=board.map(row=>row.slice());
+          t.gameOver=false;
+          t.piece={type,x:spawn.x,y:spawn.y,o:0};
+          t.placed=seed;
+          t.lastRotation=false;
+          t.finesseEnabled=true;
+          t.finessePlacementResolved=false;
+          t.finesseMistakes=0;
+          t.finesseFaulted=false;
+          t.finesseProgress=0;
+          t.finesseDASPending=null;
+          t.stats.finessePerfect=0;
+          t.stats.finesseFaults=0;
+          t.stats.piecesPlaced=0;
+          t.stats.linesCleared=0;
+          t.generateFinessePrompt();
+          t.emitState();
+          t.render();
+        },{board,type,spawn,seed});
+        const planned=await page.evaluate(()=>({
+          piece:window.trainer.piece?{...window.trainer.piece}:null,
+          target:window.trainer.finesseTarget?{...window.trainer.finesseTarget}:null,
+          actions:window.trainer.finesseActions.map(step=>({...step})),
+          executionRoute:(window.trainer.finesseExecutionRoute||[]).map(step=>({...step}))
+        }));
+        const route=planned.executionRoute;
+        const rotationAt=route.findIndex(step=>['cw','ccw','half'].includes(step.action));
+        if(planned.piece&&planned.target&&rotationAt>0&&
+          route.slice(0,rotationAt).some(step=>step.action==='softDrop')){
+          gravityDescentWitness={boardKind,type,board,spawn,seed,planned};
+          break;
+        }
+      }
+      if(gravityDescentWitness)break;
+    }
+    if(gravityDescentWitness)break;
+  }
+  assert(gravityDescentWitness,
+    'finite-gravity prompt generation did not select descent-before-rotation across obstacle fixtures/seeds');
+  {
+    const {boardKind,type,board,seed,planned}=gravityDescentWitness;
+    const route=planned.executionRoute;
+    for(const step of route){
+      const key=step.action==='left'?'ArrowLeft'
+        :step.action==='right'?'ArrowRight'
+        :step.action==='cw'?'x'
+        :step.action==='ccw'?'z'
+        :step.action==='softDrop'?'ArrowDown':'a';
+      if(step.mode==='das'){
+        await page.keyboard.down(key);
+        await page.waitForTimeout(100);
+        await page.keyboard.up(key);
+        await page.waitForTimeout(30);
+      }else{
+        await page.keyboard.press(key);
+      }
+    }
+    const active=await page.evaluate(()=>({
+      piece:window.trainer.piece?{...window.trainer.piece}:null,
+      target:window.trainer.finesseTarget?{...window.trainer.finesseTarget}:null,
+      progress:window.trainer.finesseProgress,
+      count:window.trainer.finesseActions.length,
+      faulted:window.trainer.finesseFaulted,
+      gravity:window.trainer.rules.gravity
+    }));
+    assert(active.piece&&active.target&&active.piece.x===active.target.x&&
+      active.piece.o===active.target.o,
+      'finite-gravity descent-before-rotation route missed target x/orientation: '+
+      JSON.stringify({boardKind,type,seed,active,route}));
+    assert(!active.faulted&&active.progress===active.count,
+      'finite-gravity descent-before-rotation route was rejected by finesse observer: '+
+      JSON.stringify({boardKind,type,seed,active,route}));
+    await page.keyboard.press('Space');
+    await page.waitForFunction(()=>window.trainer.stats.piecesPlaced===1,null,{timeout:5000});
+    const locked=await page.evaluate(()=>({
+      board:window.trainer.board.map(row=>[...row]),
+      perfect:window.trainer.stats.finessePerfect,
+      faults:window.trainer.stats.finesseFaults,
+      placed:window.trainer.stats.piecesPlaced
+    }));
+    const expected=expectedBoardAfterLock(board,type,active.target);
+    assert(JSON.stringify(locked.board)===JSON.stringify(expected.board),
+      'finite-gravity descent-before-rotation route locked an unexpected board: '+
+      JSON.stringify({boardKind,type,seed,route}));
+    assert(locked.perfect===1&&locked.faults===0&&locked.placed===1,
+      'finite-gravity descent-before-rotation route did not score exactly once: '+
+      JSON.stringify(locked));
+    console.log(JSON.stringify({promptPathDescentBeforeRotationUnderGravity:true,passed:true,
+      type,boardKind,seed,gravityMs:active.gravity,route,lockedCells:locked.board.flat().filter(Boolean).length}));
+  }
+
   // Explicit direct-180 acceptance case under active gravity on a high stack.
   // Lower the target cost only for this isolated scenario so the planner must
   // select a one-input route, then choose a deterministic seed whose route is
