@@ -391,3 +391,17 @@ Expanded `games/01/tetrio-coordinate-adapter-test.js` from I-only synthetic chec
 - Because unrelated Node, Playwright, and fixture-fetch jobs all fail in the same pre-step state, the evidence points to a shared Actions execution/runner problem rather than a demonstrated common application defect. The precise service/account cause is still unknown.
 - Compatibility-path audit: `games/01/finesse.js` remains a 310-byte re-export facade; `games/01/engine.js` imports `finesse-core.js` directly. Do not delete the facade until a complete repository-wide import/reference audit and compatibility decision are supported by evidence.
 - No movement or planner code changed in this iteration. Next: restore Actions execution or run the existing Node/browser suite in a working environment, then resume the highest-risk parity gap (I-piece 180-degree pivot/kick equivalence) with captured test evidence.
+
+
+## Reconcile historical I-piece direct-180 finding with current implementation — 2026-10-10
+
+The earlier CI-triage note above that says `HALF_I` contains two non-zero offsets describes an older revision and is superseded by the pinned-coordinate-adapter work. At branch head `34b199ef3ed15c30421d88b05caa7bb5f0bd351e`, `games/01/kicks.js` defines each I-piece direct-180 candidate list with the no-kick baseline first and exactly one transformed non-zero kick after it:
+
+- orientation 0: `[[0,0],[0,-1]]`
+- orientation 1: `[[0,0],[1,0]]`
+- orientation 2: `[[0,0],[0,1]]`
+- orientation 3: `[[0,0],[-1,0]]`
+
+`tryRotate` tests the candidates in order, so the baseline is attempted first. The coordinate-adapter test compares the remaining entries with the pinned client's single raw kick after matrix-anchor conversion. The I-piece empty-board test covers all 12 quarter-turn/direct-180 transitions, and its six blocked/edge/floor cases assert the selected local candidate index against the pinned client index. The 39-case SRS+ movement parity corpus separately checks final state and candidate selection for kicked turns across I/T/S/Z/J/L.
+
+This resolves the specific source-level concern that the current implementation omitted the I-piece direct-180 baseline and carried two non-zero offsets. It does **not** establish that these tests pass on the current branch head: the latest retries still terminate before any job step runs (`runner_id: 0`, empty runner name, no steps). The last known green code baseline is `146ffdc220bc495d66036afae440690adaba177f`; commits after it still need successful execution. Do not carry the older two-offset finding forward as if it describes current code, and do not claim current-head verification until CI actually runs.
