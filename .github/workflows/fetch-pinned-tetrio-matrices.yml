@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: ["rebuild/finesse-core"]
+  pull_request:
+    branches: ["main"]
 
 permissions:
   contents: read
