@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test pinned TETR.IO matrix fixture extractor
+        run: node scripts/test-extract-tetrio-matrix-fixtures.mjs
       - name: Inventory legacy finesse.js references across tracked source
         shell: bash
         run: |
