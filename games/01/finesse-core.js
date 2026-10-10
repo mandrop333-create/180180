@@ -292,6 +292,7 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
   // Preserve a bounded set of distinct histories per state: this retains useful
   // alternate finesse routes without allowing the free-descent graph to explode.
   const MAX_ROUTES_PER_STATE=8;
+  const MAX_ROUTES_PER_TARGET=8;
   const stateRoutes=new Map([[stateKey(start),new Set([''])]]);
   const targets=new Map();
 
@@ -319,7 +320,8 @@ export function enumerateFinesseNavigationTargets({piece,board,W,H,cellsFor,move
       // route remains a deterministic canonical route for existing callers.
       if(!previous||candidate.cost<previous.cost){
         targets.set(key,{...candidate,routes:[current.route],executionRoutes:[current.executionRoute]});
-      }else if(candidate.cost===previous.cost&&!previous.executionRoutes.some(route=>routeKey(route)===candidate.routeKey)){
+      }else if(candidate.cost===previous.cost&&previous.executionRoutes.length<MAX_ROUTES_PER_TARGET&&
+        !previous.executionRoutes.some(route=>routeKey(route)===candidate.routeKey)){
         const paired=[...previous.routes.map((route,i)=>({route,executionRoute:previous.executionRoutes[i]})),{route:current.route,executionRoute:current.executionRoute}];
         paired.sort((a,b)=>routeKey(a.executionRoute).localeCompare(routeKey(b.executionRoute)));
         previous.routes=paired.map(item=>item.route);
