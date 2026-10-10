@@ -1,6 +1,9 @@
 import { chromium } from 'playwright';
 import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
 import { boardFor, referenceTargets } from './finesse-oracle-reference-test.js';
+import { cellsFor } from './pieces.js';
+import { move } from './collision.js';
+import { tryRotate } from './rotation.js';
 
 const baseURL = process.env.FINESSE_BROWSER_BASE_URL || 'http://127.0.0.1:4173/';
 const W = 10;
@@ -95,12 +98,44 @@ try {
       ' differs from independent minimum ' + minimum + ' for ' + key);
     assert(!planned.promptHidden, type + ': finesse prompt is not visible');
 
-    for (const step of planned.actions) {
+    // Predict each deliberate transition independently, then compare it to
+    // the live browser runtime immediately after the real key event. This
+    // catches x/y/orientation drift at the exact action that introduces it,
+    // rather than only discovering the mismatch at the final landing.
+    let predicted = { ...planned.piece };
+    for (let stepIndex = 0; stepIndex < planned.actions.length; stepIndex++) {
+      const step = planned.actions[stepIndex];
       const keyName = step.action==='left'?'ArrowLeft'
         : step.action==='right'?'ArrowRight'
         : step.action==='cw'?'x'
         : step.action==='ccw'?'z'
         : 'a';
+
+      if (step.action==='left' || step.action==='right') {
+        const direction = step.action==='left' ? -1 : 1;
+        if (step.mode==='das') {
+          let moved = false;
+          for (let guard=0; guard<W+4; guard++) {
+            const next = { ...predicted };
+            if (!move(next,direction,0,emptyBoard,W,H,cellsFor)) break;
+            predicted = next;
+            moved = true;
+          }
+          assert(moved, type+': planned DAS action '+stepIndex+' could not move from predicted state');
+        } else {
+          const next = { ...predicted };
+          assert(move(next,direction,0,emptyBoard,W,H,cellsFor),
+            type+': planned tap action '+stepIndex+' is blocked in predicted state');
+          predicted = next;
+        }
+      } else {
+        const delta = step.action==='cw' ? 1 : step.action==='ccw' ? -1 : 2;
+        const next = { ...predicted };
+        assert(tryRotate(next,delta,emptyBoard,W,H,cellsFor),
+          type+': planned rotation '+step.action+' at action '+stepIndex+' fails in predicted state '+JSON.stringify(predicted));
+        predicted = next;
+      }
+
       if (step.mode==='das') {
         await page.keyboard.down(keyName);
         await page.waitForTimeout(100);
@@ -109,6 +144,15 @@ try {
       } else {
         await page.keyboard.press(keyName);
       }
+
+      const observed = await page.evaluate(() => {
+        const p = window.trainer.piece;
+        return p ? { type:p.type,x:p.x,y:p.y,o:p.o } : null;
+      });
+      assert(observed && observed.type===predicted.type &&
+        observed.x===predicted.x && observed.y===predicted.y && observed.o===predicted.o,
+        type+': action '+stepIndex+' ('+step.action+'/'+step.mode+') predicted '+
+        JSON.stringify(predicted)+' but runtime observed '+JSON.stringify(observed));
     }
 
     const afterRoute = await page.evaluate(() => {
