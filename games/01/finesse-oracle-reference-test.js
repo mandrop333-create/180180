@@ -174,7 +174,7 @@ export function referenceTargets({ type, start, board, maxCost = 2 }) {
  * This is kept separate from referenceTargets until the production planner
  * and browser observer support the same two-route contract.
  */
-export function referenceNavigationTargets({type,start,board,maxCost=2}) {
+export export function referenceNavigationTargets({type,start,board,maxCost=2}) {
   const actions = [
     {action:'left',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,-1,0,board)?n:null;}},
     {action:'right',mode:'tap',cost:1,apply:p=>{const n=copy(p);return referenceMove(n,1,0,board)?n:null;}},
