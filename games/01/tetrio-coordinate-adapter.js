@@ -38,3 +38,40 @@ export function tetrioToNativeState(matrices, type, rotation, x, y) {
     y: Math.min(...cells.map((cell) => TETRIO_TOTAL_HEIGHT - 1 - cell.y))
   };
 }
+
+
+// Convert a pinned client's ordered kick offset into this trainer's local-origin
+// displacement. Client matrices are pivot-relative; trainer cells use an
+// orientation-specific local 4x4 origin. Additional client anchor offsets are
+// optional and default to zero for the pinned SRS+ I table.
+export function tetrioKickToLocalOriginOffset(
+  matrices,
+  trainerPieces,
+  type,
+  fromRotation,
+  toRotation,
+  kick,
+  fromAnchor = [0, 0],
+  toAnchor = [0, 0]
+) {
+  const fromClient = matrixFor(matrices, type, fromRotation);
+  const toClient = matrixFor(matrices, type, toRotation);
+  const fromTrainer = trainerPieces[type]?.orientations?.[fromRotation];
+  const toTrainer = trainerPieces[type]?.orientations?.[toRotation];
+  if (!fromTrainer || !toTrainer) {
+    throw new Error('Missing trainer geometry for ' + type + ' rotation transition ' + fromRotation + '>' + toRotation);
+  }
+
+  const minRelativeX = (matrix) => Math.min(...matrix.cells.map(([x]) => x - matrix.dx));
+  const maxRelativeY = (matrix) => Math.max(...matrix.cells.map(([, y]) => y - matrix.dy));
+  const minLocalX = (cells) => Math.min(...cells.map(([x]) => x));
+  const maxLocalY = (cells) => Math.max(...cells.map(([, y]) => y));
+
+  const dx = kick[0] + (toAnchor[0] - fromAnchor[0]) +
+    minRelativeX(toClient) - minRelativeX(fromClient) -
+    minLocalX(toTrainer) + minLocalX(fromTrainer);
+  const dy = kick[1] + (toAnchor[1] - fromAnchor[1]) +
+    maxRelativeY(toClient) - maxRelativeY(fromClient) -
+    maxLocalY(toTrainer) + maxLocalY(fromTrainer);
+  return [dx, dy];
+}
