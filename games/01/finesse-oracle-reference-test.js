@@ -346,6 +346,46 @@ export function runIndependentFinesseOracleTests() {
     'navigation route and finesse route disagree about costed actions');
   assert(navigationExample.finesseRoute.every(step=>step.action!=='softDrop'),
     'soft-drop navigation leaked into the finesse-scoring route');
+  // Every paired route must preserve the same physical landing. This catches
+  // the prior failure mode where zero-cost descent was removed from the route
+  // sent to the executor, leaving a scoring-correct but physically incomplete
+  // sequence. Replay executionRoute with independent transitions, then verify
+  // that finesseRoute is exactly the costed-action projection.
+  let navigationRoutesChecked=0;
+  for(const candidate of navigationTargets.values()){
+    const state=copy({type:'T',...REFERENCE_PIECES.T.spawn,o:0});
+    for(const step of candidate.executionRoute){
+      if(step.action==='softDrop'){
+        assert(referenceMove(state,0,1,empty),
+          'navigation execution route contains a blocked soft-drop step');
+      }else if(step.action==='left'||step.action==='right'){
+        const dir=step.action==='left'?-1:1;
+        if(step.mode==='das'){
+          let moved=false;
+          for(let guard=0;guard<W+4;guard++){
+            if(!referenceMove(state,dir,0,empty))break;
+            moved=true;
+          }
+          assert(moved,'navigation execution route contains a blocked DAS action');
+        }else assert(referenceMove(state,dir,0,empty),
+          'navigation execution route contains a blocked horizontal tap');
+      }else{
+        const delta=step.action==='cw'?1:step.action==='ccw'?-1:2;
+        assert(referenceRotate(state,delta,empty),
+          'navigation execution route contains an invalid rotation');
+      }
+    }
+    const landed=referenceLanding(state,empty);
+    assert(landed.x===candidate.target.x&&landed.o===candidate.target.o&&landed.y===candidate.target.y,
+      'execution route does not reproduce its advertised physical landing: '+JSON.stringify(candidate));
+    const projected=candidate.executionRoute.filter(step=>step.action!=='softDrop');
+    assert(JSON.stringify(projected)===JSON.stringify(candidate.finesseRoute),
+      'finesse route is not the exact costed-action projection of execution route');
+    assert(projected.length===candidate.cost,
+      'navigation route cost differs from its costed action count');
+    navigationRoutesChecked++;
+  }
+
 
   // Weighted-cost regression: the search must not assume every action has
   // unit cost. A direct half-turn costing 3 must lose to two quarter-turns
@@ -469,7 +509,7 @@ export function runIndependentFinesseOracleTests() {
       extendedFixtures++;
     }
   }
-  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, extendedFixtures, extendedTargets, extendedMaxCost:4, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
+  return { ok:true, fixtures, comparedTargets, collisionStates, boards:boardKinds.length, generatedBoards:8, pieces:7, maxCost:2, extendedFixtures, extendedTargets, extendedMaxCost:4, navigationRoutesChecked, oracle:'static geometry/kick fixtures + independent collision and transition logic' };
 }
 
 if (import.meta.url === 'file://' + process.argv[1]) {
