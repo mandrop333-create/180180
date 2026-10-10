@@ -321,3 +321,9 @@ This narrows the next safe implementation step: add a deterministic matrix-fixtu
 
 Until the matrix fixture is available, a new adapter test built from `finesse-reference-fixtures.js` would only prove the trainer is consistent with itself, not client parity. That would create false confidence, so it is deliberately not being added. Existing production rotation and kick values remain unchanged.
 
+## Matrix-fixture extraction tooling — 2026-10-09
+
+Added `scripts/extract-tetrio-matrix-fixtures.mjs` to extract the exact `matrix.dx`, `matrix.dy`, and four orientation cell arrays for I/O/T/S/Z/J/L from a locally saved copy of the pinned client bundle. The tool writes `games/01/tetrio-matrix-reference-fixtures.js` with the pinned asset identifier and upstream fetch timestamp. It fails closed for missing pieces, missing offsets, a wrong orientation count, malformed cells, duplicate cells, or an orientation without four occupied cells.
+
+Added `scripts/test-extract-tetrio-matrix-fixtures.mjs` using a synthetic bundle to exercise extraction, shape validation, and metadata output, and wired that check into `.github/workflows/finesse-reference-tests.yml`. This test validates the extractor plumbing only; it does **not** claim that the actual pinned client matrices have been extracted or that coordinate parity is established. The actual asset still needs to be saved locally and passed to the extractor before the generated reference fixture can be committed. Production rotation and kick tables remain unchanged.
+
