@@ -934,3 +934,56 @@ The page is not one background plus a set of matching cards. It has four percept
 - Has the result been observed in an actual browser and on a real phone, with the conditions recorded?
 
 A source-level check is not a visual test. A successful pull request is not proof of a good frame rate. A polished screenshot is not proof that the interface remains comfortable after ten minutes of play.
+
+
+## 25. V2.2 implementation brief: authored habitat, not blue glass
+
+The latest pass is an art-direction change, not another blanket increase in saturation. It establishes four distinct visual distances:
+
+1. **Surface light** — broad, nearly still shafts and a faint luminous ceiling. These are environmental, not UI indicators.
+2. **Habitat edge** — asymmetric, blurred reef-like silhouettes at the outer margins of the content. They imply an inhabited space without introducing image assets, network requests, or a busy particle field.
+3. **Pressure window** — the board frame gets a more deliberate, layered edge and inner seal. The playfield itself stays dark, sharp, and geometrically unchanged.
+4. **Instrument material** — Hold, Next, metrics, and actions retain a shared aquatic material vocabulary but differ in corner rhythm, light source, and surface treatment so the whole page is not one repeated card component.
+
+This is a deliberate rejection of “more cyan = more underwater.” The composition should read as a quiet, deep environment surrounding a precise instrument. The organic forms stay peripheral and blurred; the central board remains the first fixation point.
+
+### 25.1 Constraints retained
+
+- No changes to game.js, engine.js, pieces.js, training rules, input bindings, queue state, scoring, gravity, lock timing, or board geometry.
+- No new remote fonts, scripts, images, animation libraries, or runtime dependencies.
+- No animation on the active piece, ghost, board cells, or gameplay values.
+- Touch-control position and hit geometry remain owned by the existing implementation.
+- On narrow screens, remove the decorative habitat silhouettes and expensive backdrop blur; keep only static material, edge, and contrast treatments.
+- Reduced-motion and forced-colors modes remove nonessential decoration and preserve functional focus.
+
+### 25.2 Why the effects are deliberately mostly static
+
+Current MDN performance guidance warns that large or numerous animations can degrade performance and that properties affecting geometry or paint can be costly. Its reduced-motion guidance also makes clear that motion should be reduced or replaced for users who request it. This pass therefore uses layered static gradients and only immediate, local control feedback. It does not add an animated reef, particle simulation, page parallax, or animated blur.
+
+References:
+- MDN, CSS performance optimization: https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/CSS
+- MDN, CSS and JavaScript animation performance: https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/CSS_JavaScript_animation_performance
+- MDN, prefers-reduced-motion: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/%40media/prefers-reduced-motion
+
+### 25.3 Acceptance criteria for this pass
+
+- At a glance, the composition must feel spatially underwater, not merely tinted blue.
+- The board is the strongest high-contrast focal area; the outer habitat cannot compete with it.
+- Hold, Next, HUD, and training controls are visibly related but not interchangeable-looking.
+- All text remains readable against the new surfaces, and keyboard focus remains explicit.
+- The design must not depend on animation to communicate any gameplay state.
+- Mobile must preserve existing board size and touch behavior while dropping peripheral decoration.
+- These criteria remain unverified until a real browser/device review. A valid CSS parse and a clean Git diff cannot prove the visual hierarchy or phone performance.
+
+## 26. Next quality gate: perception over author intent
+
+Do not accept this iteration simply because its CSS is more elaborate. Review the rendered result at a normal viewing distance and ask:
+
+- Does the page have an identifiable “surface above / deep water below” structure?
+- Do the edges imply habitat while the central board feels like a protected instrument?
+- Are the materials different enough to feel designed, but restrained enough to support rapid play?
+- Is any decorative shape visibly clipping, overlapping content, or expanding the scrollable page?
+- Does the mobile view feel intentionally simplified rather than like a broken desktop composition?
+- Can a person play for several minutes without noticing the background as an attention competitor?
+
+If the answer to the first two is no, the next iteration should change the composition and silhouettes, not add more glows. If the answer to any of the last four is no, simplify before adding more detail.
