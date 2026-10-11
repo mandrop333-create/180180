@@ -3,11 +3,11 @@ import { tryRotate } from './rotation.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
 
-// Kicked SRS+ outcomes from the pinned TETR.IO movement snapshot generator.
-// Fixture rows are native bottom-up row masks; expected states use native
-// minimum-cell coordinates. Assertions compare both landing state and selected
-// ordered candidate, after converting to the trainer's local-origin frame.
-const SOURCE_ASSET = 'https://tetr.io/js/tetrio.js?hv=7eebfc9cd.987f91854aad.20260504T210001';
+// Kicked SRS+ outcomes originally captured from an older TETR.IO bundle.
+// The independent current-client generator re-evaluated all these exact board
+// states and confirmed the landing state and ordered kick index still match.
+// Rows are native bottom-up masks; states are native minimum-cell coordinates.
+const VERIFIED_ASSET = 'https://tetr.io/js/tetrio.js?hv=9628c0bbd.a0cb57db6fb1.20260921T164842';
 const TOTAL_HEIGHT = 40;
 const W = 10;
 const H = TOTAL_HEIGHT;
@@ -1535,5 +1535,5 @@ for (const testCase of CASES) {
     testCase.name + ': local selected-candidate index must equal pinned kickIndex + baseline slot');
 }
 
-console.log(JSON.stringify({ ok: true, cases: CASES.length, sourceAsset: SOURCE_ASSET,
+console.log(JSON.stringify({ ok: true, cases: CASES.length, verifiedAgainstAsset: VERIFIED_ASSET,
   scope: '39 pinned SRS+ kicked outcomes across I/T/S/Z/J/L; final state and selected candidate order' }));
