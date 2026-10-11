@@ -30,7 +30,7 @@ export class Trainer {
     this.board=[];this.piece=null;this.generator=options.generator||(this.mode.createGenerator?this.mode.createGenerator({seed:options.seed}):new SevenBagGenerator({seed:options.seed}));
     this.queue=[];this.holdType=null;this.holdUsed=false;
     this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;
-    this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
+    this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,totalPieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0,b2bCurrent:0,b2bBest:0,b2bClears:0,piecesSinceTetris:0,burnLines:0};
     this.gameOver=false;this.rhythm=new RhythmTracker(options.calculateRhythm===true);this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
     this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.halfTurnAnimationEnabled=options.halfTurnAnimationEnabled===true;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
@@ -237,18 +237,31 @@ export class Trainer {
     const spin=this.isTSpin(lockedPiece);let clearRows=[];
     if(shouldClear){const remaining=this.board.filter(row=>{const full=row.every(Boolean);if(full){cleared++;clearRows.push(row);}return!full;});if(cleared){while(remaining.length<this.H)remaining.unshift(Array(this.W).fill(0));this.board=remaining;this.lines+=cleared;this.stats.linesCleared+=cleared;}}
     if(cleared===0)this.combo=-1;else{this.combo++;if(this.combo>0)this.stats.combos++;}
-    if(cleared===4)this.stats.tetrises++;
+    this.stats.piecesSinceTetris++;
+    if(cleared===4){this.stats.tetrises++;this.stats.piecesSinceTetris=0;this.stats.burnLines=0;}
+    else if(cleared>0)this.stats.burnLines+=cleared;
     if(spin)this.stats.tspins++;
     const difficult=(cleared===4)||!!spin;
-    if(cleared>0&&!difficult)this.b2b=false;
-    if(difficult&&cleared>0){if(this.b2b)this.stats.score+=Math.round((this.rules.scoring?.b2bMultiplier??1.5)*this.spinOrLineScore(cleared,spin));else this.stats.score+=this.spinOrLineScore(cleared,spin);this.b2b=true;}
-    else if(cleared>0){this.stats.score+=this.spinOrLineScore(cleared,spin);this.b2b=false;}
+    // B2B persists through placements that clear no lines; only a non-difficult
+    // line clear breaks the chain. Count qualifying line clears, not spin no-clears.
+    if(cleared>0){
+      if(difficult){
+        if(this.b2b){this.stats.b2bClears++;this.stats.b2bCurrent++;this.stats.score+=Math.round((this.rules.scoring?.b2bMultiplier??1.5)*this.spinOrLineScore(cleared,spin));}
+        else{this.stats.b2bCurrent=1;this.stats.score+=this.spinOrLineScore(cleared,spin);}
+        this.b2b=true;
+        this.stats.b2bBest=Math.max(this.stats.b2bBest,this.stats.b2bCurrent);
+      }else{
+        this.stats.score+=this.spinOrLineScore(cleared,spin);
+        this.b2b=false;
+        this.stats.b2bCurrent=0;
+      }
+    }
     if(this.combo>0)this.stats.score+=50*this.combo;
     const afterClear=this.board.map(r=>[...r]);
     if(countFilled(this.board)===0&&cleared>0){this.stats.perfectClears++;this.stats.score+=3500;}
     this.placed++;this.stats.piecesPlaced++;
     this.holdUsed=false;
-    this.stats.pieceInputs=this.pieceInputCount;
+    this.stats.pieceInputs=this.pieceInputCount;this.stats.totalPieceInputs+=this.pieceInputCount;
     if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
       const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&(!Number.isInteger(target.y)||lockedPiece.y===target.y));
@@ -449,7 +462,7 @@ export class Trainer {
   }
   say(s){if(this.toastCallback)this.toastCallback(s);}setToastCallback(cb){this.toastCallback=cb;}
   reset(reason='manual'){
-    this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
+    this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,totalPieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0,b2bCurrent:0,b2bBest:0,b2bClears:0,piecesSinceTetris:0,burnLines:0};
     this.softAcc=0;this.gravityAcc=0;this.lockAcc=0;this.lockResets=0;this.rhythm?.reset();this.dasCutRemaining=0;this.lastTime=0;this.gameOver=false;this.downKeys.clear();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;this.training=createTrainingState();
     this.holdUsed=false;
     this.session=this.mode.createSession?this.mode.createSession():{};this.generator=this.mode.createGenerator?this.mode.createGenerator({}):this.generator;if(this.generator.reset)this.generator.reset();this.queue=[];this.holdType=null;this.holdUsed=false;this.emptyBoard();this.piece=null;this.anim=null;this.ensureQueue();this.spawn();this.hook('reset');this.options.onReset(reason);this.markRender();this.flushRender();if(!this.running)this.start();
