@@ -214,7 +214,6 @@ function createXorshift32(seed) {
   };
 }
 function mod4(value) { return ((value % 4) + 4) % 4; }
-function emptyRows() { return new Array(VISIBLE_HEIGHT).fill(0); }
 function isRecord(value) { return typeof value === 'object' && value !== null && !Array.isArray(value); }
 function extractObjectLiteralAfterKey(input, key) {
   const keyIndex = input.indexOf(key + ':');
