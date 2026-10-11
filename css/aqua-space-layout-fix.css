@@ -1,0 +1,137 @@
+/* Aqua-space layout integrity pass: keep every instrument in its own lane. */
+.homepage-game-first .trainer-shell {
+  width: min(1180px, 100%) !important;
+  max-width: 1180px !important;
+}
+.homepage-game-first .trainer-layout {
+  display: grid !important;
+  grid-template-columns: minmax(142px, .86fr) minmax(270px, 300px) minmax(112px, .68fr) minmax(180px, .98fr) !important;
+  gap: clamp(8px, 1.35vw, 16px) !important;
+  align-items: start !important;
+  justify-content: stretch !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+.homepage-game-first .trainer-layout > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+.homepage-game-first .board-column {
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-self: stretch !important;
+}
+.homepage-game-first .board-wrap {
+  width: fit-content !important;
+  max-width: 100% !important;
+  margin-inline: auto !important;
+}
+.homepage-game-first .trainer-side,
+.homepage-game-first .rules-column {
+  padding-top: 0 !important;
+  min-width: 0 !important;
+}
+.homepage-game-first .trainer-card {
+  min-width: 0 !important;
+  overflow-wrap: anywhere;
+}
+.homepage-game-first .next-preview {
+  transform: none !important;
+  transform-origin: top center !important;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible !important;
+  gap: 5px !important;
+}
+.homepage-game-first .next-preview .mini-piece {
+  flex: 0 1 auto;
+  max-width: 100%;
+  animation: none !important;
+  translate: none !important;
+  will-change: auto !important;
+}
+.homepage-game-first .trainer-side > .trainer-card,
+.homepage-game-first .rules-column > .trainer-card {
+  animation: none !important;
+  translate: none !important;
+}
+.homepage-game-first .trainer-layout::before {
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+@media (max-width: 1080px) {
+  .homepage-game-first .trainer-layout {
+    grid-template-columns: minmax(132px, .8fr) minmax(270px, 300px) minmax(120px, .72fr) !important;
+    gap: 12px !important;
+  }
+  .homepage-game-first .rules-column {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .homepage-game-first .rules-column > .trainer-card {
+    min-width: 0;
+  }
+}
+@media (max-width: 760px) {
+  .homepage-game-first .trainer-main { padding-inline: 10px !important; }
+  .homepage-game-first .trainer-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-areas:
+      "board board"
+      "left next"
+      "rules rules" !important;
+    gap: 12px !important;
+    align-items: start !important;
+  }
+  .homepage-game-first .board-column {
+    grid-area: board !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+  }
+  .homepage-game-first .trainer-side:first-of-type {
+    grid-area: left !important;
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    display: grid;
+    align-content: start;
+    gap: 10px !important;
+  }
+  .homepage-game-first .trainer-side:nth-of-type(2) {
+    grid-area: next !important;
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    display: block;
+  }
+  .homepage-game-first .rules-column {
+    grid-area: rules !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .homepage-game-first .trainer-card { padding: 12px !important; }
+  .homepage-game-first .next-preview {
+    align-items: center !important;
+    justify-content: flex-start !important;
+  }
+}
+@media (max-width: 390px) {
+  .homepage-game-first .trainer-layout { gap: 8px !important; }
+  .homepage-game-first .trainer-card { padding: 9px !important; }
+  .homepage-game-first .next-preview { gap: 3px !important; }
+  .homepage-game-first .next-preview .mini-piece {
+    min-width: 0 !important;
+    padding: 2px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .homepage-game-first .next-preview .mini-piece,
+  .homepage-game-first .trainer-side > .trainer-card,
+  .homepage-game-first .rules-column > .trainer-card {
+    animation: none !important;
+    translate: none !important;
+  }
+}
