@@ -80,3 +80,31 @@ Cloudflare Workers Builds reported failed previews for PR #29 and again for the 
 - Compare startup/network/long-task/frame behavior before and after on a real browser; do not equate source bytes with performance.
 - Verify Cloudflare build/deployment status separately.
 - User confirms live appearance and training feel; do not claim zero lag without device-level measurements.
+
+## Third audit — protected SEO and runtime/CSS ownership map (2026-10-11)
+
+### Protected metadata — verified present and intentionally untouched
+
+The current `index.html` contains the document title, meta description, robots directive, canonical URL, theme color, Open Graph title/description/type/site name/URL, Twitter card/title/description, and JSON-LD describing the WebSite and SoftwareApplication. These are intentional page metadata, not cleanup targets. No SEO metadata or structured data was removed in this audit.
+
+### Actual page runtime entry points
+
+- `games/01/game.js` is the page's game module entry point. It imports the active game engine, mode, settings, and piece helpers.
+- `js/planet-themes.js` is loaded by the page with `defer` and owns the theme picker behavior.
+- Two inline scripts own the visible rules controls and customizable mobile controls. They use the page's existing controls, settings persistence, and trainer events; they are not free-running background loops.
+- The exhaustive `games/01/self-test.js` module is dynamically imported only for the explicit `?selftest=1` opt-in path. It is not part of normal startup.
+- `js/app.js` and `js/home.js` are not loaded by the current `index.html`. Their presence in the repository does not mean the browser downloads or executes them on this page. Do not delete them solely to claim a runtime speedup.
+
+### CSS overlap review — no blind deletion
+
+The current page loads base, trainer, settings, prototype-flow, layout-fix, theme, and session-stat styles. The scan found selectors shared between style owners, including the inline page rules and `css/abyssal-space.css`. These overlaps are not automatically dead code: several define different properties, media-query behavior, theme materials, accessibility states, or intentional later overrides. The prototype-flow and layout-fix files also have overlapping selectors where one file supplies properties the other does not.
+
+No CSS selector or stylesheet was removed based only on name overlap. A safe deletion needs computed-style or screenshot comparison at desktop/mobile breakpoints and checks for runtime-generated classes. This is deliberately more conservative than mass-cleaning `!important` declarations, because the latter can change the actual page even when selectors look duplicated.
+
+### Next safe optimization gate
+
+1. Establish a browser baseline for first input, long tasks, transferred CSS bytes, and desktop/mobile screenshots.
+2. Compare computed styles and responsive screenshots before removing or merging a specific CSS rule group.
+3. Re-run the Finesse regression and Playwright gameplay/mobile checks on the exact change head.
+4. Keep SEO metadata, accessible labels, reduced-motion behavior, theme selection, settings persistence, and mobile-control editing as explicit regression checks.
+5. Verify the production static-site deployment separately; GitHub checks and a Worker preview are not proof that the public site is live.
