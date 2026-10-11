@@ -653,22 +653,6 @@ body::after {
 
 /* Human-scale details: small controls and queue previews should feel designed,
    not merely recolored. Ambient drift is slow and independent of game timing. */
-@keyframes abyssal-drift {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -2px, 0); }
-}
-@keyframes abyssal-shimmer {
-  0%, 100% { opacity: .48; }
-  50% { opacity: .82; }
-}
-.next-preview .mini-piece {
-  animation: abyssal-drift 6.8s ease-in-out infinite;
-  will-change: transform;
-}
-.next-preview .mini-piece:nth-child(2) { animation-delay: -1.3s; }
-.next-preview .mini-piece:nth-child(3) { animation-delay: -2.6s; }
-.next-preview .mini-piece:nth-child(4) { animation-delay: -3.9s; }
-.next-preview .mini-piece:nth-child(5) { animation-delay: -5.2s; }
 .next-preview .mini-piece:first-child::before {
   content: "";
   position: absolute;
@@ -676,7 +660,6 @@ body::after {
   border-radius: 5px;
   pointer-events: none;
   background: linear-gradient(120deg, transparent 15%, rgba(182,246,250,.08) 48%, transparent 75%);
-  animation: abyssal-shimmer 5.4s ease-in-out infinite;
 }
 .settings-gear {
   position: relative;
@@ -743,72 +726,16 @@ body::after {
 .trainer-actions .action-button {
   letter-spacing: .035em;
 }
-@media (prefers-reduced-motion: reduce) {
-  .next-preview .mini-piece,
-  .next-preview .mini-piece:first-child::before {
-    animation: none !important;
-    will-change: auto;
-  }
-}
-@media (max-width: 900px) {
-  .next-preview .mini-piece { animation-duration: 8.5s; }
-}
 @media (max-width: 560px) {
   .mobile-control { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 /* A suspended-water layer: the world drifts, but the playfield stays exact.
    Staggered phases avoid a synchronized, mechanical bobbing effect. */
-@keyframes abyssal-suspension {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -1.5px; }
-}
-@keyframes abyssal-current {
-  0%, 100% { opacity: .24; transform: translate3d(-1px, 0, 0); }
-  50% { opacity: .48; transform: translate3d(1px, -1px, 0); }
-}
-.hold-preview .mini-piece {
-  animation: abyssal-drift 7.6s ease-in-out infinite;
-}
+/* Pieces, cards and board glow stay still. Only the background current drifts. */
 .hold-preview .mini-piece .mini-grid,
 .next-preview .mini-piece .mini-grid {
   transform-origin: center;
-}
-.trainer-side > .trainer-card,
-.rules-column > .trainer-card {
-  animation: abyssal-suspension 9.5s ease-in-out infinite;
-}
-.trainer-side > .trainer-card:nth-child(2),
-.rules-column > .trainer-card:nth-child(2) {
-  animation-delay: -3.1s;
-}
-.trainer-side > .trainer-card:nth-child(3),
-.rules-column > .trainer-card:nth-child(3) {
-  animation-delay: -6.2s;
-}
-.board-wrap::after {
-  animation: abyssal-current 8s ease-in-out infinite;
-}
-.settings-gear .power-orbit {
-  animation: abyssal-current 6s ease-in-out infinite;
-}
-@media (hover: hover) and (pointer: fine) {
-  .trainer-card:hover { animation-play-state: paused; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hold-preview .mini-piece,
-  .trainer-side > .trainer-card,
-  .rules-column > .trainer-card,
-  .board-wrap::after,
-  .settings-gear .power-orbit {
-    animation: none !important;
-    translate: none !important;
-  }
-}
-@media (max-width: 720px) {
-  /* Keep the mobile reading/touch plane calm; previews still feel buoyant. */
-  .trainer-side > .trainer-card,
-  .rules-column > .trainer-card { animation: none; }
 }
 
 
@@ -1476,7 +1403,6 @@ body::after {
 body::after {
   inset: -3vh -3vw;
   animation: aqua-space-current-drift 34s ease-in-out infinite alternate;
-  will-change: transform;
 }
 
 @media (max-width: 720px) {
@@ -1492,6 +1418,5 @@ body::after {
   .trainer-page::after {
     animation: none !important;
     transform: none !important;
-    will-change: auto;
   }
 }
