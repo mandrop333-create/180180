@@ -99,3 +99,100 @@ Keep three categories distinct in future model updates:
 - **Hypothesis to test:** a plausible improvement that requires user-flow or visual validation.
 
 Do not describe a proposed change as implemented, or a successful automated test as proof of visual quality, without the corresponding evidence.
+
+
+## Version 1.1 — Seamless-flow model
+
+This version makes the experience model operational: it describes the player's attention cycle, defines priority between interface elements, and records concrete hypotheses from the current source. It remains documentation-only.
+
+### The continuous loop
+
+The trainer should support one unbroken loop:
+
+1. **Orient:** the player reads the active board state and the landing/ghost information.
+2. **Anticipate:** Hold and the ordered Next queue provide just enough information for the next placement decision.
+3. **Act:** keyboard or touch input produces a predictable, low-latency game response.
+4. **Confirm:** the board state changes clearly when a piece moves, rotates, locks, or clears lines.
+5. **Learn:** finesse and rhythm feedback explain a useful pattern without hijacking the next decision.
+6. **Resume:** transient feedback settles; attention naturally returns to the active piece and board.
+
+This is a design model, not a claim that every phase is currently measured or implemented as a formal state machine.
+
+### Attention priority
+
+When elements compete for attention, resolve the conflict in this order:
+
+1. **Immediate play:** active piece, board boundaries, occupied cells, ghost/landing position, and the next required input.
+2. **Near-future planning:** Hold state and the first Next pieces. The closest upcoming piece should be easiest to scan.
+3. **Action confirmation:** a concise cue for meaningful events such as hold, lock, line clear, or rotation.
+4. **Training guidance:** the next finesse step or a relevant rhythm insight, presented only when it helps the current task.
+5. **Session metrics and configuration:** score, counts, tuning controls, and deeper settings; available without constantly pulling focus from play.
+
+This is a priority order, not a mandate to hide useful information. A mode's purpose can legitimately promote a training cue, but that choice should be explicit and testable.
+
+### Element relationships and transitions
+
+- **Board ↔ previews:** use a shared spatial rhythm and consistent piece geometry. Preview placement should make the relationship to the board obvious, not make the interface look like a row of unrelated cards.
+- **Hold ↔ Next:** treat them as one planning pair with distinct meanings: Hold is stored optionality; Next is ordered future information. Empty Hold must be unambiguous.
+- **Input ↔ response:** the visual response must confirm the action that actually happened. Effects must not delay the engine or suggest a rotation/movement that was rejected.
+- **Board event ↔ training feedback:** feedback should be anchored to the event or its result. Avoid persistent high-salience overlays that mask cells or interfere with reading the active piece.
+- **Active play ↔ settings:** tuning should be easy to access, but opening or adjusting settings must not accidentally consume gameplay input or obscure essential context.
+- **Desktop ↔ mobile:** preserve the same mental model even if the spatial arrangement changes. Responsive behavior must not reorder information in a way that breaks the player's learned scan path.
+
+### What the source currently tells us
+
+Observed in repository source; these are not visual QA findings:
+
+- The HTML uses a board-first composition with Hold/Next, HUD, rules/settings, and responsive layout rules. Several responsive breakpoints alter the column structure and ordering.
+- The board uses a fixed 10 × 20 logical grid with 28px cells in the renderer; narrow-screen CSS scales the board cell size.
+- Hold and Next are rendered by the same preview helper, while queue length is configurable and clamped by the renderer.
+- The engine records gameplay actions and exposes training state, finesse prompts, rhythm reports, and callbacks for state changes.
+- The settings UI persists many controls locally and can re-render the board when visual tuning values change.
+- The renderer has an explicit reduced-motion path for the 180-degree turn animation, including a fallback that releases the animation state. This is a good example of preserving game-state correctness when visual motion is suppressed.
+
+These observations justify testing information flow and transition behavior before proposing decorative changes. Source inspection alone cannot establish whether the live layout feels seamless.
+
+### Prioritized hypotheses to validate
+
+| Priority | Hypothesis | How to validate | Failure signal |
+| --- | --- | --- | --- |
+| P0 | Players can scan board → Hold → first Next piece without losing the active piece. | Inspect desktop and mobile at representative widths; perform repeated placements while verbalizing the scan order. | Eyes/attention repeatedly lose the active piece or the next piece is hard to locate. |
+| P0 | Feedback confirms actions without interrupting control. | Test accepted and rejected rotations, Hold, hard drop, line clear, and reduced-motion mode. | Visual response contradicts engine state, delays input, or hides the landing/board. |
+| P0 | The board remains the dominant play surface across responsive layouts. | Check 901px, 900px, 560px, 520px boundaries plus actual phone dimensions. | Board is squeezed, jumps position unexpectedly, or supporting panels displace immediate play information. |
+| P1 | Hold and Next communicate stored vs ordered information with no ambiguity. | Test empty Hold, occupied Hold, swapping, queue-size extremes, and color-only settings. | The meaning/order of a preview must be inferred from color alone or pieces are clipped. |
+| P1 | Training guidance helps the next input rather than adding a second task. | Run finesse on/off and rhythm reporting through multiple placements. | Prompt obscures relevant cells, remains stale, or demands attention after its value has passed. |
+| P2 | HUD metrics can be read peripherally without becoming visual noise. | Compare a short play session with and without looking at the metrics. | Metrics repeatedly draw attention during active placement but do not inform a decision. |
+
+Do not mark a hypothesis as passed without a recorded manual check or reproducible automated test. Automated tests verify logic; they do not substitute for observing the visual scan path.
+
+### Flow quality scorecard
+
+For future reviews, score each dimension as **Pass / Needs evidence / Fail**, and link evidence:
+
+- **Continuity:** transitions between states feel like consequences of the player's input, not disconnected effects.
+- **Legibility:** essential game state remains quickly distinguishable at normal play speed.
+- **Predictability:** identical inputs under identical rules yield understandable outcomes.
+- **Priority:** only the information needed now competes for primary attention.
+- **Spatial coherence:** board, Hold, Next, and controls feel related by alignment, scale, and scan order.
+- **Recovery:** interruption, settings, reset, focus loss, and reduced motion do not strand the player or confuse the game state.
+- **Adaptability:** desktop, mobile, color-only modes, and user settings preserve the same core mental model.
+
+A change should improve at least one identified friction point without regressing any P0 dimension. If evidence is inconclusive, keep the proposal as a hypothesis rather than changing the live interface.
+
+### Research connections
+
+- The game-feel survey separates physicality, amplification, and support. For this trainer, apply that as: tune input/motion for predictability; amplify only events that need confirmation; streamline the route from intent to action. Source: [Designing Game Feel: A Survey](https://arxiv.org/abs/2011.09201).
+- TetrisWiki describes Next as ordered preview information and Hold as a stored piece. Use these as the functional distinction; do not copy another game's exact layout as a universal rule. Sources: [Tetris Guideline](https://tetris.wiki/Tetris_Guideline), [Hold piece](https://tetris.wiki/Hold_piece).
+- Movement finesse is specifically about minimizing inputs and making placement more efficient. Training feedback should therefore reinforce clarity and repeatability rather than add visual spectacle. Source: [Movement finesse](https://tetris.wiki/Movement_finesse).
+- Dark-mode guidance cautions against relying on highly saturated colors against dark backgrounds for essential visibility. Treat color as one cue within a larger state language. Source: [Nielsen Norman Group](https://www.nngroup.com/articles/dark-mode-users-issues/).
+
+### Change gate
+
+Before moving from model work to a code change, write down:
+1. The exact friction observed in the running trainer.
+2. The affected player decision and moment in the loop.
+3. The smallest change likely to remove that friction.
+4. The game-state, responsive, accessibility, and reduced-motion regressions to test.
+5. Evidence from before/after checks.
+
+No broad redesign, theme pass, or deployment is justified by the model alone.
