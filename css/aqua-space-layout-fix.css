@@ -94,6 +94,35 @@
   z-index: -1;
 }
 
+
+@media (min-width: 901px) {
+  .homepage-game-first .trainer-layout {
+    grid-template-columns:
+      minmax(116px, .78fr)
+      320px
+      minmax(104px, .68fr)
+      minmax(168px, .94fr);
+  }
+
+  .homepage-game-first .trainer-layout > .board-column {
+    width: 320px;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  .homepage-game-first .board-wrap {
+    width: fit-content;
+    max-width: none;
+    box-sizing: content-box;
+    margin-inline: auto;
+  }
+
+  .homepage-game-first .board-wrap > .board {
+    flex: 0 0 auto;
+    max-width: none;
+  }
+}
+
 @media (max-width: 760px) {
   .homepage-game-first .trainer-main {
     padding-inline: 10px;
