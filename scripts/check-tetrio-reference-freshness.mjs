@@ -27,6 +27,30 @@ if (versions.length !== 1) {
   throw new Error('Expected exactly one TETR.IO homepage asset version; found ' + versions.length);
 }
 const currentAsset = 'https://tetr.io/js/tetrio.js?hv=' + versions[0];
+
+// These tests contain expected movement outcomes captured from a specific client
+// bundle. Updating only the matrix fixture URL must not make stale snapshots look
+// current; each snapshot must explicitly identify the same client asset.
+const snapshotPaths = [
+  new URL('../games/01/tetrio-i-empty-rotation-parity-test.js', import.meta.url),
+  new URL('../games/01/tetrio-srs-plus-movement-parity-test.js', import.meta.url)
+];
+const staleSnapshots = [];
+for (const snapshotPath of snapshotPaths) {
+  const snapshot = await readFile(snapshotPath, 'utf8');
+  const sourceMatch = snapshot.match(/SOURCE_ASSET\s*=\s*'([^']+)'/);
+  if (!sourceMatch) {
+    staleSnapshots.push(snapshotPath.pathname.split('/').pop() + ' has no SOURCE_ASSET declaration');
+  } else if (sourceMatch[1] !== currentAsset) {
+    staleSnapshots.push(snapshotPath.pathname.split('/').pop() + ' pins ' + sourceMatch[1]);
+  }
+}
+if (staleSnapshots.length) {
+  throw new Error(
+    'TETR.IO movement snapshots are not verified against the current client (' + currentAsset + '): ' +
+    staleSnapshots.join('; ') + '. Refresh and validate snapshot outcomes before updating their source labels.'
+  );
+}
 if (currentAsset !== pinnedAsset) {
   throw new Error(
     'Pinned TETR.IO reference is stale. Current homepage advertises ' + currentAsset +
