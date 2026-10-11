@@ -549,3 +549,103 @@ body::after {
     transition: none !important;
   }
 }
+
+
+/* Third pass — give the world a signature, not just a palette.
+   The playfield remains clean; the "living" quality lives at its perimeter. */
+:root {
+  --abyss-luminous-edge: rgba(113, 231, 246, .72);
+  --abyss-halo-cool: rgba(50, 190, 205, .18);
+  --abyss-halo-violet: rgba(112, 94, 198, .12);
+}
+.trainer-page::before {
+  width: min(1260px, 100%);
+  top: 115px;
+  height: 680px;
+  opacity: .92;
+  background:
+    radial-gradient(ellipse at 50% 36%, rgba(22, 110, 135, .13), transparent 32%),
+    radial-gradient(ellipse at 12% 56%, rgba(27, 118, 130, .09), transparent 35%),
+    radial-gradient(ellipse at 88% 25%, rgba(87, 73, 157, .09), transparent 34%),
+    radial-gradient(ellipse at 50% 100%, rgba(5, 37, 54, .2), transparent 48%);
+}
+.trainer-brand {
+  text-shadow:
+    0 0 1px rgba(232,250,255,.65),
+    0 0 16px rgba(101,231,232,.23),
+    0 0 48px rgba(44,166,189,.14) !important;
+}
+.mini-home-title {
+  letter-spacing: .015em;
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.08),
+    0 0 26px rgba(101,231,232,.18) !important;
+}
+.board-wrap {
+  isolation: isolate;
+  border-color: rgba(132, 222, 232, .52) !important;
+  box-shadow:
+    0 30px 76px rgba(0,0,0,.58),
+    0 0 0 1px rgba(101,231,232,.1),
+    0 0 30px rgba(52,175,194,.12),
+    inset 0 1px 0 rgba(216,247,255,.15) !important;
+}
+.board-wrap::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -13px;
+  border-radius: 18px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--abyss-halo-cool), transparent 60%),
+    radial-gradient(ellipse at 0% 45%, rgba(40,151,170,.08), transparent 52%),
+    radial-gradient(ellipse at 100% 80%, var(--abyss-halo-violet), transparent 58%);
+  filter: blur(13px);
+  opacity: .8;
+}
+.board-wrap::before {
+  background:
+    linear-gradient(118deg, rgba(190,247,250,.1), transparent 18% 72%, rgba(126,111,221,.055)),
+    linear-gradient(180deg, rgba(101,231,232,.025), transparent 28%);
+}
+.trainer-side > .trainer-card:first-child,
+.rules-column > .trainer-card:first-child {
+  box-shadow:
+    0 16px 40px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(216,247,255,.06),
+    inset 0 0 26px rgba(57,153,170,.025) !important;
+}
+.trainer-card:hover {
+  transform: translateY(-1px);
+}
+.trainer-card h2::before {
+  box-shadow: 0 0 7px rgba(88,203,185,.35), 0 0 15px rgba(88,203,185,.12);
+}
+.action-button:focus-visible,
+.settings-gear:focus-visible,
+.mobile-control:focus-visible {
+  box-shadow: 0 0 0 4px rgba(101,231,232,.13), 0 0 22px rgba(101,231,232,.12) !important;
+}
+.mobile-control:active, .mobile-control.pressed {
+  box-shadow:
+    0 0 0 2px rgba(101,231,232,.15),
+    0 0 20px rgba(101,231,232,.14),
+    inset 0 1px 0 rgba(216,247,255,.16) !important;
+}
+@media (max-width: 900px) {
+  .board-wrap::after { inset: -8px; filter: blur(9px); opacity: .58; }
+  .trainer-card:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-card { transform: none !important; }
+}
+@media (forced-colors: active) {
+  .board-wrap, .trainer-card, .settings-card, .mobile-control {
+    border: 1px solid CanvasText !important;
+    box-shadow: none !important;
+  }
+  :where(button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid Highlight !important;
+  }
+}
