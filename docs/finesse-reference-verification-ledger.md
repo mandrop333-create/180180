@@ -457,3 +457,12 @@ This resolves the specific source-level concern that the current implementation 
 - In the same run, the existing matrix/coordinate, I-piece rotation, and SRS+ movement tests passed when rerun by the workflow's diagnostic step—but those results remain parity against the May snapshot, not the current September client. Do not relabel the old cases as September data or change kick offsets by guesswork.
 - Current gate: fetch the exact current bundle, regenerate its matrix fixture and movement snapshots, then run the full parity suite against those generated expectations. Compare actual movement tables and outcomes before changing production kick values. The freshness failure is intentional until that refresh is complete.
 - Changes this iteration are tooling/CI only; no gameplay code changed. PR #8 remains draft; no merge or deployment.
+
+
+## Follow-up: current-client matrix and SRS+ table audit — 2026-10-11
+
+- On branch head `a93841bbe3123291daf9f6eabecd76ac17db2ea8`, reference workflow run [38111562876](https://github.com/mandrop333-create/180180/actions/runs/38111562876) successfully acquired the currently advertised TETR.IO client bundle: `https://tetr.io/js/tetrio.js?hv=9628c0bbd.a0cb57db6fb1.20260921T164842`, SHA-256 `b310aaf13ac0d7ee73c87c58abcdec87e1267217e182c10f4c9cb40dc5d73c92`.
+- Added `scripts/audit-tetrio-current-reference.mjs` and wired it into `.github/workflows/finesse-reference-tests.yml`. The audit passed: all seven current-client matrix fixtures match the accepted geometry, and 72 SRS+ quarter-turn/direct-180 piece-transition kick-table comparisons match `games/01/kicks.js`, including candidate ordering.
+- The reference workflow still fails only at `Verify accepted TETR.IO reference is still current`: accepted fixtures and movement snapshots still name the May 4 asset. The audit verifies matrices and kick tables, not full runtime movement parity; it does **not** justify silently relabeling old movement snapshots as newly captured.
+- No gameplay code, merge, or deployment. Changes are limited to reference-audit tooling, workflow wiring, and this ledger.
+- **Next step:** verify representative current-client movement outcomes in the actual rotation path (including blocked/edge and direct-180 cases), then refresh the source references/snapshots only when the evidence supports it. Keep the freshness gate enabled until that is complete.
