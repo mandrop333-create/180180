@@ -987,3 +987,23 @@ Do not accept this iteration simply because its CSS is more elaborate. Review th
 - Can a person play for several minutes without noticing the background as an attention competitor?
 
 If the answer to the first two is no, the next iteration should change the composition and silhouettes, not add more glows. If the answer to any of the last four is no, simplify before adding more detail.
+
+
+## 27. V2.3 correction: water is not outer space
+
+A critical audit found that the original theme's persistent pinpoint field still read as stars. That is a direct metaphor conflict: the page was saying “cosmos” while the brief requires a deeply aquatic world. V2.3 replaces those points with low-contrast suspended matter, gives the top of the page a faint surface boundary, and increases depth toward the lower viewport. This is not intended to look like an aquarium wallpaper; it should be a peripheral environmental cue that makes the central training instrument feel housed underwater.
+
+The top rule and header light establish a surface reference. The recessed central pocket creates spatial contrast. The existing board frame then reads as a pressure window inside that environment. The board, pieces, ghost, previews' data, timing, controls, and rules remain gameplay-owned and are not animated or repositioned.
+
+The prefers-reduced-transparency query is an additional progressive enhancement: where supported, it removes card backdrop blur and tones down the peripheral habitat layer. This complements the existing reduced-motion and forced-colors treatments.
+
+### 27.1 Reference-informed technical guardrails
+
+MDN explains that backdrop-filter applies effects to pixels behind an element and has backdrop-root constraints, so blur is not a universal material effect; MDN also recommends measuring actual rendering costs rather than optimizing by guesswork. See:
+- https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/backdrop-filter
+- https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/CSS
+- https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Animation_performance_and_frame_rate
+
+### 27.2 New acceptance test
+
+Hide the brand and cards mentally for a moment: the background alone should read as surface light descending into dark water, not stars in space. Then restore the content: the playfield must be the sharpest, most legible object, while the environment stays peripheral. If that reading does not survive on a phone at normal brightness, simplify and recompose rather than layering on more effects.
