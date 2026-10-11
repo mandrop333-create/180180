@@ -110,3 +110,36 @@
 :root[data-piece-theme="retro"] .cell.locked {
   box-shadow: inset 2px 2px 0 rgba(255,255,255,.32), inset -3px -3px 0 rgba(8,4,18,.36), 2px 2px 0 #05030b;
 }
+
+
+/* Fruity piece skin: juicy citrus, berry, grape and melon colors. */
+:root[data-piece-theme="fruity"] {
+  --piece-i-light:#8ff7e5; --piece-i-dark:#08bda5;
+  --piece-o-light:#fff19a; --piece-o-dark:#f3ad18;
+  --piece-t-light:#e6b5ff; --piece-t-dark:#a34de0;
+  --piece-s-light:#d0fa83; --piece-s-dark:#68bd28;
+  --piece-z-light:#ffb1c8; --piece-z-dark:#ef477b;
+  --piece-j-light:#a8c7ff; --piece-j-dark:#557be8;
+  --piece-l-light:#ffc28a; --piece-l-dark:#f07836;
+}
+:root[data-piece-theme="fruity"] .cell.locked {
+  border: 1px solid #572a57;
+  border-radius: 3px;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,.48), inset -3px -3px 0 rgba(71,23,70,.22);
+}
+:root[data-piece-theme="fruity"] .cell.locked::after {
+  opacity: .8;
+  background: linear-gradient(135deg,rgba(255,255,255,.25) 0 20%,transparent 20% 72%,rgba(70,20,65,.12) 72%);
+}
+:root[data-piece-theme="fruity"] .active-piece-svg .front-face,
+:root[data-piece-theme="fruity"] .turn-face .front-face {
+  stroke: #572a57;
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+}
+:root[data-piece-theme="fruity"] .active-piece-svg .seam,
+:root[data-piece-theme="fruity"] .turn-face .seam {
+  stroke: #fff9e9;
+  stroke-width: 1;
+  opacity: .88;
+}
