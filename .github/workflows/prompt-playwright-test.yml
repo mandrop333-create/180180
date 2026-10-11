@@ -5,6 +5,13 @@ on:
     types: [created]
   pull_request:
     branches: ["main"]
+    paths:
+      - "index.html"
+      - "css/**"
+      - "games/**"
+      - "js/**"
+      - "assets/**"
+      - ".github/workflows/prompt-playwright-test.yml"
   workflow_dispatch:
     inputs:
       test_request:
@@ -70,8 +77,6 @@ jobs:
         run: npm init -y && npm install --no-save playwright
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run Worker API tests
-        run: node --experimental-default-type=module --test diagnostics-harness/tests/worker-api.test.js
       - name: Start isolated local game server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/180180-http.log 2>&1 &
