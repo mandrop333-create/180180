@@ -67,7 +67,12 @@ for (const testCase of snapshot.cases) {
     const selectedIndex = candidates.findIndex(([dx, dy]) =>
       dx === piece.x - from.x && dy === piece.y - from.y);
     if (testCase.expected.kickIndex === null) {
-      assert.equal(selectedIndex, 0, 'direct rotation should select the unshifted candidate');
+      if (candidates.length === 0) {
+        assert.deepEqual({ x: piece.x - from.x, y: piece.y - from.y }, { x: 0, y: 0 },
+          'direct-only rotation with no configured kicks should remain unshifted');
+      } else {
+        assert.equal(selectedIndex, 0, 'direct rotation should select the unshifted candidate');
+      }
       direct += 1;
     } else {
       assert.equal(selectedIndex, testCase.expected.kickIndex + 1,
