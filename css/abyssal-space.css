@@ -1478,3 +1478,34 @@ body::after {
 @media (forced-colors: active) {
   body::before, body::after { display: none !important; }
 }
+
+
+/* Canonical ambient motion: one lightweight CSS layer, no canvas loop.
+   Keep it visible on touch screens; reduced-motion preferences still win. */
+.trainer-page::before,
+.trainer-page::after {
+  animation: none !important;
+  transform: none;
+}
+
+body::after {
+  animation: aqua-space-current-drift 38s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (max-width: 720px) {
+  body::after {
+    animation-duration: 46s;
+    opacity: .38;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after,
+  .trainer-page::before,
+  .trainer-page::after {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto;
+  }
+}
