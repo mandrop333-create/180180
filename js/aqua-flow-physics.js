@@ -123,19 +123,21 @@
     if (!reduced.matches) waveStep();
     drawCaustics(t);
     for (const p of particles) {
-      const [fu, fv] = reduced.matches ? [0, 0] : field(p.x, p.y, t);
-      // Buoyancy offsets gravity-like settling; depth increases inertia and visibility.
-      const buoyancy = -.008 + p.depth * .004;
-      const drag = .965 - p.depth * .012;
-      p.vx = (p.vx + fu * .012) * drag;
-      p.vy = (p.vy + fv * .012 + buoyancy) * drag;
-      p.phase += .012 + p.depth * .008;
-      p.vx += Math.sin(p.phase + p.y * .01) * .004;
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < -8) p.x = width + 8;
-      if (p.x > width + 8) p.x = -8;
-      if (p.y < -8) { p.y = height + 8; p.x = rand(0, width); }
-      if (p.y > height + 8) { p.y = -8; p.x = rand(0, width); }
+      if (!reduced.matches) {
+        const [fu, fv] = field(p.x, p.y, t);
+        // Buoyancy offsets gravity-like settling; depth increases inertia and visibility.
+        const buoyancy = -.008 + p.depth * .004;
+        const drag = .965 - p.depth * .012;
+        p.vx = (p.vx + fu * .012) * drag;
+        p.vy = (p.vy + fv * .012 + buoyancy) * drag;
+        p.phase += .012 + p.depth * .008;
+        p.vx += Math.sin(p.phase + p.y * .01) * .004;
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -8) p.x = width + 8;
+        if (p.x > width + 8) p.x = -8;
+        if (p.y < -8) { p.y = height + 8; p.x = rand(0, width); }
+        if (p.y > height + 8) { p.y = -8; p.x = rand(0, width); }
+      }
       const waveIndex = clamp(Math.round(p.y / height * (rows - 1)), 1, rows - 2) * cols + clamp(Math.round(p.x / width * (cols - 1)), 1, cols - 2);
       const shimmer = Math.abs(wave[waveIndex] || 0);
       ctx.fillStyle = 'rgba(163,245,226,' + (p.alpha + Math.min(.12, shimmer * .3)) + ')';
