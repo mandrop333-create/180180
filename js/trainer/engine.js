@@ -93,7 +93,8 @@ export class Trainer {
     const spin=this.isTSpin(lockedPiece);let clearRows=[];
     if(shouldClear){const remaining=this.board.filter(row=>{const full=row.every(Boolean);if(full){cleared++;clearRows.push(row);}return!full;});if(cleared){while(remaining.length<this.H)remaining.unshift(Array(this.W).fill(0));this.board=remaining;this.lines+=cleared;this.stats.linesCleared+=cleared;}}
     if(cleared===0)this.combo=-1;else{this.combo++;if(this.combo>0)this.stats.combos++;}
-    if(cleared>0)this.stats.piecesWithLineClear++;\n    if(cleared===4)this.stats.tetrises++;
+    if(cleared>0)this.stats.piecesWithLineClear++;
+    if(cleared===4)this.stats.tetrises++;
     if(spin)this.stats.tspins++;
     if(cleared===0&&spin===null)this.b2b=false;
     const difficult=(cleared===4)||!!spin;
