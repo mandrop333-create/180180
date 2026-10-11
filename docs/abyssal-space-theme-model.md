@@ -698,3 +698,112 @@ Before approval, ask a first-time player to find the active piece, Hold, the nex
 - Does the visual identity still feel good after five minutes, rather than only in the first five seconds?
 
 If the answer to “is it cooler?” is yes but the player reads the board more slowly, the design has failed. The success condition is emotional character **and** improved or preserved gameplay clarity.
+
+
+---
+
+## 22. Deep human-centered interaction model: micro-tactility, liquid motion, and game-time integrity
+
+The next level is not a stronger glow. It is the accumulation of small, coherent moments that make the interface feel authored and alive. A player may not consciously notice a two-pixel drift, a pressed-state highlight, or the difference between a flat icon and a small luminous instrument—but together those details change how the whole experience feels.
+
+The core design principle is **ambient world motion must never become gameplay motion**. Environmental effects can drift slowly in the background. Anything that communicates piece position, queue order, timing, input, or success must remain governed by the real game state and at game pace.
+
+### 22.1 The two clocks
+
+There are two distinct clocks in the experience:
+
+1. **World clock:** slow, low-amplitude, optional. It creates the sense of liquid suspension. It may affect the background, tiny highlights, or static preview presentation by a pixel or two over several seconds.
+2. **Game clock:** immediate and authoritative. Active-piece movement, gravity, lock timing, input response, queue order, Hold, scoring, finesse and rhythm remain controlled by the existing engine and its actual render updates.
+
+Never tie gameplay speed to an ambient animation. Never slow a queue update so it can finish an animation. Never animate the active piece with CSS transforms that could visually disagree with its actual grid coordinates. If a piece moves from Next to active play, it should appear in the correct place immediately; decorative motion must not delay or interpolate that state change.
+
+### 22.2 Queue pieces should float like objects in liquid
+
+The Next queue is a special opportunity because its pieces are important, but they are not moving game objects until promoted to the active piece.
+
+Target behavior:
+- Give each static preview a restrained, asynchronous vertical drift of approximately 1–2 CSS pixels over a 6–9 second cycle.
+- Use different negative animation delays so the previews do not bob in synchrony like a loading indicator.
+- Give only the first upcoming piece a barely perceptible light refraction/highlight; later pieces remain quieter.
+- Keep the order, colors, silhouette and spacing stable. No rotation, scale wobble, perspective tilt, parallax chase, or movement large enough to imply a changed queue order.
+- On promotion into active play, the queue's ordinary DOM/state update takes precedence immediately. The incoming active piece is not required to inherit or complete the preview animation.
+- On small screens, reduce or remove the effect if it adds noise or affects performance.
+- With reduced motion enabled, remove drift and shimmer entirely.
+
+**A first version of this idea is now in the draft CSS:** the preview items use a tiny, staggered vertical drift, with a faint highlight on the first item and a reduced-motion override. This is intentionally a preview-only treatment, not a change to active-piece physics or timing. Browser validation is still required to confirm the actual preview DOM and ensure animation does not conflict with existing transforms.
+
+### 22.3 Micro-controls: the small details people actually touch
+
+Every control has a human interaction lifecycle: discover → approach → focus/touch → act → receive confirmation. A premium theme should honor that lifecycle.
+
+**Settings beacon**
+- Make the settings control read as a small piece of luminous hardware, not a generic gear floating over the page.
+- Give it a distinct inset rim, low-energy internal glow, and a clear focus ring.
+- Its open/closed state should be visibly different if the existing UI exposes that state. Do not invent state or add a second source of truth.
+
+**Action buttons**
+- A fine top-edge glint and subtle material gradient can make a button feel like a solid control surface.
+- Hover should be a slight edge-brightening, not a dramatic lift. Press should be immediate and local—roughly one pixel of movement or a restrained inset response.
+- The visual pressed response must not change the element's layout box or delay click/touch handling.
+- Disabled controls must remain recognizably disabled and must not receive the same bright active treatment.
+
+**Mobile controls**
+- Treat the touch controls as small pressure-sealed instruments: translucent deep-teal surfaces, precise cool edge, readable glyph, and a clear pressed state.
+- Do not make them smaller to look delicate. Preserve touch target geometry and user-customized positions.
+- The editing mode needs a legible boundary that remains clear against different backgrounds.
+- Avoid blur when constrained mobile performance makes it expensive.
+
+**Settings modal**
+- The modal should feel like opening a small control console into the same world. Keep the backdrop dark and quiet, the panel's edge precise, and range/checkbox accents coherent.
+- Keep labels and numeric values readable; atmosphere must not reduce control discoverability.
+
+**One material rule:** controls should share edge, light and press language, but not all share the same silhouette. The settings beacon, rectangular action buttons and round touch controls need distinct shapes appropriate to their use.
+
+### 22.4 The board and the previews need different physics
+
+The board is a live coordinate system, not a decorative object. No ambient transform, blur, opacity pulse or background animation should alter its cell geometry, ghost position, or the perceived grid.
+
+- Board frame: stable, sharp, with a soft perimeter halo behind the frame.
+- Active piece and ghost: stable game-state rendering; preserve the renderer's piece identity and opacity semantics.
+- Next previews: may have very small independent ambient drift while static.
+- Hold preview: remains still by default because its primary purpose is quick recognition; optionally add a one-shot confirmed event cue later, only if the engine reports a successful Hold.
+- Statistics: values update immediately, with tabular numerals; avoid flashing every counter change.
+- Finesse prompt: explicit correctness states and key sequence remain more important than effects.
+
+### 22.5 Motion budget and accessibility
+
+Motion is a scarce resource. The interface should not make every surface move.
+
+| Element | Motion allowance | Reason |
+|---|---|---|
+| Ambient background | Static by default; optional extremely slow low-contrast field shift only after performance testing | Atmosphere, not attention |
+| Next previews | 1–2px over 6–9 seconds, staggered | Subtle liquid suspension |
+| Active piece / ghost / board | No theme-controlled motion | Game engine owns movement |
+| Buttons | Immediate pressed response, no layout shift | Tactility and feedback |
+| Desktop card hover | At most 1px; none on touch | Quiet affordance |
+| Settings open/close | Short opacity/transform transition only if current interaction and reduced-motion settings permit | Orientation |
+| Confirmed gameplay event | Brief local response only after source event is verified | Truthful feedback |
+
+For reduced-motion preferences, disable preview drift, shimmer, panel lift, and nonessential transitions. Never modify the game engine's timing in response to a CSS preference. Avoid relying on the will-change hint for dozens of queue items; if browser profiling shows layer proliferation, remove it. Motion must never be the only indicator of state.
+
+### 22.6 How to tell whether it feels human
+
+Use an observation-based review rather than asking only whether the design looks cool:
+
+- Can a player locate settings without hunting?
+- Do the small controls feel intentionally crafted or merely overdecorated?
+- Does the queue feel gently suspended while its order remains instantly readable?
+- Can the player track the active piece at full speed without noticing background motion?
+- Does the visual feedback feel immediate on touch, including on a lower-powered phone?
+- Does the interface feel calm and precise after several minutes of play?
+- Does turning on reduced motion preserve the whole experience, rather than making it feel broken?
+
+A successful design makes the user feel the care without forcing them to watch the effects.
+
+### 22.7 Third-pass implementation status and caveats
+
+The latest draft stylesheet adds a restrained, staggered 1–2px ambient drift to static Next-preview items, a faint first-preview shimmer, liquid-material settings/action/mobile controls, and reduced-motion overrides. It does not change queue data, active-piece rendering, input handling, or game timing. These are CSS-level effects and remain subject to browser verification: confirm that the preview elements are direct children matching the selectors, that no existing transform is overwritten, and that the motion is quiet at phone sizes.
+
+The settings beacon and mobile controls now have more distinctive surface treatment; touch-target dimensions and custom control positions are intentionally left to the existing implementation.
+
+This is still a draft implementation, not a claim of production readiness. The next verification should specifically test rapid queue updates, Hold, game reset, reduced motion, mobile controls, and whether the animation creates excess compositing layers on a mid-range phone.
