@@ -7,17 +7,17 @@
   const status=document.getElementById('themePickerStatus');
   const themes={
     'aqua-space':{label:'AQUA SPACE',name:'Aqua Space'},
-    'ember-orbit':{label:'EMBER ORBIT',name:'Ember Orbit'}
+    'generic':{label:'GENERIC',name:'Generic'}
   };
   let active='aqua-space';
-  try{const saved=localStorage.getItem('180180.pieceTheme');if(themes[saved])active=saved;}catch{}
+  try{const saved=localStorage.getItem('180180.pieceTheme');const migrated=saved==='ember-orbit'?'generic':saved;if(themes[migrated])active=migrated;}catch{}
   function apply(id,announce){
     if(!themes[id])return;
     active=id;
     try{localStorage.setItem('180180.pieceTheme',id);}catch{}
     document.documentElement.dataset.pieceTheme=id;
     launcher.querySelector('.theme-planet').classList.toggle('theme-planet-aqua',id==='aqua-space');
-    launcher.querySelector('.theme-planet').classList.toggle('theme-planet-ember',id==='ember-orbit');
+    launcher.querySelector('.theme-planet').classList.toggle('theme-planet-generic',id==='generic');
     label.textContent=themes[id].label;
     options.forEach(option=>{
       const selected=option.dataset.pieceTheme===id;
@@ -25,8 +25,8 @@
       option.setAttribute('aria-pressed',String(selected));
     });
     if(status)status.textContent=announce
-      ? themes[id].name+' selected and saved. Piece-art presets will be connected in the next build step.'
-      : themes[id].name+' selected. Piece-art presets are ready for the next build step.';
+      ? themes[id].name+' selected and saved.'
+      : themes[id].name+' selected.';
     window.dispatchEvent(new CustomEvent('180436:piecethemechange',{detail:{theme:id}}));
   }
   function open(){

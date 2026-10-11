@@ -40,3 +40,27 @@ body.theme-picker-open{overflow:hidden}
 @media(max-width:560px){.theme-launcher-wrap{top:53px;left:10px}.theme-launcher{gap:8px;min-height:48px;padding:6px 9px 6px 7px;border-radius:11px}.theme-launcher .theme-planet{width:29px;height:29px}.theme-launcher-copy{gap:4px}.theme-launcher-copy strong{font-size:9px}.theme-launcher-copy small{font-size:7px}.theme-picker{padding:12px}.theme-picker-panel{padding:18px;border-radius:17px}.theme-option{grid-template-columns:48px minmax(0,1fr) 23px;gap:10px;padding:11px}.theme-option-planet{width:41px;height:41px}}
 @media(prefers-reduced-motion:reduce){.theme-launcher,.theme-option{transition:none}.theme-launcher:hover,.theme-option:hover{transform:none}}
 @media(forced-colors:active){.theme-launcher,.theme-option,.theme-picker-panel{border:1px solid ButtonText}.theme-planet{forced-color-adjust:none}}
+
+
+/* Generic is the finished, standard piece-art preset—not a fictional planet. */
+.theme-planet-generic {
+  border-radius: 9px;
+  background:
+    linear-gradient(90deg, transparent 0 34%, #f4d35e 34% 66%, transparent 66%) 0 0 / 100% 33.333%,
+    linear-gradient(90deg, #54d6e8 0 33.333%, #9b8cff 33.333% 66.666%, #ff8a72 66.666% 100%) 0 50% / 100% 33.333%,
+    linear-gradient(90deg, transparent 0 16.666%, #65d68b 16.666% 50%, #6aa8ff 50% 83.333%, transparent 83.333%) 0 100% / 100% 33.333%,
+    #071421;
+  box-shadow: inset 0 0 0 1px rgba(224,248,255,.35), 0 0 14px rgba(126,188,255,.12);
+}
+.theme-planet-generic::before {
+  inset: 3px;
+  border: 1px solid rgba(230,247,255,.5);
+  border-radius: 6px;
+  transform: none;
+  box-shadow: none;
+}
+.theme-planet-generic::after {
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px rgba(1,8,17,.35), inset 0 -5px 8px rgba(1,8,17,.25);
+}
+.theme-planet-generic i { display: none; }
