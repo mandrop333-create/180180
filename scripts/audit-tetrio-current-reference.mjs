@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Audits the freshly fetched TETR.IO client against accepted Finesse geometry
 // and kick tables. This is a review gate; it never promotes candidate fixtures.
-import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { TETRIO_MATRIX_REFERENCE as ACCEPTED_MATRIX } from '../games/01/tetrio-matrix-reference-fixtures.js';
 import { getSrsKicks, getTetrio180Kicks } from '../games/01/kicks.js';
 
@@ -13,7 +14,7 @@ if (!bundlePath || !candidatePath) {
 }
 
 const bundle = await readFile(bundlePath, 'utf8');
-const candidateModule = await import(new URL('file://' + candidatePath).href);
+const candidateModule = await import(pathToFileURL(resolve(candidatePath)).href);
 const candidateMatrix = candidateModule.TETRIO_MATRIX_REFERENCE;
 const source = candidateModule.TETRIO_MATRIX_SOURCE;
 
@@ -86,11 +87,11 @@ function extractObjectLiteralAfterKey(input, key) {
     const char = input[index];
     if (quote !== undefined) {
       if (escaped) escaped = false;
-      else if (char === '\\\\') escaped = true;
+      else if (char === '\\') escaped = true;
       else if (char === quote) quote = undefined;
       continue;
     }
-    if (char === '"' || char === "'" || char === '`') { quote = char; continue; }
+    if (char === '"' || char === "'" || char === '\`') { quote = char; continue; }
     if (char === '{') depth += 1;
     else if (char === '}') {
       depth -= 1;
