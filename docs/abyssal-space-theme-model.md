@@ -807,3 +807,77 @@ The latest draft stylesheet adds a restrained, staggered 1–2px ambient drift t
 The settings beacon and mobile controls now have more distinctive surface treatment; touch-target dimensions and custom control positions are intentionally left to the existing implementation.
 
 This is still a draft implementation, not a claim of production readiness. The next verification should specifically test rapid queue updates, Hold, game reset, reduced motion, mobile controls, and whether the animation creates excess compositing layers on a mid-range phone.
+
+
+
+## 23. Logical upgrade: model the interface as an ecosystem, not a pile of effects
+
+The next iteration should not be defined as “add more animation.” It should be defined as a coherent system where every visual behavior has a cause, a spatial role, a priority, and a stopping rule. The aquatic metaphor becomes convincing when objects seem to share one environment while retaining different physical responsibilities.
+
+### 23.1 Four behavior layers
+
+1. **Gameplay truth layer** — board cells, active piece, ghost, input response, score, timers, queue order, finesse states. This layer is authoritative and never receives theme-driven movement or delayed feedback.
+2. **Instrument layer** — Hold, Next, statistics, training prompts, settings. These elements can have tiny material responses, but content updates immediately and text remains stable.
+3. **Water layer** — peripheral glass panels, the board's exterior halo, soft light falloff, restrained drifting. This layer supplies atmosphere and must stay visually subordinate.
+4. **Access layer** — focus indicators, reduced-motion behavior, contrast modes, touch-target geometry, and narrow-screen layout. This layer overrides atmosphere whenever there is a conflict.
+
+The hierarchy is deliberate: gameplay truth wins over instrument styling; access wins over atmosphere. A beautiful effect is incorrect if it makes the next piece harder to recognize, a focus ring harder to see, or a touch target move under a finger.
+
+### 23.2 One world, several movement signatures
+
+A convincing underwater scene is not a synchronized screensaver. Give each class a distinct signature and a clear budget:
+
+| Class | Signature | Boundary |
+|---|---|---|
+| Next pieces | Independent 1–2px vertical drift, slow and staggered | Never change order, spacing, or reading rhythm |
+| Hold preview | Similar buoyancy, but visually quieter than the first Next item | Never imply a Hold occurred when none did |
+| Side instruments | Extremely small slow suspension on desktop only | No layout movement; stop/disable on hover, touch layouts, and reduced motion |
+| Board frame | Low-contrast peripheral “pressure” or light halo | Keep the grid and every cell stable and sharp |
+| Controls | Fast local press response and fine edge light | No scale jump that changes hit geometry; no delayed response |
+| Background light | Broad, slow, low-contrast variation | No flashing, no high-frequency noise, no competing focal point |
+| Gameplay events | Brief local cue only when a real state transition is known | No invented success/error feedback from CSS alone |
+
+Prefer animating decorative pseudo-elements and isolated preview wrappers over animating large blurred panels. Avoid permanent compositing hints on every queue item unless profiling demonstrates a measurable benefit; these hints can cost memory on phones. Where possible, use opacity and transforms, but do not let transform animations overwrite existing scale/position transforms. Separate nested layers when both transformations are needed.
+
+### 23.3 State transitions should be truthful
+
+The model distinguishes **ambient behavior** from **event feedback**:
+
+- Ambient behavior is continuous, low salience, and does not assert that anything happened.
+- Event feedback is short, local, and tied to a verified state change.
+- Data updates are immediate and never wait for an animation to finish.
+- A newly rendered queue may naturally restart its decorative motion, but it must not animate across the screen or appear to swap positions.
+- Reset clears gameplay state immediately; atmospheric animation may continue because it represents the environment, not the previous run.
+- Reduced motion removes ambient and decorative transitions without removing labels, state changes, or access to controls.
+
+This distinction prevents the theme from fabricating gameplay meaning. CSS alone cannot reliably determine whether a lock, Hold, reset, or training milestone succeeded; those effects should wait until the existing game code exposes a real event or state signal.
+
+### 23.4 Responsive depth is not uniform scaling
+
+On desktop, side panels can read as instruments floating around the board, with the board remaining the visual anchor. On narrow screens, vertical movement on entire cards can create scroll jitter, distract from touch controls, or make the page feel unstable. Mobile should retain the aquatic material language—color falloff, edge highlights, small preview drift—while removing movement from large containers. Preserve existing control coordinates, minimum touch targets, safe-area spacing, and scroll behavior.
+
+The background must never force page width or height beyond the existing layout. Decorative layers should be clipped to their own region, ignore pointer events, and avoid intercepting gestures. If an effect needs to be disabled to protect touch accuracy, disable the effect rather than the interaction.
+
+### 23.5 Verification gates, in priority order
+
+**Gate A — correctness:** run existing self-tests; verify board geometry, queue order, Hold behavior, reset, keyboard and touch controls, and training rules remain unchanged.
+
+**Gate B — legibility and access:** test reduced motion, keyboard focus, forced-colors mode, contrast, zoom, and the smallest supported viewport. Every essential state must remain understandable with animation removed.
+
+**Gate C — perception:** observe a real play session for several minutes. Ask whether the queue remains instantly scannable, the board remains the first fixation point, and motion fades into awareness rather than demanding attention.
+
+**Gate D — performance:** inspect a mid-range phone during rapid queue updates and extended play. Check dropped frames, layer count, memory pressure, scrolling, and touch latency. Remove expensive blur or permanent compositing hints before compromising game responsiveness.
+
+**Gate E — release:** capture desktop and mobile before/after states, document browser/device conditions, and only then consider merging. A code diff is not a visual QA result, and an empty CI status is not a passing test.
+
+### 23.6 Design decision rule
+
+For every proposed effect, answer five questions before implementation:
+
+1. What real object or environmental phenomenon does it represent?
+2. Which behavior layer owns it?
+3. What higher-priority information could it obscure or destabilize?
+4. What is its reduced-motion and mobile behavior?
+5. How will we verify that it improves recognition or atmosphere rather than merely adding activity?
+
+If these questions have no clear answers, leave the effect out. The target is not maximal motion; it is a world whose smallest details feel like they belong together.
