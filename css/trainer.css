@@ -35,9 +35,10 @@
 /* Theme-aware piece materials; gameplay geometry is untouched. */
 .cell.locked{position:relative;isolation:isolate;overflow:hidden}.cell.locked::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0}
 .cell.locked-i{background:linear-gradient(135deg,var(--piece-i-light,#a9e5ff),var(--piece-i-dark,#3e9bd8))}.cell.locked-o{background:linear-gradient(135deg,var(--piece-o-light,#fff0a8),var(--piece-o-dark,#dcae32))}.cell.locked-t{background:linear-gradient(135deg,var(--piece-t-light,#e8c8ff),var(--piece-t-dark,#9459ce))}.cell.locked-s{background:linear-gradient(135deg,var(--piece-s-light,#b1f3c5),var(--piece-s-dark,#43aa68))}.cell.locked-z{background:linear-gradient(135deg,var(--piece-z-light,#ffb3bd),var(--piece-z-dark,#cf4e61))}.cell.locked-j{background:linear-gradient(135deg,var(--piece-j-light,#a8c9ff),var(--piece-j-dark,#3a72c8))}.cell.locked-l{background:linear-gradient(135deg,var(--piece-l-light,#ffd09a),var(--piece-l-dark,#dc7722))}
-:root[data-piece-theme="glass"]{--piece-i-light:#d9ffff;--piece-i-dark:#58bfd9;--piece-o-light:#fff5c9;--piece-o-dark:#cda95c;--piece-t-light:#f0e6ff;--piece-t-dark:#a18ad8;--piece-s-light:#d9ffe8;--piece-s-dark:#5ebc9b;--piece-z-light:#ffdce9;--piece-z-dark:#c96891;--piece-j-light:#dbe8ff;--piece-j-dark:#688ed2;--piece-l-light:#ffe8d5;--piece-l-dark:#c98254}
-:root[data-piece-theme="nature"]{--piece-i-light:#b9f1dd;--piece-i-dark:#247d75;--piece-o-light:#f4e6a0;--piece-o-dark:#a58c35;--piece-t-light:#d8c8a3;--piece-t-dark:#856344;--piece-s-light:#c9f28b;--piece-s-dark:#4d883c;--piece-z-light:#ffb7a0;--piece-z-dark:#a84d43;--piece-j-light:#9fd7ae;--piece-j-dark:#356b4a;--piece-l-light:#f2c078;--piece-l-dark:#a65c2e}
-:root[data-piece-theme="space"]{--piece-i-light:#b8f5ff;--piece-i-dark:#147cae;--piece-o-light:#fff0a0;--piece-o-dark:#bb842e;--piece-t-light:#e2b7ff;--piece-t-dark:#673ac2;--piece-s-light:#a4ffd7;--piece-s-dark:#168a82;--piece-z-light:#ff9dd8;--piece-z-dark:#a52e77;--piece-j-light:#a7bdff;--piece-j-dark:#354eaf;--piece-l-light:#ffc19a;--piece-l-dark:#b64b48}
+/* Skin palettes: high-contrast face colors; shadows intentionally use fixed neutral colors below. */
+:root[data-piece-theme="glass"]{--piece-i-light:#f0ffff;--piece-i-dark:#2ca9d1;--piece-o-light:#fff9dc;--piece-o-dark:#d6a83c;--piece-t-light:#f7edff;--piece-t-dark:#9868d9;--piece-s-light:#e3fff4;--piece-s-dark:#3aa987;--piece-z-light:#ffe9f2;--piece-z-dark:#d85e91;--piece-j-light:#e7f0ff;--piece-j-dark:#537ed0;--piece-l-light:#fff0e4;--piece-l-dark:#ce7b4c}
+:root[data-piece-theme="nature"]{--piece-i-light:#c6f7e5;--piece-i-dark:#147d70;--piece-o-light:#fff0a6;--piece-o-dark:#a87819;--piece-t-light:#f0d9b5;--piece-t-dark:#89532f;--piece-s-light:#d9ff9b;--piece-s-dark:#3c7f2b;--piece-z-light:#ffc1ad;--piece-z-dark:#b94336;--piece-j-light:#b7edc0;--piece-j-dark:#286343;--piece-l-light:#ffd18a;--piece-l-dark:#a95020}
+:root[data-piece-theme="space"]{--piece-i-light:#a9f5ff;--piece-i-dark:#0879bd;--piece-o-light:#fff29a;--piece-o-dark:#c57a10;--piece-t-light:#f0b6ff;--piece-t-dark:#7a36ce;--piece-s-light:#a5ffcf;--piece-s-dark:#087f80;--piece-z-light:#ffadd9;--piece-z-dark:#b11e78;--piece-j-light:#a8c0ff;--piece-j-dark:#3047b8;--piece-l-light:#ffc08a;--piece-l-dark:#c74735}
 :root[data-piece-theme="generic"]{--piece-i-light:#a9e5ff;--piece-i-dark:#3e9bd8;--piece-o-light:#fff0a8;--piece-o-dark:#dcae32;--piece-t-light:#e8c8ff;--piece-t-dark:#9459ce;--piece-s-light:#b1f3c5;--piece-s-dark:#43aa68;--piece-z-light:#ffb3bd;--piece-z-dark:#cf4e61;--piece-j-light:#a8c9ff;--piece-j-dark:#3a72c8;--piece-l-light:#ffd09a;--piece-l-dark:#dc7722}
 :root[data-piece-theme="glass"] .cell.locked{border:1px solid #e6ffffaa;box-shadow:inset 1px 1px 0 #ffffffc9,inset -2px -2px 0 #174e6b44,0 0 7px #8aeaff30}
 :root[data-piece-theme="glass"] .cell.locked::after{opacity:1;background:linear-gradient(125deg,#ffffff77 0%,#ffffff12 27%,transparent 44%,#baf7ff20 68%,#ffffff08 100%);border-top:1px solid #ffffffb5;border-left:1px solid #ffffff70}
@@ -46,10 +47,16 @@
 :root[data-piece-theme="space"] .cell.locked{border:1px solid #d9f6ff66;box-shadow:inset 1px 1px 0 #ffffff80,inset 0 -3px 0 #05071f66,0 0 5px #4f91ff24}
 :root[data-piece-theme="space"] .cell.locked::after{opacity:.85;background:radial-gradient(circle at 24% 28%,#ffffffd9 0 1px,transparent 1.6px),radial-gradient(circle at 72% 66%,#c4eaffcc 0 1px,transparent 1.6px),linear-gradient(135deg,#ffffff20,transparent 50%)}
 :root[data-piece-theme="generic"] .cell.locked{border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -2px 0 rgba(0,0,0,.22)}:root[data-piece-theme="generic"] .cell.locked::after{display:none}
-:root[data-piece-theme="glass"] .active-piece-svg .front-face,:root[data-piece-theme="glass"] .turn-face .front-face{stroke:#f0ffff;stroke-width:1.5}
-:root[data-piece-theme="nature"] .active-piece-svg .front-face,:root[data-piece-theme="nature"] .turn-face .front-face{stroke:#e4ffd1;stroke-width:1.15}
-:root[data-piece-theme="space"] .active-piece-svg .front-face,:root[data-piece-theme="space"] .turn-face .front-face{stroke:#d8f7ff;stroke-width:1.2}
-:root[data-piece-theme="glass"] .active-piece-svg .seam,:root[data-piece-theme="glass"] .turn-face .seam{stroke:#f0ffff;opacity:.85}:root[data-piece-theme="nature"] .active-piece-svg .seam,:root[data-piece-theme="nature"] .turn-face .seam{stroke:#e4ffd1;opacity:.72}:root[data-piece-theme="space"] .active-piece-svg .seam,:root[data-piece-theme="space"] .turn-face .seam{stroke:#d8f7ff;opacity:.78}
+/* Distinct material signatures apply only to live/locked pieces, never ghost shadows. */
+:root[data-piece-theme="glass"] .active-piece-svg .front-face,:root[data-piece-theme="glass"] .turn-face .front-face{stroke:#f4ffff;stroke-width:1.65;filter:drop-shadow(0 0 1.2px rgba(180,250,255,.5))}
+:root[data-piece-theme="nature"] .active-piece-svg .front-face,:root[data-piece-theme="nature"] .turn-face .front-face{stroke:#eaffc9;stroke-width:1.2}
+:root[data-piece-theme="space"] .active-piece-svg .front-face,:root[data-piece-theme="space"] .turn-face .front-face{stroke:#e0faff;stroke-width:1.3;filter:drop-shadow(0 0 1px rgba(110,170,255,.35))}
+:root[data-piece-theme="glass"] .active-piece-svg .seam,:root[data-piece-theme="glass"] .turn-face .seam{stroke:#f4ffff;opacity:.95}
+:root[data-piece-theme="nature"] .active-piece-svg .seam,:root[data-piece-theme="nature"] .turn-face .seam{stroke:#eaffc9;opacity:.82}
+:root[data-piece-theme="space"] .active-piece-svg .seam,:root[data-piece-theme="space"] .turn-face .seam{stroke:#e0faff;opacity:.9}
+:root[data-piece-theme="glass"] .cell.locked{box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -2px 0 rgba(12,54,78,.25),inset 2px 0 0 rgba(255,255,255,.24)}
+:root[data-piece-theme="nature"] .cell.locked{box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -2px 0 rgba(29,62,24,.34)}
+:root[data-piece-theme="space"] .cell.locked{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 0 rgba(8,15,58,.4),0 0 5px rgba(79,122,255,.12)}
 
 /* Preview swatches and colored ghost share the active theme palette. */
 .mini-i{color:var(--piece-i-light,#8bd5ff);background:var(--piece-i-light,#8bd5ff)}
@@ -59,10 +66,11 @@
 .mini-z{color:var(--piece-z-light,#ff8d9c);background:var(--piece-z-light,#ff8d9c)}
 .mini-j{color:var(--piece-j-light,#73a9ff);background:var(--piece-j-light,#73a9ff)}
 .mini-l{color:var(--piece-l-light,#ffb05f);background:var(--piece-l-light,#ffb05f)}
-.colored-ghost-piece .cell.ghost-i{--ghost-color:var(--piece-i-dark,#2f86b8)}
-.colored-ghost-piece .cell.ghost-o{--ghost-color:var(--piece-o-dark,#b8891f)}
-.colored-ghost-piece .cell.ghost-t{--ghost-color:var(--piece-t-dark,#7d4ca9)}
-.colored-ghost-piece .cell.ghost-s{--ghost-color:var(--piece-s-dark,#2f8a50)}
-.colored-ghost-piece .cell.ghost-z{--ghost-color:var(--piece-z-dark,#ad3f52)}
-.colored-ghost-piece .cell.ghost-j{--ghost-color:var(--piece-j-dark,#2e61ad)}
-.colored-ghost-piece .cell.ghost-l{--ghost-color:var(--piece-l-dark,#b9651d)}
+/* Shadow/ghost pieces are deliberately theme-independent. */
+.colored-ghost-piece .cell.ghost-i{--ghost-color:#2f86b8}
+.colored-ghost-piece .cell.ghost-o{--ghost-color:#b8891f}
+.colored-ghost-piece .cell.ghost-t{--ghost-color:#7d4ca9}
+.colored-ghost-piece .cell.ghost-s{--ghost-color:#2f8a50}
+.colored-ghost-piece .cell.ghost-z{--ghost-color:#ad3f52}
+.colored-ghost-piece .cell.ghost-j{--ghost-color:#2e61ad}
+.colored-ghost-piece .cell.ghost-l{--ghost-color:#b9651d}
