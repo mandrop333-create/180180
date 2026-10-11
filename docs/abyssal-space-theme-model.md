@@ -881,3 +881,56 @@ For every proposed effect, answer five questions before implementation:
 5. How will we verify that it improves recognition or atmosphere rather than merely adding activity?
 
 If these questions have no clear answers, leave the effect out. The target is not maximal motion; it is a world whose smallest details feel like they belong together.
+
+
+## 24. Reference-informed upgrade criteria: habitat, not theme
+
+This section translates current platform guidance into concrete acceptance criteria for the next visual iterations. The cited sources are implementation references, not aesthetic templates; the design must remain specific to 180436.
+
+### 24.1 Performance as a design constraint
+
+MDN's CSS performance guidance recommends limiting unnecessary animation and preferring properties such as transforms and opacity when motion is needed. Its animation performance guide explains why layout and paint costs can destabilize frame delivery. The web.dev animation guide likewise emphasizes selecting properties that can be handled efficiently by the browser. These principles lead to the following rules:
+
+- The water column is ambient and low-frequency; it must never animate the board, cells, text, or layout geometry.
+- Use a small number of layered gradients instead of hundreds of animated particle elements.
+- Do not add `will-change` indiscriminately; compositing hints have costs.
+- Avoid continuous animated blur, shadow, or large-area repaint when a static optical treatment achieves the same depth.
+- Validate on a real mid-range phone; desktop smoothness does not establish mobile performance.
+
+References:
+- MDN, CSS performance optimization: https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/CSS
+- MDN, animation performance and frame rate: https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Animation_performance_and_frame_rate
+- web.dev, high-performance CSS animations: https://web.dev/articles/animations-guide
+
+### 24.2 Motion and access are first-class behavior
+
+The `prefers-reduced-motion` media feature communicates a system-level preference to reduce non-essential motion. It is not enough to make motion slower: essential information must remain legible with animation removed. The experience must also offer clear focus feedback and maintain readable contrast across the game and training controls.
+
+- Reduced-motion mode removes ambient movement and interaction sheens without hiding state.
+- Keyboard focus remains visible independent of hover.
+- Forced-colors mode removes decorative atmospheric layers and preserves instrument boundaries.
+- Mobile mode reduces compositing and background complexity before reducing game clarity.
+
+References:
+- MDN, `prefers-reduced-motion`: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/%40media/prefers-reduced-motion
+- web.dev, animation and motion accessibility: https://web.dev/learn/accessibility/motion
+
+### 24.3 The spatial composition has distinct jobs
+
+The page is not one background plus a set of matching cards. It has four perceptual distances:
+
+1. **Far water:** broad, quiet light gradients and sparse marine snow. It establishes scale, not detail.
+2. **Habitat volume:** barely visible vertical water columns and distant spectral blooms. These should be noticed subconsciously, not read as interface content.
+3. **Instrument plane:** Hold, Next, metrics, and rules have related but distinguishable surface materials. They should feel built for different jobs.
+4. **Precision plane:** the playfield, active piece, ghost, and controls remain the fastest elements to parse. Atmospheric effects may frame them but never distort their geometry.
+
+### 24.4 Acceptance questions for each release
+
+- Does a first-time viewer perceive depth and an environment, rather than a blue color scheme?
+- Are Hold, Next, statistics, and training rules distinguishable by purpose, not just position?
+- Does the game remain readable during rapid queue changes and sustained play?
+- Does the composition retain its identity on a narrow screen without excessive blur or visual noise?
+- Can every gameplay-critical task be completed with reduced motion, keyboard focus, and forced colors?
+- Has the result been observed in an actual browser and on a real phone, with the conditions recorded?
+
+A source-level check is not a visual test. A successful pull request is not proof of a good frame rate. A polished screenshot is not proof that the interface remains comfortable after ten minutes of play.
