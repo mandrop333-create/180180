@@ -34,6 +34,18 @@ jobs:
         run: node scripts/test-extract-tetrio-matrix-fixtures.mjs
       - name: Audit current TETR.IO matrix and SRS+ kick tables against accepted Finesse data
         run: node --experimental-default-type=module scripts/audit-tetrio-current-reference.mjs tetrio-current-client-bundle.js games/01/tetrio-matrix-reference-candidate.js
+      - name: Generate review-only current-client movement outcomes
+        run: node --experimental-default-type=module scripts/generate-tetrio-movement-candidate.mjs tetrio-current-client-bundle.js games/01/tetrio-matrix-reference-candidate.js tetrio-current-movement-candidate.json
+      - name: Compare trainer rotations against generated current-client outcomes
+        run: node --experimental-default-type=module games/01/tetrio-current-movement-candidate-test.js tetrio-current-movement-candidate.json
+      - name: Upload generated current-client movement candidate for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetrio-current-movement-candidate-${{ github.run_id }}
+          path: tetrio-current-movement-candidate.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Test TETR.IO coordinate adapter round trips
         run: node --experimental-default-type=module games/01/tetrio-coordinate-adapter-test.js
       - name: Inventory legacy finesse.js references across tracked source
