@@ -2,7 +2,7 @@
 
 **Status:** Research and evaluation specification  
 **Scope:** Context model only. This document does not change game mechanics, CSS, layout, or deployment.  
-**Version:** 1.0
+**Version:** 1.2
 
 ## Core principle
 
@@ -196,3 +196,80 @@ Before moving from model work to a code change, write down:
 5. Evidence from before/after checks.
 
 No broad redesign, theme pass, or deployment is justified by the model alone.
+
+
+## Version 1.2 — Theme as part of the game, not a layer around it
+
+### Principle: the game owns the visual language
+
+The visual theme must emerge from the board's geometry, piece states, motion, and training purpose. It must not read as a decorative website skin placed around an otherwise unrelated game.
+
+**The board is the source of truth for the interface's visual language.** Panels, previews, prompts, and controls should feel like extensions of the same game system, while retaining their own clear functions.
+
+This changes how future visual decisions are judged:
+
+- Do not begin with generic cards, glow, gradients, borders, or a palette and then wrap the game in them.
+- Begin with game meaning: active piece, ghost/landing position, locked cells, held piece, ordered queue, input state, and training feedback.
+- Let the theme express those meanings consistently through shape, contrast, spacing, color, and restrained motion.
+- Use decoration only when it reinforces hierarchy or makes state easier to read. If an effect could be removed without losing clarity, feedback, or identity, it is secondary.
+- A subtle dark atmosphere is the canvas, not the feature. The game should still feel distinctive when effects are reduced or disabled.
+
+### Translate game states into a shared visual grammar
+
+| Game meaning | Visual responsibility | Flow rule |
+| --- | --- | --- |
+| Active piece | Highest immediate clarity; distinct from locked cells and background | Never let ornament compete with piece position or orientation |
+| Ghost / landing projection | Predictive, secondary but easy to track | Clearly related to the active piece without appearing equally solid |
+| Locked stack and board grid | Stable spatial reference | Keep boundaries and cell occupancy legible under every supported visual setting |
+| Hold | A single stored option | Communicate empty/occupied state clearly; do not imply it is part of the ordered queue |
+| Next queue | Ordered future information | Make order and near-term priority obvious; keep preview geometry consistent with piece geometry |
+| Input and rotation response | Immediate confirmation of a successful state change | Motion must follow the engine's committed result and must not delay subsequent input |
+| Finesse cue | Temporary instruction relevant to the next action | Keep it readable without obscuring the board information needed to execute it |
+| Rhythm insight / HUD | Secondary analysis | Calm, compact, and subordinate during active play; more detail can live outside the immediate action path |
+| Settings and rule controls | Deliberate configuration, not part of the falling-block field | Visually related to the game but clearly separate in interaction purpose |
+
+This table describes intended semantics. It is not a claim that the current UI already satisfies every row.
+
+### Make visual transitions carry meaning
+
+The theme should be felt in how the game changes state, not only in static styling.
+
+- A movement should read as a direct response to the input, not a decorative animation.
+- A rotation should preserve the player's sense of piece identity and final orientation.
+- A lock or clear should make the board's new state immediately understandable.
+- Hold should clearly transfer the active piece and update the stored/next information without visual ambiguity.
+- A finesse prompt should appear when it is actionable and recede when its instruction is no longer relevant.
+- Opening settings or changing a visual option should not make the game feel like it has switched to a different product.
+- Reduced-motion and color-only modes must preserve state meaning; they should remove a channel, not remove understanding.
+
+Avoid adding transitions to every component simply to make the UI feel animated. Motion is useful when it communicates continuity, cause, or state change. Otherwise, stillness is part of the rhythm.
+
+### Integration over containment
+
+The current page source contains several card-like support panels and layered visual treatments. That is useful evidence to inspect, not a reason to add more surfaces. Future work should test whether the board, Hold, Next, and training cues read as one composition rather than separate boxed widgets.
+
+Preferred decision order:
+1. Establish the scan path and relative scale.
+2. Establish which game state each element communicates.
+3. Align shared geometry, spacing, and edges so related elements feel connected.
+4. Tune contrast and color for state recognition.
+5. Add only the smallest visual or motion cue that improves understanding.
+6. Check the whole play loop again at desktop and phone sizes.
+
+### New acceptance criteria
+
+A theme/flow change is acceptable only if all relevant criteria pass:
+
+- **Native:** it looks and behaves as though it belongs to this trainer's game mechanics, not a generic dashboard.
+- **Continuous:** the eye can move between board, Hold, and Next without feeling that each belongs to a different visual system.
+- **Quietly expressive:** character comes from game-specific geometry and meaningful state changes, not constant glow or movement.
+- **State-first:** the player can distinguish active, projected, stored, upcoming, and locked pieces at a glance.
+- **Input-first:** feedback never makes the engine feel slower or less predictable.
+- **Graceful without effects:** reduced motion, color-only modes, and restrained display settings preserve the same core meaning.
+- **Responsive but familiar:** changing screen size rearranges the composition without changing the player's mental model.
+
+### Practical next step
+
+Do not launch a broad redesign. First review a real play session and capture three moments: a normal placement, a Hold swap, and a finesse/rotation cue. For each moment, trace the eye and the visual state from input through result to the next decision. Record the single biggest point of visual separation or interruption. Fix that one point, then compare the same moments before and after.
+
+The next code change should be chosen from observed friction in those transitions, not from a desire to make the page look more themed.
