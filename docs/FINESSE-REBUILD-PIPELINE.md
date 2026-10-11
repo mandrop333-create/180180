@@ -41,8 +41,9 @@ Before any deployment-related claim, name the target (website or Worker), the so
 2. Check whether the configured Cloudflare website project is actually connected to that branch and whether the commit triggered a build. Do not assume the integration, production branch, build command, output directory, or deployment trigger; verify those settings from the actual Cloudflare project/deployment record.
 3. Open the deployment record for the **same commit SHA**. Record whether the build started, its final status, and any build log/error. A missing run, queued run, unavailable status, or unrelated deployment is **unverified**, not a build failure.
 4. Separate the build result from deployment result. A successful build does not prove that production was deployed; a deployment status must be checked separately.
-5. After deployment, check `https://180436.xyz/` directly and run the relevant browser smoke test against the live site. Verify the expected change, not merely an HTTP response or a page load.
-6. If the Cloudflare dashboard/run cannot be inspected, say **“Cloudflare build/deployment not verified”** and state what evidence is missing. Do not say it failed, succeeded, or deployed based on assumption.
+5. **Hand the live-site acceptance check to the user.** The user should open `https://180436.xyz/` on their device and confirm the actual visual/interactive change. Provide a short, specific checklist of what to inspect and what result to report. Do not claim the live experience is verified merely because the URL responds, a static fetch succeeds, or a GitHub test passes.
+6. The assistant may inspect repository files, GitHub Actions results, and any Cloudflare deployment records genuinely available through connected tools. It must not imply it can see the user's browser, device-specific rendering, authenticated Cloudflare dashboard, or unexposed deployment details. If a relevant record is inaccessible, say exactly what is and is not verified.
+7. If the Cloudflare dashboard/run cannot be inspected, say **“Cloudflare build/deployment not verified”** and state what evidence is missing. Do not say it failed, succeeded, or deployed based on assumption.
 
 ### C. Diagnostics Worker verification
 
@@ -57,7 +58,9 @@ Before any deployment-related claim, name the target (website or Worker), the so
 - **Checks passed/failed:** a named test/workflow run completed with that conclusion for the stated ref/SHA.
 - **Build passed/failed:** the actual website project's build record completed with that conclusion for the same commit.
 - **Deployed:** the target's deployment record confirms completion for the stated commit/version.
-- **Live verified:** the production URL was checked after deployment and the expected behavior was observed.
+- **Live endpoint checked:** a limited request to the public URL succeeded. This does not prove the intended visual or interactive change is correct.
+- **Live behavior user-confirmed:** the user checked the deployed site in their real browser/device and confirmed the requested behavior.
+- **Live behavior verified by automation:** a named browser test actually ran against the production URL and verified the expected behavior; name the run and commit/deployment it tested.
 - **Unverified/unknown:** evidence is unavailable, still running, stale, or refers to a different commit/target. Never relabel this as failure.
 
 When reporting a failure, include the failing stage and its evidence. If one stage succeeds and a later stage is unknown, report exactly that; do not collapse the stages into a single “build failed” statement.
@@ -65,7 +68,7 @@ When reporting a failure, include the failing stage and its evidence. If one sta
 ## What is and is not part of this pipeline
 
 - GitHub is the workspace for code, commits, branches, pull requests, and GitHub Actions.
-- The intended Finesse release path, when explicitly authorized, is reviewed rebuild branch → PR review → `main` → verified configured website deployment → live-site verification.
+- The intended Finesse release path, when explicitly authorized, is reviewed rebuild branch → PR review → `main` → verified configured website deployment → user-confirmed live-site acceptance (or a clearly identified production browser test if one is actually available).
 - **CL Circle / CircleCI is not part of the user's pipeline.** Do not use it as a workflow, dependency, prerequisite, or source of truth. Unrelated branches or files with similar names do not change this.
 - Do not make unrelated infrastructure changes to simplify the Finesse task.
 - Do not infer the website deployment method from the existence of a Cloudflare Worker workflow. The current repository workflow deploys the separate diagnostics Worker; website build/deployment must be verified in the actual configured website project.
@@ -86,7 +89,8 @@ For each iteration, record:
 1. **Finding** — concrete observed behavior or test gap.
 2. **Evidence** — file/test, commit SHA/ref, and GitHub Actions or Cloudflare run(s).
 3. **Change** — exact files and reason; if none, say so.
-4. **Validation** — checks run and actual outcomes, separately noting build, deploy, and live verification.
-5. **Next step** — the single next logical task and any unresolved blocker.
+4. **Validation** — checks run and actual outcomes, separately noting build, deploy, and live verification. Clearly identify any manual live-site check awaiting the user.
+5. **User handoff, when needed** — give the user a concise checklist for the production browser/device check and ask them to report what they observe; do not mark it verified until they confirm or a real production browser test provides evidence.
+6. **Next step** — the single next logical task and any unresolved blocker.
 
 When asked to “proceed logically,” continue from the latest verified state using this sequence. Do not restart analysis, change the pipeline, or report work as completed when it has only been planned.
