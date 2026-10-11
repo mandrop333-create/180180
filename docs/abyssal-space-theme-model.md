@@ -483,3 +483,139 @@ Score each category 0–4 at matched viewport sizes: 0 = broken/absent; 1 = weak
 17. NASA Science — Hubble mission imagery: https://science.nasa.gov/mission/hubble/
 
 The model is intentionally much more detailed than a mood board: it records the evidence, translates it into implementation rules, identifies the hypotheses that need testing, and defines the release gate. It should be used as the working design contract for the full theme pass.
+
+---
+## 19. Second-pass model upgrade: from mood to a testable experience system
+
+This section is an implementation-oriented refinement based on the current repository, not another inspiration list. It distinguishes what exists today from what the theme should become.
+
+### 19.1 Current implementation audit
+
+The first theme layer establishes semantic colors, a layered static background, sparse CSS star points, glass-like utility cards, board framing, coordinated controls, focus rings, mobile control materials, and reduced-motion overrides. It is a useful base, but it is **not yet the complete underwater-space experience**.
+
+Known gaps and risks to test:
+
+- The atmosphere is currently made from fixed gradients and sparse CSS star points. It suggests space, but does not yet create a convincing sense of suspended liquid, particulate depth, or a light field surrounding the instruments.
+- The board itself must remain optically crisp; its frame can feel submerged, but the playfield must not acquire blur or decorative noise.
+- The existing game.js provides reliable state seams through trainer.options.onState, renderState, trainer.options.onRhythmReport, and trainer.options.onReset. Hold, Next, stats and finesse are already rendered from runtime state. Use those seams for truthful feedback rather than creating a parallel game state or guessing from key presses.
+- Hold and Next are structurally useful but visually separate in the current DOM. Strengthen their shared planning role with alignment, consistent labels and quiet connective cues, without harming mobile scan order.
+- backdrop-filter is progressive enhancement, not a required material feature. The surface must still read as a translucent instrument through layered color and edge treatment when blur is absent.
+- Do not add a permanent animation loop merely to make the page feel alive. The baseline atmosphere can be static; motion should be tied to a real interaction or game event.
+- The first CSS pass uses broad element selectors for buttons and form controls. Prefer component-scoped selectors wherever possible so unrelated controls and embedded settings do not inherit accidental styles.
+
+This audit is not a claim of browser visual testing. Each point is a design/test hypothesis until checked against screenshots and real devices.
+
+### 19.2 Experience architecture: four interacting systems
+
+**A. Environment — the abyss.** A large, quiet low-luminance field establishes scale. It has a far field (rare tiny stars), a middle field (broad, low-contrast water/nebula gradients), and a near field (subtle edge light around instruments). The environment never conveys game state.
+
+**B. Instruments — the cockpit.** Board, Hold, Next, statistics, training rules and settings should feel like one family of precision instruments suspended in that field. Materials share edge language, corner rhythm, type hierarchy and restrained highlights; they do not all have identical opacity or emphasis.
+
+**C. Live play — the signal.** Active piece, ghost, lock, clear, Hold, finesse, rhythm and focus feedback are short, localized and caused by actual events. Game signals outrank atmospheric decoration. Existing tetromino colors remain the primary piece identity and must not be recolored to match the theme.
+
+**D. Practice — the interpretation layer.** Statistics and prompts help the player understand performance without competing with the board. A number changing is not automatically a reason to flash. Highlight only meaningful changes and never use color alone to encode correctness.
+
+The priority stack is strict: **active playfield → immediate placement/rotation feedback → Hold/Next planning → training prompt → stats → atmosphere**. If two layers compete, the lower layer yields.
+
+### 19.3 Material grammar
+
+| Role | Visual construction | Do not do |
+|---|---|---|
+| Abyss | Deep navy/blue-black base, broad low-opacity gradients, very sparse star points | Bright all-over gradients, wallpaper imagery behind labels |
+| Water volume | A few large, soft color fields with different scale and position | Many tiny gradients, noisy texture, animated scan lines |
+| Instrument glass | Dark teal surface, subtle translucent fill, fine cool edge, tiny top highlight | Heavy blur, thick neon outlines on every card |
+| Precision window | Highest edge clarity and local contrast; clean grid and legible cells | Particles, blur, busy gradients or decorative overlays inside board |
+| Bioluminescent signal | Cyan/teal reserved for focus and selected positive/active events | Permanent glow, universal cyan text, color-only meaning |
+| Cosmic accent | Violet only in distant environmental fields and rare secondary cues | Reverting all controls and panels to purple |
+| Warning/error | Coral/rose plus explicit text/state marker | Red flash as the only indicator; false alarm styling |
+
+A surface should remain visually understandable when blur and shadow are disabled. The silhouette, fill, edge and hierarchy must do the work.
+
+### 19.4 State-to-feedback contract
+
+The theme may listen to existing runtime state and callbacks, but it must not infer an event that the engine has not reported. Treat these as target behaviors; confirm the exact callback/state semantics before implementation.
+
+| Runtime condition/event | Intended response | Timing / restraint |
+|---|---|---|
+| Idle / no new event | Stable atmospheric field and quiet instrument edges | No continuous pulsing |
+| Active piece moves/rotates | Preserve immediate piece/ghost clarity; do not animate surrounding panels | No extra decorative transition |
+| Hold succeeds | Brief localized edge/light response on Hold and, if useful, a subtle Next update | One short response, then settle |
+| Piece locks | Very brief local board-edge or locked-piece confirmation | Must not obscure the next active piece |
+| Line clear | Restrained horizontal/row-local highlight tied to actual cleared rows | Ends quickly; avoid full-screen flash |
+| Finesse expected input advances | Existing .done, .next, .pending state remains the source of truth | Clear shape/label contrast; no pulsing requirement |
+| Finesse fault | Preserve explicit fault text/state; rose accent may reinforce it | No screen shake or prolonged red |
+| Rhythm report appears | Small, calm reveal or no animation; data remains immediately readable | Respect reduced motion |
+| Keyboard focus | Distinct 2px high-contrast focus outline with offset | Must work without hover |
+| Reset / game over | Use existing semantic messaging if present; do not invent a success state | Do not imply an outcome before engine confirmation |
+
+The first implementation should prioritize stable colors, borders and focus states. Add transient effects only after actual lock/clear/Hold events can be observed reliably. If callbacks expose only a whole-state update, compare previous and current state carefully and avoid double-firing on rerenders.
+
+### 19.5 Token ownership and implementation hygiene
+
+Keep one canonical definition for each semantic token. The page currently has legacy inline styles and dedicated stylesheets; new tokens should override those intentionally rather than accumulate a second undocumented palette.
+
+Recommended token families:
+- --abyss-*: background and environmental depth.
+- --glass-*: surface fills and edges.
+- --text-*: primary, secondary and quiet labels.
+- --biolume-*: action/focus/active signals.
+- --nebula-*: secondary environmental accents.
+- --state-*: success, warning and error signals.
+- --motion-*: durations and easing.
+- Existing piece color constants: owned by the game renderer, not the theme.
+
+Rules:
+1. Do not redefine a semantic token in multiple selectors unless the override is a documented responsive/state exception.
+2. Scope styles to components; avoid blanket button rules when a settings-specific or mobile-control selector is available.
+3. Never target DOM order alone for state meaning. Structural selectors can support layout, but runtime state styling needs explicit classes or attributes tied to data.
+4. Use @supports (backdrop-filter: blur(1px)) if blur needs an explicit support gate; the non-blurred surface remains the baseline.
+5. Keep decorative pseudo-elements pointer-events:none, behind interactive content, and out of the accessibility tree.
+6. Avoid new dependencies, remote fonts, image requests, canvas loops, and large assets unless there is a measured benefit.
+
+### 19.6 Accessibility and contrast verification protocol
+
+The dark palette must be measured after compositing translucent surfaces over the actual background. A token pair alone does not prove contrast when alpha is involved.
+
+- Normal text: target at least 4.5:1 against the final composited surface.
+- Large text: at least 3:1.
+- Meaningful control boundaries, focus indicators and state graphics: target 3:1 against adjacent colors where WCAG non-text contrast applies.
+- Check quiet labels separately; do not excuse low contrast because they are “secondary.”
+- Preserve seven-piece identity and existing renderer colors. Ensure ghost opacity never makes placement information ambiguous.
+- Test keyboard-only operation, visible focus, settings toggles/ranges, mobile controls, and screen-reader labels after theme changes.
+- prefers-reduced-motion: reduce should remove nonessential transition and animation without hiding a state or changing game timing.
+- Verify at low screen brightness and in glare-prone environments. Do not use text-shadow as a substitute for contrast.
+- Do not use a color-only state difference: retain label, shape, position, or explicit text.
+
+### 19.7 Performance budget and failure behavior
+
+The experience is a real-time input-sensitive game. A theme is not successful if it looks richer but increases input latency, dropped frames or mobile heat.
+
+- No JavaScript animation loop for ambient effects.
+- No layout-affecting animation during gameplay; animate opacity/transform only where needed.
+- Avoid filters and large blur regions over the board. Use blur on a small number of utility surfaces only, and disable it at constrained widths or where testing shows cost.
+- Keep background layers fixed in count; do not create per-cell DOM or particles for atmosphere.
+- Confirm the board render path remains untouched by CSS effects that cause large repaint regions.
+- Test at least five minutes of active play on a mid-range phone, including rapid movement, rotations, hard drop, Hold and settings open/close.
+- If the environment effect is costly, degrade gracefully in this order: remove backdrop blur, remove nonessential shadows, simplify far-field layers, retain the board and state feedback.
+
+### 19.8 Concrete acceptance evidence
+
+Every implementation iteration should produce an evidence bundle, not only a commit message:
+
+1. Matched baseline and proposed screenshots at 1440px, 900px, 720px, 560px and ~390px widths.
+2. Crops of board/ghost clarity, Hold/Next scanning, stats, finesse prompt and expanded settings.
+3. Contrast calculations using composited foreground/background colors, listing measured pairs and ratios.
+4. Results of the existing runTrainerSelfTest() and relevant finesse/rotation regression checks.
+5. A short interaction checklist: move, rotate, hard drop, Hold, line clear, reset, settings, keyboard focus and reduced motion.
+6. Known issues with severity and a clear pass/fail against the release gate.
+
+Do not call the theme finished based on the stylesheet loading successfully. If browser screenshots or device testing are unavailable, report that evidence as unavailable and keep the release gate open.
+
+### 19.9 Decision log for the next implementation pass
+
+- **Keep:** the quiet layered abyss, cool glass surfaces, restrained bioluminescence, crisp playfield, existing piece colors, reduced-motion support.
+- **Refine:** make water depth feel volumetric through composition and restrained edge lighting rather than adding visual noise; make planning stations feel connected through hierarchy and alignment; narrow global selectors to component scopes.
+- **Defer:** animated particulate fields, moving caustics, full-screen flashes, image-based nebula backgrounds, and event effects whose source events have not been confirmed.
+- **Reject:** theme changes that alter scoring, gravity, lock delay, controls, training semantics, or renderer geometry; any decoration that lowers piece readability; and any production merge without screenshots and regression evidence.
+
+This model is the working contract for the next iteration. It should guide the design toward a more convincing suspended-in-liquid cosmos while protecting the immediacy and precision that make the trainer useful.
