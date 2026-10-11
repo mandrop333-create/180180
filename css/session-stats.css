@@ -35,8 +35,8 @@
 .hold-side .hold-preview{height:58px}
 .hold-side .action-button{padding:7px 4px}
 @media(min-width:901px){
-  .trainer-shell{width:min(calc(992px + var(--next-preview-width,96px)),100%)!important;max-width:calc(992px + var(--next-preview-width,96px))!important;margin-inline:auto!important}
-  .trainer-layout{display:grid!important;grid-template-columns:minmax(0,1fr) 200px 300px var(--next-preview-width,96px) minmax(0,1fr)!important;grid-auto-rows:auto;column-gap:12px;row-gap:18px;justify-content:stretch;align-items:start;width:100%;max-width:100%}
+  .trainer-shell{width:min(1088px,100%)!important;max-width:1088px!important;margin-inline:auto!important}
+  .trainer-layout{display:grid!important;grid-template-columns:minmax(0,1fr) 200px 300px 96px minmax(0,1fr)!important;grid-auto-rows:auto;column-gap:12px;row-gap:18px;justify-content:stretch;align-items:start;width:100%;max-width:100%}
   .trainer-layout>.hold-side{grid-column:2!important;grid-row:1!important;padding-top:54px}
   .trainer-layout>.board-column{grid-column:3!important;grid-row:1!important;width:300px!important;max-width:300px!important;justify-self:center!important}
   .trainer-layout>.next-side{grid-column:4!important;grid-row:1!important;padding-top:54px}
