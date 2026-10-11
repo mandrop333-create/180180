@@ -1,0 +1,812 @@
+/*
+ * Abyssal Space — underwater-cosmos theme layer.
+ * Loaded after legacy inline styles so this semantic theme can supersede old
+ * purple card treatments without touching gameplay logic or renderer behavior.
+ */
+:root {
+  color-scheme: dark;
+  --abyss-void: #030711;
+  --abyss-deep: #071321;
+  --abyss-blue: #0a2032;
+  --abyss-water: #0b2837;
+  --glass-surface: rgba(9, 25, 39, .82);
+  --glass-raised: rgba(14, 36, 51, .9);
+  --glass-edge: rgba(135, 207, 230, .2);
+  --glass-edge-active: rgba(113, 231, 246, .65);
+  --text-primary: #e8f6fc;
+  --text-secondary: #a5c0d0;
+  --text-quiet: #7895a9;
+  --biolume-cyan: #65e7e8;
+  --biolume-teal: #58cbb9;
+  --nebula-violet: #9a8bff;
+  --star-pearl: #d8f7ff;
+  --danger-coral: #ff8798;
+  --bg: var(--abyss-void);
+  --panel: var(--glass-surface);
+  --line: var(--glass-edge);
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --purple: var(--nebula-violet);
+  --abyss-ease: cubic-bezier(.2,.7,.2,1);
+  --abyss-fast: 150ms;
+  --abyss-medium: 220ms;
+}
+html { background: var(--abyss-void); }
+body {
+  color: var(--text-primary);
+  background:
+    radial-gradient(ellipse at 50% -18%, rgba(30, 98, 125, .25), transparent 48%),
+    radial-gradient(ellipse at 8% 38%, rgba(22, 91, 104, .13), transparent 38%),
+    radial-gradient(ellipse at 92% 72%, rgba(66, 51, 119, .15), transparent 40%),
+    linear-gradient(180deg, #071321 0%, #040b16 46%, #030711 100%);
+  background-attachment: fixed;
+  isolation: isolate;
+}
+body::before, body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+body::before {
+  opacity: .48;
+  background:
+    radial-gradient(1px 1px at 8% 14%, #c8f5ff9c 50%, transparent 100%),
+    radial-gradient(1px 1px at 22% 68%, #b2e9ff75 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 79% 17%, #e2e0ff8c 50%, transparent 100%),
+    radial-gradient(1px 1px at 91% 48%, #a4f8ef7a 50%, transparent 100%),
+    radial-gradient(1px 1px at 64% 83%, #c8f5ff70 50%, transparent 100%),
+    radial-gradient(1px 1px at 37% 31%, #c8f5ff65 50%, transparent 100%),
+    radial-gradient(1px 1px at 53% 9%, #e2e0ff70 50%, transparent 100%);
+}
+body::after {
+  opacity: .55;
+  background:
+    radial-gradient(ellipse at 50% 34%, transparent 0 22%, rgba(3, 7, 17, .12) 60%, rgba(3, 7, 17, .65) 100%),
+    radial-gradient(ellipse at 16% 56%, rgba(24, 122, 142, .09), transparent 42%),
+    radial-gradient(ellipse at 84% 26%, rgba(112, 87, 194, .09), transparent 38%);
+}
+.trainer-page { position: relative; isolation: isolate; }
+.trainer-top {
+  padding-top: 28px !important;
+  padding-bottom: 22px !important;
+}
+.trainer-brand {
+  color: #e5f8ff !important;
+  text-shadow: 0 0 12px rgba(101, 231, 232, .2), 0 0 34px rgba(101, 231, 232, .1) !important;
+  letter-spacing: .16em !important;
+}
+.trainer-description { color: var(--text-secondary) !important; }
+.mini-home-title {
+  color: #e1f8ff !important;
+  text-shadow: 0 0 24px rgba(101, 231, 232, .15) !important;
+}
+.mini-home-number { color: #80cbd4 !important; }
+.mini-home-description { color: var(--text-quiet) !important; }
+
+/* Floating instruments share one cool, restrained material system. */
+.trainer-card {
+  position: relative;
+  border: 1px solid var(--glass-edge) !important;
+  border-radius: 13px !important;
+  background:
+    linear-gradient(145deg, rgba(15, 39, 54, .94), rgba(7, 18, 31, .9) 70%) !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, .28),
+    inset 0 1px 0 rgba(216, 247, 255, .055) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color var(--abyss-medium) var(--abyss-ease),
+              background-color var(--abyss-medium) var(--abyss-ease),
+              box-shadow var(--abyss-medium) var(--abyss-ease);
+}
+.trainer-card:hover {
+  border-color: rgba(101, 231, 232, .32) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.32), inset 0 1px 0 rgba(216,247,255,.075) !important;
+}
+.trainer-card h2 {
+  color: #8fd9df !important;
+  letter-spacing: .17em !important;
+  font-size: 10px !important;
+}
+.hud-item {
+  border: 1px solid rgba(135, 207, 230, .13) !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, rgba(11, 31, 45, .85), rgba(5, 16, 28, .8)) !important;
+}
+.hud-item span { color: var(--text-quiet) !important; }
+.hud-item strong { color: #e0f7ff !important; }
+.hold-preview {
+  border: 1px solid rgba(135, 207, 230, .16) !important;
+  border-radius: 9px !important;
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(31, 105, 121, .19), transparent 72%),
+    rgba(3, 12, 22, .74) !important;
+}
+.next-preview { background: transparent !important; }
+.rhythm-outlier {
+  border-color: rgba(135, 207, 230, .16) !important;
+  background: rgba(3, 13, 23, .75) !important;
+}
+.rhythm-metric { color: var(--text-secondary) !important; }
+.rhythm-metric strong, .rhythm-outlier-title { color: var(--text-primary) !important; }
+.rhythm-pattern { color: #b6aaff !important; }
+
+/* The board is the sharp, high-confidence instrument inside the soft volume. */
+.board-wrap {
+  position: relative;
+  border: 1px solid rgba(115, 203, 221, .42) !important;
+  border-radius: 10px !important;
+  padding: 7px !important;
+  background:
+    linear-gradient(145deg, rgba(23, 57, 72, .95), rgba(5, 15, 27, .98) 68%) !important;
+  box-shadow:
+    0 28px 70px rgba(0,0,0,.52),
+    0 0 0 1px rgba(101,231,232,.06),
+    0 0 38px rgba(52, 175, 194, .105),
+    inset 0 1px 0 rgba(216,247,255,.11) !important;
+}
+.board {
+  background-color: #040c16 !important;
+  outline: 1px solid rgba(145, 213, 227, .08);
+  outline-offset: -1px;
+}
+.board-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(125deg, rgba(164, 241, 248, .06), transparent 22% 78%, rgba(120, 117, 223, .045));
+}
+.board-wrap > * { position: relative; }
+.board .cell.ghost { opacity: .42; }
+
+/* Controls: glass hardware with clear, accessible focus and immediate response. */
+.action-button, button, input, select, textarea {
+  accent-color: var(--biolume-cyan);
+}
+.action-button {
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(135, 207, 230, .25) !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, rgba(17, 48, 63, .94), rgba(7, 23, 36, .96)) !important;
+  box-shadow: inset 0 1px 0 rgba(216,247,255,.07) !important;
+  transition: border-color var(--abyss-fast) var(--abyss-ease), background var(--abyss-fast) var(--abyss-ease), transform var(--abyss-fast) var(--abyss-ease) !important;
+}
+.action-button:hover {
+  color: #f2feff !important;
+  border-color: var(--glass-edge-active) !important;
+  background: linear-gradient(180deg, rgba(22, 67, 80, .98), rgba(8, 32, 45, .98)) !important;
+  box-shadow: 0 0 18px rgba(101,231,232,.08), inset 0 1px 0 rgba(216,247,255,.1) !important;
+}
+.action-button:active { transform: translateY(1px) !important; }
+:where(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--biolume-cyan) !important;
+  outline-offset: 3px !important;
+}
+.rules-card .settings-range { accent-color: var(--biolume-cyan) !important; }
+.rules-toggle input, .settings-checks input { accent-color: var(--biolume-cyan) !important; }
+.finesse-prompt span {
+  border-color: rgba(216,247,255,.88) !important;
+  background: rgba(3, 12, 22, .95) !important;
+  text-shadow: none !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.55), 0 0 22px rgba(101,231,232,.09) !important;
+}
+.finesse-prompt .finesse-key.done { color: #76edbb !important; border-color: #76edbb !important; }
+.finesse-prompt .finesse-key.next { color: #ff9ba9 !important; border-color: #ff9ba9 !important; }
+.finesse-prompt .finesse-key.pending { color: #ffc0c8 !important; border-color: #87505d !important; }
+
+/* Settings surfaces use the same underwater instrument language. */
+.trainer-settings-label { color: var(--text-secondary) !important; }
+.settings-gear {
+  border-color: rgba(135,207,230,.28) !important;
+  background: linear-gradient(145deg, rgba(14,45,59,.96), rgba(5,17,29,.96)) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3), 0 0 20px rgba(101,231,232,.07) !important;
+}
+.power-orb, .power-orbit, .power-star { color: var(--biolume-cyan) !important; }
+.settings-panel, .settings-modal, [data-settings-panel] {
+  color: var(--text-primary);
+}
+.settings-panel .trainer-card, .settings-modal .trainer-card {
+  background: var(--glass-surface) !important;
+}
+
+/* Mobile controls retain their touch geometry, but share the new material. */
+.mobile-control {
+  color: #e7fbff !important;
+  border-color: rgba(135,207,230,.4) !important;
+  background: rgba(6, 24, 37, .88) !important;
+  box-shadow: 0 5px 18px rgba(0,0,0,.38), inset 0 1px 0 rgba(216,247,255,.1) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.mobile-control:active, .mobile-control.pressed {
+  background: rgba(25, 91, 102, .94) !important;
+  border-color: var(--biolume-cyan) !important;
+}
+.mobile-controls-editbar {
+  border-color: var(--glass-edge) !important;
+  background: rgba(4, 15, 27, .96) !important;
+}
+.mobile-controls-editbar button {
+  border-color: rgba(135,207,230,.25) !important;
+  background: rgba(11,31,45,.96) !important;
+  color: var(--text-primary) !important;
+}
+.toast {
+  color: var(--text-primary) !important;
+  border-color: var(--glass-edge-active) !important;
+  background: rgba(5, 20, 32, .97) !important;
+  box-shadow: 0 10px 32px rgba(0,0,0,.4), 0 0 20px rgba(101,231,232,.08) !important;
+}
+::selection { color: #031017; background: var(--biolume-cyan); }
+
+/* Keep the background atmospheric, not animated. Gameplay motion stays native. */
+@media (max-width: 900px) {
+  body { background-attachment: scroll; }
+  .trainer-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (max-width: 560px) {
+  .trainer-top { padding-inline: 14px !important; }
+  .trainer-brand { letter-spacing: .12em !important; }
+  .board-wrap { box-shadow: 0 18px 42px rgba(0,0,0,.48), 0 0 24px rgba(52,175,194,.09) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* Second pass: make the liquid-space material specific to the real interface. */
+:root {
+  --glass-line-soft: rgba(135, 207, 230, .12);
+  --glass-fill-deep: rgba(4, 15, 27, .94);
+  --water-glow: rgba(69, 203, 202, .12);
+  --instrument-label: #91cbd6;
+}
+.trainer-page {
+  isolation: isolate;
+}
+.trainer-page::before,
+.trainer-page::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1120px, 100%);
+}
+.trainer-page::before {
+  top: 90px;
+  height: 580px;
+  opacity: .8;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(36, 143, 159, .13), transparent 38%),
+    radial-gradient(ellipse at 14% 42%, rgba(21, 100, 125, .09), transparent 34%),
+    radial-gradient(ellipse at 88% 58%, rgba(89, 74, 161, .08), transparent 36%);
+}
+.trainer-page::after {
+  top: 170px;
+  height: 430px;
+  opacity: .55;
+  background:
+    linear-gradient(118deg, transparent 0 22%, rgba(117, 229, 233, .035) 31%, transparent 42%),
+    linear-gradient(68deg, transparent 0 60%, rgba(126, 111, 221, .03) 68%, transparent 78%);
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 75%, transparent);
+}
+.trainer-main, .trainer-shell, .trainer-layout, .trainer-side, .board-column, .rules-column {
+  min-width: 0;
+}
+.trainer-shell {
+  position: relative;
+}
+.mini-home {
+  position: relative;
+  padding: 8px 0 20px;
+}
+.mini-home::after {
+  content: "";
+  display: block;
+  width: 76px;
+  height: 1px;
+  margin: 14px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(101,231,232,.55), transparent);
+}
+.trainer-description {
+  max-width: 52ch;
+  margin-inline: auto;
+  line-height: 1.65 !important;
+}
+.trainer-card {
+  overflow: hidden;
+  background-clip: padding-box !important;
+}
+.trainer-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 13%;
+  right: 13%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(190,244,249,.2), transparent);
+}
+.trainer-card h2 {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5 !important;
+}
+.trainer-card h2::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: var(--biolume-teal);
+  box-shadow: 0 0 9px rgba(88,203,185,.32);
+}
+.hold-preview {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.next-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 10px 0 4px;
+}
+.next-preview .mini-piece {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--glass-line-soft);
+  border-radius: 7px;
+  background: linear-gradient(145deg, rgba(11,34,47,.72), rgba(3,13,23,.58));
+}
+.next-preview .mini-piece:first-child {
+  border-color: rgba(101,231,232,.32);
+  background: linear-gradient(145deg, rgba(20,64,76,.68), rgba(4,18,29,.76));
+  box-shadow: inset 0 1px 0 rgba(216,247,255,.06), 0 0 18px rgba(101,231,232,.035);
+}
+.next-preview .mini-grid {
+  display: grid;
+  align-content: center;
+  justify-content: center;
+}
+.hud-item {
+  transition: border-color var(--abyss-fast) var(--abyss-ease), background var(--abyss-fast) var(--abyss-ease);
+}
+.hud-item:focus-within {
+  border-color: var(--glass-edge-active) !important;
+}
+.rules-card .rule-control,
+.rules-card .rules-toggle {
+  border-color: var(--glass-line-soft) !important;
+}
+.rules-card .rule-control {
+  padding-block: 10px !important;
+}
+.rules-card .rule-control-head,
+.settings-control-head {
+  gap: 12px;
+}
+.rules-card label,
+.settings-card label {
+  color: var(--text-secondary);
+}
+.rules-card output,
+.settings-card output {
+  color: var(--biolume-cyan);
+  font-variant-numeric: tabular-nums;
+}
+.rules-card .rules-toggle {
+  padding: 10px 9px !important;
+  border-radius: 7px;
+  transition: background var(--abyss-fast) var(--abyss-ease), border-color var(--abyss-fast) var(--abyss-ease);
+}
+.rules-card .rules-toggle:has(input:checked) {
+  background: rgba(31, 94, 98, .16);
+  border-color: rgba(101,231,232,.28) !important;
+}
+.rules-card .rules-toggle:has(input:focus-visible) {
+  outline: 2px solid var(--biolume-cyan);
+  outline-offset: 2px;
+}
+.trainer-card [data-content-region] p,
+.trainer-card p {
+  color: var(--text-secondary);
+}
+.trainer-card[data-content-region="training-signal"] {
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(37, 130, 140, .1), transparent 68%),
+    linear-gradient(145deg, rgba(10,29,42,.9), rgba(4,14,25,.9)) !important;
+}
+.trainer-card[data-content-region="training-signal"] p {
+  line-height: 1.7 !important;
+}
+.rhythm-card:not([hidden]) {
+  border-color: rgba(101,231,232,.24) !important;
+}
+.rhythm-metric {
+  padding-block: 7px;
+  border-bottom: 1px solid var(--glass-line-soft);
+}
+.rhythm-metric:last-child { border-bottom: 0; }
+.rhythm-metric span {
+  letter-spacing: .09em;
+  font-size: 9px;
+}
+.rhythm-metric strong {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.finesse-prompt {
+  isolation: isolate;
+}
+.finesse-prompt .finesse-key {
+  min-width: 26px;
+  text-align: center;
+  line-height: 1.35;
+}
+.settings-panel {
+  color: var(--text-primary) !important;
+}
+.settings-backdrop {
+  background: rgba(1, 6, 14, .78) !important;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.settings-card {
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(135,207,230,.28) !important;
+  border-radius: 16px !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(42,116,130,.16), transparent 40%),
+    linear-gradient(145deg, rgba(12,31,45,.99), rgba(3,11,21,.99)) !important;
+  box-shadow: 0 30px 100px rgba(0,0,0,.62), inset 0 1px 0 rgba(216,247,255,.07) !important;
+}
+.settings-heading {
+  border-bottom-color: var(--glass-line-soft) !important;
+}
+.settings-title, .settings-section-title {
+  color: var(--text-primary) !important;
+}
+.settings-section {
+  border-bottom-color: var(--glass-line-soft) !important;
+}
+.settings-hint {
+  color: var(--text-quiet) !important;
+}
+.settings-close, .settings-reset {
+  color: var(--text-primary) !important;
+  border-color: rgba(135,207,230,.22) !important;
+  background: rgba(7,23,36,.92) !important;
+}
+.settings-close:hover, .settings-reset:hover {
+  border-color: var(--glass-edge-active) !important;
+  background: rgba(17,55,67,.95) !important;
+}
+.settings-bind-list > *, .settings-control, .settings-checks label {
+  border-color: var(--glass-line-soft) !important;
+}
+.settings-card input[type="range"] {
+  accent-color: var(--biolume-cyan);
+}
+.settings-card input[type="checkbox"] {
+  accent-color: var(--biolume-cyan);
+}
+.trainer-settings-control {
+  filter: drop-shadow(0 5px 16px rgba(0,0,0,.28));
+}
+.trainer-settings-label {
+  letter-spacing: .18em !important;
+}
+.toast {
+  border-radius: 9px !important;
+  letter-spacing: .035em;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .trainer-card, .mobile-control, .settings-backdrop {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+@media (max-width: 900px) {
+  .trainer-page::before { top: 70px; height: 440px; }
+  .trainer-page::after { display: none; }
+  .next-preview { flex-direction: row; flex-wrap: wrap; gap: 5px; }
+  .next-preview .mini-piece { min-width: 43px; min-height: 31px; padding: 3px 5px; }
+}
+@media (max-width: 560px) {
+  .mini-home { padding-bottom: 12px; }
+  .trainer-card { border-radius: 10px !important; }
+  .trainer-card h2 { letter-spacing: .12em !important; }
+  .next-preview { gap: 4px; }
+  .next-preview .mini-piece { min-width: 36px; min-height: 28px; }
+  .settings-card { border-radius: 12px !important; }
+  .settings-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-card, .hud-item, .action-button, .rules-card .rules-toggle {
+    transition: none !important;
+  }
+}
+
+
+/* Third pass — give the world a signature, not just a palette.
+   The playfield remains clean; the "living" quality lives at its perimeter. */
+:root {
+  --abyss-luminous-edge: rgba(113, 231, 246, .72);
+  --abyss-halo-cool: rgba(50, 190, 205, .18);
+  --abyss-halo-violet: rgba(112, 94, 198, .12);
+}
+.trainer-page::before {
+  width: min(1260px, 100%);
+  top: 115px;
+  height: 680px;
+  opacity: .92;
+  background:
+    radial-gradient(ellipse at 50% 36%, rgba(22, 110, 135, .13), transparent 32%),
+    radial-gradient(ellipse at 12% 56%, rgba(27, 118, 130, .09), transparent 35%),
+    radial-gradient(ellipse at 88% 25%, rgba(87, 73, 157, .09), transparent 34%),
+    radial-gradient(ellipse at 50% 100%, rgba(5, 37, 54, .2), transparent 48%);
+}
+.trainer-brand {
+  text-shadow:
+    0 0 1px rgba(232,250,255,.65),
+    0 0 16px rgba(101,231,232,.23),
+    0 0 48px rgba(44,166,189,.14) !important;
+}
+.mini-home-title {
+  letter-spacing: .015em;
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.08),
+    0 0 26px rgba(101,231,232,.18) !important;
+}
+.board-wrap {
+  isolation: isolate;
+  border-color: rgba(132, 222, 232, .52) !important;
+  box-shadow:
+    0 30px 76px rgba(0,0,0,.58),
+    0 0 0 1px rgba(101,231,232,.1),
+    0 0 30px rgba(52,175,194,.12),
+    inset 0 1px 0 rgba(216,247,255,.15) !important;
+}
+.board-wrap::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -13px;
+  border-radius: 18px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--abyss-halo-cool), transparent 60%),
+    radial-gradient(ellipse at 0% 45%, rgba(40,151,170,.08), transparent 52%),
+    radial-gradient(ellipse at 100% 80%, var(--abyss-halo-violet), transparent 58%);
+  filter: blur(13px);
+  opacity: .8;
+}
+.board-wrap::before {
+  background:
+    linear-gradient(118deg, rgba(190,247,250,.1), transparent 18% 72%, rgba(126,111,221,.055)),
+    linear-gradient(180deg, rgba(101,231,232,.025), transparent 28%);
+}
+.trainer-side > .trainer-card:first-child,
+.rules-column > .trainer-card:first-child {
+  box-shadow:
+    0 16px 40px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(216,247,255,.06),
+    inset 0 0 26px rgba(57,153,170,.025) !important;
+}
+.trainer-card:hover {
+  transform: translateY(-1px);
+}
+.trainer-card h2::before {
+  box-shadow: 0 0 7px rgba(88,203,185,.35), 0 0 15px rgba(88,203,185,.12);
+}
+.action-button:focus-visible,
+.settings-gear:focus-visible,
+.mobile-control:focus-visible {
+  box-shadow: 0 0 0 4px rgba(101,231,232,.13), 0 0 22px rgba(101,231,232,.12) !important;
+}
+.mobile-control:active, .mobile-control.pressed {
+  box-shadow:
+    0 0 0 2px rgba(101,231,232,.15),
+    0 0 20px rgba(101,231,232,.14),
+    inset 0 1px 0 rgba(216,247,255,.16) !important;
+}
+@media (max-width: 900px) {
+  .board-wrap::after { inset: -8px; filter: blur(9px); opacity: .58; }
+  .trainer-card:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-card { transform: none !important; }
+}
+@media (forced-colors: active) {
+  .board-wrap, .trainer-card, .settings-card, .mobile-control {
+    border: 1px solid CanvasText !important;
+    box-shadow: none !important;
+  }
+  :where(button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid Highlight !important;
+  }
+}
+
+
+/* Human-scale details: small controls and queue previews should feel designed,
+   not merely recolored. Ambient drift is slow and independent of game timing. */
+@keyframes abyssal-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -2px, 0); }
+}
+@keyframes abyssal-shimmer {
+  0%, 100% { opacity: .48; }
+  50% { opacity: .82; }
+}
+.next-preview .mini-piece {
+  animation: abyssal-drift 6.8s ease-in-out infinite;
+  will-change: transform;
+}
+.next-preview .mini-piece:nth-child(2) { animation-delay: -1.3s; }
+.next-preview .mini-piece:nth-child(3) { animation-delay: -2.6s; }
+.next-preview .mini-piece:nth-child(4) { animation-delay: -3.9s; }
+.next-preview .mini-piece:nth-child(5) { animation-delay: -5.2s; }
+.next-preview .mini-piece:first-child::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 5px;
+  pointer-events: none;
+  background: linear-gradient(120deg, transparent 15%, rgba(182,246,250,.08) 48%, transparent 75%);
+  animation: abyssal-shimmer 5.4s ease-in-out infinite;
+}
+.settings-gear {
+  position: relative;
+  overflow: hidden;
+  border-radius: 13px !important;
+  border: 1px solid rgba(126,224,234,.36) !important;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(105,228,235,.18), transparent 58%),
+    linear-gradient(145deg, rgba(13,47,60,.96), rgba(4,17,29,.98)) !important;
+}
+.settings-gear::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(168,239,243,.1);
+  border-radius: 10px;
+  pointer-events: none;
+}
+.power-orb {
+  filter: drop-shadow(0 0 7px rgba(101,231,232,.3));
+}
+.action-button, .mobile-control, .mobile-controls-editbar button,
+.settings-close, .settings-reset {
+  position: relative;
+  overflow: hidden;
+}
+.action-button::after, .mobile-control::after,
+.mobile-controls-editbar button::after,
+.settings-close::after, .settings-reset::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(207,249,251,.075), transparent 34% 70%, rgba(101,231,232,.035));
+  opacity: .7;
+}
+.action-button:active, .settings-close:active, .settings-reset:active {
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.24), 0 0 0 1px rgba(101,231,232,.13) !important;
+}
+.mobile-control {
+  border-color: rgba(130,222,234,.42) !important;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(101,231,232,.14), transparent 64%),
+    linear-gradient(145deg, rgba(13,43,56,.92), rgba(4,15,27,.94)) !important;
+  box-shadow: 0 5px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(216,247,255,.13), 0 0 15px rgba(44,166,189,.055) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.mobile-controls.editing .mobile-control::after {
+  background: none;
+  border: 1px dashed rgba(130,222,234,.5);
+  border-radius: inherit;
+}
+.mobile-controls-editbar {
+  border-color: rgba(130,222,234,.26) !important;
+  background: linear-gradient(145deg, rgba(10,31,44,.98), rgba(3,12,22,.98)) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.48), inset 0 1px 0 rgba(216,247,255,.06) !important;
+}
+.mobile-controls-editbar button {
+  border-color: rgba(130,222,234,.28) !important;
+  background: linear-gradient(180deg, rgba(15,47,60,.96), rgba(5,20,32,.98)) !important;
+}
+.trainer-actions .action-button {
+  letter-spacing: .035em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .next-preview .mini-piece,
+  .next-preview .mini-piece:first-child::before {
+    animation: none !important;
+    will-change: auto;
+  }
+}
+@media (max-width: 900px) {
+  .next-preview .mini-piece { animation-duration: 8.5s; }
+}
+@media (max-width: 560px) {
+  .mobile-control { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+/* A suspended-water layer: the world drifts, but the playfield stays exact.
+   Staggered phases avoid a synchronized, mechanical bobbing effect. */
+@keyframes abyssal-suspension {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -1.5px; }
+}
+@keyframes abyssal-current {
+  0%, 100% { opacity: .24; transform: translate3d(-1px, 0, 0); }
+  50% { opacity: .48; transform: translate3d(1px, -1px, 0); }
+}
+.hold-preview .mini-piece {
+  animation: abyssal-drift 7.6s ease-in-out infinite;
+}
+.hold-preview .mini-piece .mini-grid,
+.next-preview .mini-piece .mini-grid {
+  transform-origin: center;
+}
+.trainer-side > .trainer-card,
+.rules-column > .trainer-card {
+  animation: abyssal-suspension 9.5s ease-in-out infinite;
+}
+.trainer-side > .trainer-card:nth-child(2),
+.rules-column > .trainer-card:nth-child(2) {
+  animation-delay: -3.1s;
+}
+.trainer-side > .trainer-card:nth-child(3),
+.rules-column > .trainer-card:nth-child(3) {
+  animation-delay: -6.2s;
+}
+.board-wrap::after {
+  animation: abyssal-current 8s ease-in-out infinite;
+}
+.settings-gear .power-orbit {
+  animation: abyssal-current 6s ease-in-out infinite;
+}
+@media (hover: hover) and (pointer: fine) {
+  .trainer-card:hover { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hold-preview .mini-piece,
+  .trainer-side > .trainer-card,
+  .rules-column > .trainer-card,
+  .board-wrap::after,
+  .settings-gear .power-orbit {
+    animation: none !important;
+    translate: none !important;
+  }
+}
+@media (max-width: 720px) {
+  /* Keep the mobile reading/touch plane calm; previews still feel buoyant. */
+  .trainer-side > .trainer-card,
+  .rules-column > .trainer-card { animation: none; }
+}
