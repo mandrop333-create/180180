@@ -126,7 +126,7 @@ function renderState(state){
   setStat('statTetrises',s.tetrises||0);setStat('statTspins',s.tspins||0);setStat('statPerfectClears',s.perfectClears||0);setStat('statDropSplit',(s.softDropRows||0)+' / '+(s.hardDropRows||0));setStat('statsSessionStatus',state.gameOver?'GAME OVER':'IN PROGRESS');
   renderFinesse(state);
   if(hold)hold.innerHTML=miniPiece(state.hold,colorOnlyHoldEnabled);
-  if(next){const count=Math.max(1,Math.min(15,Number(trainer.nextQueueSize)||5));next.innerHTML=state.queue.slice(0,count).map(type=>miniPiece(type,colorOnlyNextEnabled)).join('');}
+  if(next)next.innerHTML=state.queue.slice(0,5).map(type=>miniPiece(type,colorOnlyNextEnabled)).join('');
 }
 trainer.options.onState=renderState;
 trainer.options.onRhythmReport=renderRhythmReport;
