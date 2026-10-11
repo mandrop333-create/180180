@@ -16,14 +16,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Acquire current TETR.IO matrix candidate (never overwrite accepted reference)
+      - name: Acquire current TETR.IO matrix candidate and preserve exact bundle for movement audit
+        env:
+          TETRIO_BUNDLE_OUTPUT: tetrio-current-client-bundle.js
         run: node scripts/fetch-tetrio-matrix-fixtures.mjs games/01/tetrio-matrix-reference-candidate.js
-      - name: Upload current matrix candidate for review
+      - name: Upload current matrix candidate and source bundle for review
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tetrio-current-matrix-candidate-${{ github.run_id }}
-          path: games/01/tetrio-matrix-reference-candidate.js
+          name: tetrio-current-reference-candidate-${{ github.run_id }}
+          path: |
+            games/01/tetrio-matrix-reference-candidate.js
+            tetrio-current-client-bundle.js
           if-no-files-found: warn
           retention-days: 14
       - name: Test pinned TETR.IO matrix fixture extractor
