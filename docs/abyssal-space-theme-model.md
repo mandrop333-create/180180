@@ -765,8 +765,8 @@ The board is a live coordinate system, not a decorative object. No ambient trans
 
 - Board frame: stable, sharp, with a soft perimeter halo behind the frame.
 - Active piece and ghost: stable game-state rendering; preserve the renderer's piece identity and opacity semantics.
-- Next previews: may have very small independent ambient drift while static.
-- Hold preview: remains still by default because its primary purpose is quick recognition; optionally add a one-shot confirmed event cue later, only if the engine reports a successful Hold.
+- Next previews: may have very small independent ambient drift while static; queue order and silhouettes must remain immediately legible.
+- Hold preview: may share the same low-amplitude drift as the Next preview because it is a separate instrument in the surrounding world. The held piece's identity and availability must remain obvious; do not add a celebratory cue until a successful Hold event is explicitly observable.
 - Statistics: values update immediately, with tabular numerals; avoid flashing every counter change.
 - Finesse prompt: explicit correctness states and key sequence remain more important than effects.
 
