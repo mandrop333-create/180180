@@ -643,3 +643,58 @@ No JavaScript gameplay hooks, engine state, input mapping, scoring, timing, boar
 ### Verification status
 
 This is a source-level implementation pass, **not a visual acceptance pass**. The GitHub workflow lookup for the latest CSS commit returned no pull-request workflow runs. Browser screenshots, measured composited contrast ratios, and device performance evidence are still outstanding. The release gate remains open until those checks can be performed; a richer stylesheet alone is not sufficient evidence of completion.
+
+
+---
+
+## 21. Human-centered ambition: make the world feel discovered, not themed
+
+A premium experience is not achieved by adding more glow. It is achieved when the player feels that the interface has a point of view, that the game is easier to read, and that small moments feel intentional. The target is not “a Tetris board with ocean colors.” The target is a precision training instrument suspended in an immense, quiet, living abyss.
+
+### 21.1 The emotional arc
+
+- **Arrival:** the player enters a dark, spacious environment. The title is a distant beacon, not a giant neon sign. The game is the visual destination.
+- **Orientation:** Hold, board, Next and training signals feel like stations in one small submersible cockpit. The player can understand the hierarchy before reading every label.
+- **Flow:** once play starts, the environment gets out of the way. Piece identity, ghost placement, board boundaries and inputs remain immediate.
+- **Meaningful feedback:** a useful result feels like a precise instrument responding, not an arcade machine exploding. The reward is clarity and mastery.
+- **Return:** the page is visually distinctive enough to recognize, but calm enough to spend long practice sessions in.
+
+### 21.2 Signature design moves
+
+These moves should be recognizable as the identity of this experience, rather than generic dark-mode decoration:
+
+1. **The pressure halo.** A soft cyan/teal light volume lives around the outside of the board frame. It makes the board feel suspended in deep water while leaving the cells themselves sharp. This is now implemented in the draft CSS with a low-opacity perimeter pseudo-element; browser validation is still required.
+2. **The beacon wordmark.** The 180436 heading gets a restrained cool glow with a fine bright core. It should feel luminous through atmosphere, not through a thick neon stroke.
+3. **Instrument typography.** Tiny uppercase station labels are deliberately spaced; values use stable numeric alignment. Headings are short, while explanation text gets comfortable line height. The hierarchy should feel closer to scientific instrumentation than to a generic gaming dashboard.
+4. **Depth through absence.** Empty space is part of the design. Do not fill every gap with stars, particles, outlines, or metrics. The dark field creates scale by leaving areas quiet.
+5. **A physical response, not an animation show.** Controls get a crisp focus ring and a small pressed response. Panels can rise by a pixel on desktop hover, but mobile has no hover lift and reduced-motion users get no unnecessary motion.
+6. **Adaptive atmosphere.** On constrained widths the light volume is simplified; forced-colors mode receives clear system-color borders and focus. A visual effect that fails gracefully is better than one that only works in a showcase screenshot.
+
+### 21.3 Human factors that define “super cool”
+
+- **Instant comprehension beats ornament.** A player should find the board first, the next decision second, and settings third. Every decorative treatment must preserve this scan path.
+- **Contrast is part of atmosphere.** The dark background can be rich, but text and actionable boundaries cannot become mist. Quiet does not mean unreadable.
+- **Tactility matters.** A press should feel acknowledged through a small local material change. Avoid fake depth that shifts layout or delays input.
+- **Trust matters.** Never show a success glow for an event the game did not confirm. Do not turn a training error into a punishment animation.
+- **Long-session comfort matters.** Persistent pulsing, moving particles, large areas of bright cyan and constant motion are tiring, even when they look exciting in a short demo.
+- **Personal agency matters.** Existing depth, queue size, ghost and touch-layout controls should continue to work. Theme polish must not make those options harder to find or use.
+- **Distinctiveness comes from restraint.** The memorable signature is the combination of an immense abyss, precise glass instruments and one luminous playfield halo—not a pile of effects.
+
+### 21.4 Third-pass implementation record
+
+The third CSS pass adds a more recognizable identity: a soft perimeter halo around the board frame, a more deliberate beacon treatment for the 180436 wordmark, slightly richer environmental volume, localized focus/pressed responses, restrained desktop panel lift, and a forced-colors fallback. The halo is behind the board frame and does not intentionally overlay the playfield.
+
+No JavaScript, game mechanics, input mapping, board geometry, piece colors or training semantics were changed. The effect should be considered provisional until the board remains crisp at all target widths and contrast/performance evidence is collected.
+
+### 21.5 Release questions that are about people, not only code
+
+Before approval, ask a first-time player to find the active piece, Hold, the next piece and settings without coaching. Then ask an experienced player to practice for several minutes. Observe, rather than lead:
+
+- What do they look at first?
+- Do they notice the next decision without losing the active piece?
+- Does the atmosphere make the game feel special, or does it compete for attention?
+- Are any labels hard to read at typical phone brightness?
+- Do controls feel immediate and stable?
+- Does the visual identity still feel good after five minutes, rather than only in the first five seconds?
+
+If the answer to “is it cooler?” is yes but the player reads the board more slowly, the design has failed. The success condition is emotional character **and** improved or preserved gameplay clarity.
