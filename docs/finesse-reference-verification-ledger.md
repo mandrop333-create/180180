@@ -466,3 +466,15 @@ This resolves the specific source-level concern that the current implementation 
 - The reference workflow still fails only at `Verify accepted TETR.IO reference is still current`: accepted fixtures and movement snapshots still name the May 4 asset. The audit verifies matrices and kick tables, not full runtime movement parity; it does **not** justify silently relabeling old movement snapshots as newly captured.
 - No gameplay code, merge, or deployment. Changes are limited to reference-audit tooling, workflow wiring, and this ledger.
 - **Next step:** verify representative current-client movement outcomes in the actual rotation path (including blocked/edge and direct-180 cases), then refresh the source references/snapshots only when the evidence supports it. Keep the freshness gate enabled until that is complete.
+
+
+## Current-client movement verification — 2026-10-11
+
+- Captured the live homepage-advertised TETR.IO client asset `https://tetr.io/js/tetrio.js?hv=9628c0bbd.a0cb57db6fb1.20260921T164842`; SHA-256 `b310aaf13ac0d7ee73c87c58abcdec87e1267217e182c10f4c9cb40dc5d73c92`.
+- The current-client audit matched all seven piece matrices and 72 SRS+ quarter-turn/direct-180 kick-table comparisons against `games/01/kicks.js`.
+- Added a review-only generator for current-client movement outcomes. The generated corpus contains 1,247 cases: 942 direct rotations, 255 kicked rotations, and 50 failed rotations. The trainer matched all 1,247 outcomes after the direct-only O-piece 180 case was handled correctly.
+- Re-evaluated the existing 57 static movement cases against the current bundle: 12 empty-board I turns, 6 blocked/edge/floor I cases, and 39 kicked SRS+ cases all matched landing states and kick indices. The existing cases remain static regression fixtures; their comments now distinguish original capture from current-client verification.
+- **Verified behavior fix:** the current-client cases showed that an O-piece direct 180 should attempt the unshifted destination even though O has no additional 180 kick candidates. Kept `getTetrio180Kicks('O')` empty (no fake kick) and changed `tryRotate` to attempt the direct destination when the configured kick list is empty. Planner regression tests passed after this change.
+- The freshness guard now checks the explicitly declared `VERIFIED_ASSET` in both static movement fixtures, in addition to the accepted matrix source. This prevents the matrix URL alone from being refreshed while the movement outcomes remain unverified.
+- At the time of this ledger entry, the latest run's substantive matrix/kick audit, generated movement comparison, static snapshot audit, and planner regression tests passed. The freshness gate was rerunning after the source metadata refresh; do not claim the entire workflow is green until that final run completes.
+- No merge or deployment. All changes remain on draft PR #8.
