@@ -76,7 +76,14 @@ for (const testCase of snapshot.cases) {
     }
     checked += 1;
   } catch (error) {
-    errors.push({ name: testCase.name, message: error instanceof Error ? error.message : String(error) });
+    errors.push({
+      name: testCase.name,
+      piece: testCase.piece,
+      from: testCase.from,
+      direction: testCase.direction,
+      expected: testCase.expected,
+      message: error instanceof Error ? error.message : String(error)
+    });
   }
 }
 
