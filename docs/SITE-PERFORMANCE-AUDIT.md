@@ -46,6 +46,28 @@ This is a source-level audit of the current `main` tree and the isolated `chore/
 5. **Legacy game copies** — consolidate after verifying every route, import, and test contract.
 6. **Visual polish** — refine atmosphere/materials after the render and input path is lean.
 
+
+## Second audit — cohesion and unintended runtime work (2026-10-11)
+
+Baseline: `main` at `c9cc2fbac24f766c57048ab787b5b2919799d50b`, after the first cleanup.
+
+### Confirmed findings
+
+- **Runtime-generated stylesheet:** `games/01/game.js` created a style element on every page startup and assembled 16.3 KB of CSS through six concatenated string literals. This mixed presentation/layout ownership into the gameplay module and caused an avoidable JS-to-DOM style-injection step before training started.
+- **Duplicate layout generations:** the injected CSS contained several overlapping desktop/mobile grid definitions that repeatedly overrode earlier rules, including repeated `!important` declarations. The intended final responsive layout was already expressed in the last block; earlier layout drafts were redundant.
+- **Safe bounded fix on `audit/site-cohesion`:** moved session-stat presentation into `css/session-stats.css`, linked it with the page stylesheets, removed runtime style construction, and consolidated the repeated layout drafts into one responsive layout authority. The stylesheet shrank from 16.3 KB of CSS literals to about 8.3 KB of CSS while preserving the existing stats markup and controls. This is a source-size reduction; runtime performance still needs browser measurement.
+- **Expected runtime activity, not random bloat:** the trainer's requestAnimationFrame loop is the active game simulation and stops when the game ends; rendering is gated by `renderDirty`. Keyboard, blur, mobile-control, theme-picker and settings listeners support visible features. The toast timeout is event-triggered, not a permanent timer. These should not be removed without changing behavior.
+- **No evidence from this source pass that every legacy game folder executes on this page.** The active entry point is `games/01/game.js`; duplicate game folders primarily need import/route tracing before any deletion. Do not equate repository copies with browser startup cost.
+
+### Remaining audit order
+
+1. Run CI on the exact PR head after moving and consolidating the CSS; inspect responsive layout behavior at desktop and mobile widths.
+2. Audit the remaining `index.html` inline CSS and `css/abyssal-space.css` for conflicting ownership and dead selectors, one bounded section at a time.
+3. Trace imports and page references before removing any legacy module or feature.
+4. Measure first input, startup main-thread tasks, transferred bytes, and frame/input latency in a real browser. Do not claim zero lag from source inspection alone.
+
+The new stylesheet extraction is not a production deployment. Keep the branch isolated until tests pass and the live deployment target is verifiable.
+
 ## Deployment blocker
 
 Cloudflare Workers Builds reported a failed preview for an earlier PR #29 commit (`e42d2d8`). The later head (`8ceff4b`) passed the GitHub Finesse and Playwright checks, but its Cloudflare preview result has not been verified. A Workers Builds preview for service `180trainertool` is not, by itself, proof that the public static website was deployed. Confirm the preview result and identify the production website deployment target before claiming a live release. The repository workflow in `.github/workflows/deploy-diagnostics-worker.yml` deploys a separate diagnostics Worker.
