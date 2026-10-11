@@ -57,6 +57,8 @@ export function getSrsKicks(type, from, to) {
  return table[from+'>'+to] || [[0,0]];
 }
 export function getTetrio180Kicks(type, from) {
- if(type==='O') return [];
+ // TETR.IO still accepts the unshifted 180 destination for O; it disallows
+ // additional kick candidates, not the direct rotation itself.
+ if(type==='O') return [[0,0]];
  return (type==='I'?HALF_I:HALF_JLSTZ)[((from%4)+4)%4] || [];
 }
