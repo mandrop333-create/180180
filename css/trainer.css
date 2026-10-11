@@ -74,3 +74,39 @@
 .colored-ghost-piece .cell.ghost-z{--ghost-color:#ad3f52}
 .colored-ghost-piece .cell.ghost-j{--ghost-color:#2e61ad}
 .colored-ghost-piece .cell.ghost-l{--ghost-color:#b9651d}
+
+
+/* Retro piece skin: crisp arcade palette, hard pixel edges and cabinet-like shadows. */
+:root[data-piece-theme="retro"] {
+  --piece-i-light:#8be9fd; --piece-i-dark:#00a8cc;
+  --piece-o-light:#fff1a8; --piece-o-dark:#e0a800;
+  --piece-t-light:#d8b4fe; --piece-t-dark:#8b35d1;
+  --piece-s-light:#a7f3a0; --piece-s-dark:#16a34a;
+  --piece-z-light:#ff9aa2; --piece-z-dark:#e11d48;
+  --piece-j-light:#93c5fd; --piece-j-dark:#2563eb;
+  --piece-l-light:#ffc078; --piece-l-dark:#ea580c;
+}
+:root[data-piece-theme="retro"] .cell.locked {
+  border: 1px solid #170d2a;
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 #ffffff55, inset -3px -3px 0 #12091d55, 2px 2px 0 #05030b;
+}
+:root[data-piece-theme="retro"] .cell.locked::after {
+  opacity: .85;
+  background: linear-gradient(135deg,#ffffff20 0 18%,transparent 18% 72%,#09051b30 72%);
+}
+:root[data-piece-theme="retro"] .active-piece-svg .front-face,
+:root[data-piece-theme="retro"] .turn-face .front-face {
+  stroke: #180d2a;
+  stroke-width: 1.6;
+  stroke-linejoin: miter;
+}
+:root[data-piece-theme="retro"] .active-piece-svg .seam,
+:root[data-piece-theme="retro"] .turn-face .seam {
+  stroke: #fff4d6;
+  stroke-width: 1;
+  opacity: .9;
+}
+:root[data-piece-theme="retro"] .cell.locked {
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,.32), inset -3px -3px 0 rgba(8,4,18,.36), 2px 2px 0 #05030b;
+}
