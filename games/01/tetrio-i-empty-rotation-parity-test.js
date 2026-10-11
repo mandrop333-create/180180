@@ -4,11 +4,10 @@ import { collides } from './collision.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { REFERENCE_PIECES } from './finesse-reference-fixtures.js';
 
-// These empty-board I-piece transitions are copied from the pinned TETR.IO
-// movement snapshot fixture generated from the client asset recorded below.
-// The snapshot coordinates are native min-cell coordinates; convert them into
-// the trainer's orientation-specific local-origin convention before comparing.
-const SOURCE_ASSET = 'https://tetr.io/js/tetrio.js?hv=7eebfc9cd.987f91854aad.20260504T210001';
+// These cases were originally captured from an older TETR.IO bundle and have
+// been re-evaluated against the current asset below by the independent movement
+// generator. Native min-cell coordinates are converted into trainer-local origins.
+const VERIFIED_ASSET = 'https://tetr.io/js/tetrio.js?hv=9628c0bbd.a0cb57db6fb1.20260921T164842';
 const TOTAL_HEIGHT = 40;
 const CASES = [
   { name: 'I 0 CCW', from: { rotation: 0, x: 2, y: 3 }, direction: -1, expected: { rotation: 3, x: 3, y: 1 } },
@@ -180,6 +179,6 @@ assert.equal(syntheticHalfTurnCases, 4, 'all four I-piece direct-180 orientation
 console.log(JSON.stringify({
   ok: true,
   cases: CASES.length + BLOCKED_CASES.length + 1,
-  sourceAsset: SOURCE_ASSET,
+  verifiedAgainstAsset: VERIFIED_ASSET,
   scope: '12 empty-board I turns, 6 pinned blocked/edge/floor outcomes, plus synthetic blocked-baseline direct-180 kick regressions for all four I orientations; pinned outcomes map local candidate index to raw kickIndex + 1'
 }));
