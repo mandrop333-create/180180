@@ -4,7 +4,7 @@
 // Set TETRIO_BUNDLE_OUTPUT to preserve the exact fetched client bundle for local audit.
 // Usage: node scripts/fetch-tetrio-matrix-fixtures.mjs [output-path]
 import { createHash } from 'node:crypto';
-import { copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,9 +22,9 @@ if (!homepageResponse.ok) {
 const homepage = await homepageResponse.text();
 // The homepage may advertise the version token outside a literal script URL.
 // Match the same hv token used by the freshness guard, then build the canonical URL.
-const versions = [...new Set([...homepage.matchAll(/\\bhv=([^"&<>]+)/g)].map(match => match[1]))];
+const versions = [...new Set([...homepage.matchAll(/\bhv=([^"&<>]+)/g)].map(match => match[1]))];
 if (versions.length !== 1) {
-  const title = homepage.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1]?.trim() ?? '(no HTML title)';
+  const title = homepage.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? '(no HTML title)';
   throw new Error('Expected exactly one TETR.IO homepage asset version; found ' + versions.length + '; HTTP ' + homepageResponse.status + '; title=' + title + '; bodyLength=' + homepage.length + '. Refusing to fall back to a stale hardcoded asset.');
 }
 const asset = new URL('https://tetr.io/js/tetrio.js?hv=' + versions[0]);
