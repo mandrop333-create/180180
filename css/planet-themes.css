@@ -64,3 +64,10 @@ body.theme-picker-open{overflow:hidden}
   box-shadow: inset 0 0 0 1px rgba(1,8,17,.35), inset 0 -5px 8px rgba(1,8,17,.25);
 }
 .theme-planet-generic i { display: none; }
+
+/* Swatches for the three original piece-material families. */
+.theme-planet-space{background:radial-gradient(circle at 28% 22%,#d8f7ff 0 2%,#64d9ff 10%,transparent 28%),radial-gradient(circle at 68% 63%,#8e52e9 0 17%,transparent 34%),linear-gradient(135deg,#163a76,#080b28 72%)}
+.theme-planet-space i{position:absolute;z-index:1;left:4px;top:14px;width:28px;height:7px;border:1px solid #8feaffaa;border-radius:50%;transform:rotate(-24deg);box-shadow:0 0 8px #4bd7ff66}
+.theme-planet-glass{background:linear-gradient(135deg,#f2ffffaa,#65d6e2aa 45%,#4e6db7aa);box-shadow:inset 0 0 0 1px #efffffcc,0 0 16px #7deaff35}.theme-planet-glass::after{box-shadow:inset -7px -7px 11px #0b254b66,inset 3px 3px 6px #ffffffbb,0 0 12px #65e7e82b}.theme-planet-glass i{position:absolute;z-index:1;inset:5px;border:1px solid #fff;border-radius:8px;transform:rotate(28deg);box-shadow:0 0 8px #fff8}
+.theme-planet-nature{background:radial-gradient(ellipse at 28% 24%,#e7ffad 0 3%,#8fdc76 13%,transparent 31%),radial-gradient(ellipse at 65% 68%,#2c805c 0 22%,transparent 23%),linear-gradient(135deg,#c1df85,#3d855b 48%,#122d31)}.theme-planet-nature::before{border-color:#b6f69b77;transform:rotate(28deg) scaleY(.55)}.theme-planet-nature i{position:absolute;z-index:1;left:5px;top:16px;width:26px;height:2px;border-radius:50%;background:#cfff9b;transform:rotate(-30deg);box-shadow:0 0 5px #d7ffab}
+.theme-option-planet.theme-planet-space,.theme-option-planet.theme-planet-glass,.theme-option-planet.theme-planet-nature{border-radius:50%}

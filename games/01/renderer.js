@@ -25,7 +25,10 @@ function addGradient(defs, id, stops, NS) {
 }
 
 function pieceGradient(type) {
-  const [light, dark] = PIECE_COLORS[type] || PIECE_COLORS.T;
+  const fallback = PIECE_COLORS[type] || PIECE_COLORS.T;
+  const styles = getComputedStyle(document.documentElement);
+  const light = styles.getPropertyValue('--piece-' + type + '-light').trim() || fallback[0];
+  const dark = styles.getPropertyValue('--piece-' + type + '-dark').trim() || fallback[1];
   return [{ offset: '0%', color: light }, { offset: '100%', color: dark }];
 }
 
@@ -53,7 +56,7 @@ function appendPieceGeometry(root, shape, depthPx, NS, { frontGradient = ACTIVE_
 
 export function drawActivePiece(piece, pieceSvg, anim, W, H, depth, cellsFor, NS, cache = {}, colorOnlyFocalPiece = false) {
   if (!piece || anim?.layer) { if (!anim?.layer) cache.activeKey = null; pieceSvg.replaceChildren(); return; }
-  const key = piece.type + ':' + piece.x + ':' + piece.y + ':' + piece.o + ':' + depth + ':' + colorOnlyFocalPiece;
+  const key = piece.type + ':' + piece.x + ':' + piece.y + ':' + piece.o + ':' + depth + ':' + colorOnlyFocalPiece + ':' + (document.documentElement.dataset.pieceTheme || 'generic');
   if (cache.activeKey === key) return;
   cache.activeKey = key;
   pieceSvg.replaceChildren();

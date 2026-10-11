@@ -5,19 +5,16 @@
   const options=[...picker.querySelectorAll('[data-piece-theme]')];
   const label=document.getElementById('activeThemeLabel');
   const status=document.getElementById('themePickerStatus');
-  const themes={
-    'aqua-space':{label:'AQUA SPACE',name:'Aqua Space'},
-    'generic':{label:'GENERIC',name:'Generic'}
-  };
-  let active='aqua-space';
-  try{const saved=localStorage.getItem('180180.pieceTheme');const migrated=saved==='ember-orbit'?'generic':saved;if(themes[migrated])active=migrated;}catch{}
+  const themes={space:{label:'SPACE',name:'Space'},glass:{label:'GLASS',name:'Glass'},nature:{label:'NATURE',name:'Nature'},generic:{label:'GENERIC',name:'Generic'}};
+  let active='space';
+  try{const saved=localStorage.getItem('180180.pieceTheme');const migrated=saved==='aqua-space'?'space':saved==='ember-orbit'?'generic':saved;if(themes[migrated])active=migrated;}catch{}
   function apply(id,announce){
     if(!themes[id])return;
     active=id;
     try{localStorage.setItem('180180.pieceTheme',id);}catch{}
     document.documentElement.dataset.pieceTheme=id;
-    launcher.querySelector('.theme-planet').classList.toggle('theme-planet-aqua',id==='aqua-space');
-    launcher.querySelector('.theme-planet').classList.toggle('theme-planet-generic',id==='generic');
+    const planet=launcher.querySelector('.theme-planet');
+    ['space','glass','nature','generic'].forEach(theme=>planet.classList.toggle('theme-planet-'+theme,id===theme));
     label.textContent=themes[id].label;
     options.forEach(option=>{
       const selected=option.dataset.pieceTheme===id;
