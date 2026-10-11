@@ -57,9 +57,7 @@ body{min-height:100vh}
 .trainer-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:22px clamp(18px,5vw,56px)}
 .trainer-brand{margin:0;text-align:center;font:900 clamp(20px,4vw,32px)/1 ui-monospace,monospace;letter-spacing:.08em;color:#eee8fb}
 .trainer-description{margin:8px auto 0;max-width:520px;text-align:center;color:#81778b;font-size:11px;line-height:1.45}
-.trainer-main{flex:1;padding:0 18px 40px;transform:none}
-.trainer-shell{width:min(1060px,100%);margin:0 auto}
-.homepage-game-first .trainer-layout{display:grid;grid-template-columns:220px 300px 220px 220px;gap:28px;align-items:start;justify-content:center}.homepage-game-first .board-column{justify-self:center}.homepage-game-first .rules-column{display:grid;gap:12px;padding-top:54px}
+.trainer-main{flex:1;width:100%;max-width:none;min-width:0;padding:0 18px 40px;transform:none}
 .homepage-game-first .trainer-side{display:grid;gap:12px;padding-top:54px}
 .trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
 .trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}.rules-card{position:relative;z-index:20;pointer-events:auto}.rules-list{display:grid;gap:10px;pointer-events:auto}.rule-control{display:grid;gap:7px}.rule-control-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.rule-control-head label{color:#cfc6dc;font:700 11px/1 ui-monospace,monospace}.rule-control-head output{color:#eee8fb;font:800 10px/1 ui-monospace,monospace}.rules-card .settings-range{width:100%;margin:0;display:block;position:relative;z-index:2;pointer-events:auto;cursor:pointer}.rules-toggle{position:relative;z-index:2;pointer-events:auto}.rules-toggle{display:flex;align-items:center;gap:8px;color:#cfc6dc;font:700 11px/1.25 ui-monospace,monospace;cursor:pointer}.rules-toggle input{accent-color:#a78bfa}.next-preview{transform:scale(var(--next-preview-scale,1));transform-origin:top center}.rhythm-card[hidden]{display:none}.rhythm-report{display:grid;gap:8px}.rhythm-metric{display:flex;justify-content:space-between;gap:8px;color:#91879e;font:700 9px/1.2 ui-monospace,monospace}.rhythm-metric strong{color:#eee8fb}.rhythm-outlier{padding:8px;border:1px solid #30283d;border-radius:8px;background:#0d0c11}.rhythm-outlier-title{display:flex;justify-content:space-between;gap:8px;color:#eee8fb;font:900 10px/1.2 ui-monospace,monospace}.rhythm-outlier-detail{margin-top:5px;color:#91879e;font:700 9px/1.35 ui-monospace,monospace}.rhythm-pattern{margin-top:5px;color:#d7a1ff;font:800 9px/1.35 ui-monospace,monospace}.invisible-focal-piece .active-piece-svg,.invisible-focal-piece .turn-layer{visibility:hidden}.color-only-focal-piece .turn-layer{visibility:hidden}.invisible-ghost-piece .cell.ghost{visibility:hidden}.finesse-prompt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;pointer-events:none}.finesse-prompt span{padding:7px 9px;border:2px solid #eee8fb;border-radius:7px;background:#0d0c11e8;color:#e45b66;font:900 clamp(15px,2.4vw,24px)/1 ui-monospace,monospace;letter-spacing:.08em;text-align:center;text-shadow:0 2px 12px #000;box-shadow:0 10px 28px #0008}.finesse-prompt .finesse-key.done{color:#72e69a;border-color:#72e69a}.finesse-prompt .finesse-key.next{color:#ff6673;border-color:#ff6673}.finesse-prompt .finesse-key.pending{color:#d94e5b;border-color:#7d3038}.finesse-prompt .finesse-gap{margin:0 5px;color:#777083;font:900 18px ui-monospace,monospace}.finesse-prompt[hidden]{display:none}
@@ -79,14 +77,8 @@ body{min-height:100vh}
 .trainer-controls{max-width:300px}
 .settings-checks{display:grid;gap:7px}.settings-checks label{display:flex;align-items:center;gap:8px;color:#cfc6dc;font-size:11px}.settings-checks input{accent-color:#a78bfa}.action-button{border:1px solid #51446e;border-radius:7px;background:#17151d;color:#eee8fa;padding:7px 12px;font:800 11px ui-monospace,monospace;cursor:pointer}
 .action-button:hover{border-color:#a78bfa;background:#201b29}
-@media(max-width:1100px){.homepage-game-first .trainer-layout{grid-template-columns:220px 300px 220px;}.rules-column{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:0}.rules-column .trainer-card{width:100%}}
-@media(max-width:900px){.homepage-game-first .trainer-layout{grid-template-columns:1fr;justify-items:center}.trainer-side,.rules-column{padding-top:0;width:min(520px,100%);grid-template-columns:1fr 1fr}.board-column{order:-1}.trainer-card{width:100%}}
 @media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}.trainer-description{font-size:10px}}
 
-/* Desktop composition: center the board itself, not an uneven four-column group. */
-.trainer-main{width:100%;max-width:none;min-width:0;transform:none!important}
-.trainer-shell{width:min(1240px,100%);margin-inline:auto}
-.homepage-game-first .trainer-layout{column-gap:clamp(16px,2vw,28px);row-gap:18px}
 .trainer-top{padding-top:26px;padding-bottom:24px}
 .trainer-brand{font-size:clamp(25px,2.4vw,36px);letter-spacing:.14em;text-shadow:0 0 26px #a78bfa28}
 .trainer-description{font-size:12px;max-width:560px;color:#a49ab5}
@@ -102,22 +94,6 @@ body{min-height:100vh}
 .board{background-color:#100e16}
 .action-button{background:linear-gradient(180deg,#282136,#17131f);border-color:#665184;transition:background .15s ease,border-color .15s ease,transform .15s ease}
 .action-button:hover{background:linear-gradient(180deg,#382b4d,#21182d);border-color:#c4a9ff;transform:translateY(-1px)}
-@media(min-width:901px){
-  .homepage-game-first .trainer-layout{grid-template-columns:minmax(190px,1fr) 300px minmax(190px,1fr);align-items:start;justify-content:stretch;gap:clamp(16px,2vw,28px);max-width:960px;margin-inline:auto}
-  .homepage-game-first .trainer-layout>.trainer-side:first-of-type{grid-column:1;grid-row:1 / span 2;min-width:0}
-  .homepage-game-first .trainer-layout>.board-column{grid-column:2;grid-row:1 / span 2;justify-self:center;min-width:0}
-  .homepage-game-first .trainer-layout>.trainer-side:nth-of-type(2){grid-column:3;grid-row:1;min-width:0}
-  .homepage-game-first .trainer-layout>.rules-column{grid-column:3;grid-row:2;display:grid;grid-template-columns:1fr;gap:12px;padding-top:0;min-width:0}
-  .homepage-game-first .trainer-layout>.trainer-side,.homepage-game-first .trainer-layout>.rules-column{width:100%}
-}
-@media(max-width:900px){
-  .trainer-shell{width:min(680px,100%)}
-  .homepage-game-first .trainer-layout{row-gap:16px}
-  .homepage-game-first .trainer-layout>.trainer-side,.homepage-game-first .trainer-layout>.board-column,.homepage-game-first .trainer-layout>.rules-column{grid-column:1;grid-row:auto}
-  .homepage-game-first .trainer-layout>.trainer-side:nth-of-type(2){grid-row:auto}
-  .homepage-game-first .trainer-layout>.rules-column{display:grid;grid-template-columns:1fr 1fr;padding-top:0}
-  .trainer-card{border-radius:14px}
-}
 @media(max-width:560px){
   .trainer-top{padding-top:18px;padding-bottom:18px}
   .mini-home-title{font-size:21px}
@@ -143,9 +119,7 @@ body{min-height:100vh}
 </style>
 <link rel="stylesheet" href="css/abyssal-space.css">
 <link rel="stylesheet" href="css/planet-themes.css">
-<link rel="stylesheet" href="css/aqua-flow-physics.css">
 
-<canvas class="aqua-flow-canvas" id="aquaFlowCanvas" aria-hidden="true"></canvas>
 <div class="trainer-page">
   <div class="trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
   <div class="trainer-settings-control">
@@ -361,5 +335,4 @@ body{min-height:100vh}
   window.addEventListener('trainerready',()=>{setEnabled(toggle.checked);applyLayout();});
 })();
 </script>
-<script src="js/aqua-flow-physics.js"></script>
 </html>

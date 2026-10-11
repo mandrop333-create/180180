@@ -1,188 +1,210 @@
-/* Aqua-space layout integrity pass: keep every instrument in its own lane. */
+/* Canonical responsive layout for the trainer page.
+   Keep page geometry here; theme styles only control visual materials. */
+
 .homepage-game-first .trainer-shell {
-  width: min(1180px, 100%) !important;
-  max-width: 1180px !important;
+  width: min(1180px, 100%);
+  max-width: 1180px;
+  margin-inline: auto;
 }
+
 .homepage-game-first .trainer-layout {
-  display: grid !important;
-  grid-template-columns: minmax(142px, .86fr) minmax(270px, 300px) minmax(112px, .68fr) minmax(180px, .98fr) !important;
-  gap: clamp(8px, 1.35vw, 16px) !important;
-  align-items: start !important;
-  justify-content: stretch !important;
-  min-width: 0 !important;
-  width: 100% !important;
+  display: grid;
+  grid-template-columns:
+    minmax(116px, .78fr)
+    minmax(260px, 300px)
+    minmax(104px, .68fr)
+    minmax(168px, .94fr);
+  gap: clamp(10px, 1.25vw, 16px);
+  align-items: start;
+  justify-content: stretch;
+  width: 100%;
+  min-width: 0;
 }
+
 .homepage-game-first .trainer-layout > * {
-  min-width: 0 !important;
-  max-width: 100% !important;
-}
-.homepage-game-first .board-column {
-  width: 100% !important;
-  min-width: 0 !important;
-  justify-self: stretch !important;
-}
-.homepage-game-first .board-wrap {
-  width: fit-content !important;
-  max-width: 100% !important;
-  margin-inline: auto !important;
-}
-.homepage-game-first .trainer-side,
-.homepage-game-first .rules-column {
-  padding-top: 0 !important;
-  min-width: 0 !important;
-}
-.homepage-game-first .trainer-card {
-  min-width: 0 !important;
-  overflow-wrap: anywhere;
-}
-.homepage-game-first .next-preview {
-  transform: none !important;
-  transform-origin: top center !important;
   min-width: 0;
   max-width: 100%;
-  overflow: visible !important;
-  gap: 5px !important;
 }
+
+.homepage-game-first .board-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.homepage-game-first .board-wrap {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.homepage-game-first .trainer-side,
+.homepage-game-first .rules-column {
+  min-width: 0;
+  padding-top: 0;
+}
+
+.homepage-game-first .trainer-side {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.homepage-game-first .rules-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 12px;
+  width: 100%;
+}
+
+.homepage-game-first .trainer-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.homepage-game-first .next-preview {
+  min-width: 0;
+  max-width: 100%;
+  gap: 5px;
+  transform: none;
+  transform-origin: top center;
+  overflow: visible;
+}
+
 .homepage-game-first .next-preview .mini-piece {
   flex: 0 1 auto;
   max-width: 100%;
-  animation: none !important;
-  translate: none !important;
-  will-change: auto !important;
+  animation: none;
+  translate: none;
+  will-change: auto;
 }
+
 .homepage-game-first .trainer-side > .trainer-card,
 .homepage-game-first .rules-column > .trainer-card {
-  animation: none !important;
-  translate: none !important;
+  animation: none;
+  translate: none;
 }
+
 .homepage-game-first .trainer-layout::before {
-  pointer-events: none !important;
-  z-index: -1 !important;
+  pointer-events: none;
+  z-index: -1;
 }
-@media (max-width: 1080px) {
+
+
+@media (min-width: 901px) {
   .homepage-game-first .trainer-layout {
-    grid-template-columns: minmax(132px, .8fr) minmax(270px, 300px) minmax(120px, .72fr) !important;
-    gap: 12px !important;
+    grid-template-columns:
+      minmax(116px, .78fr)
+      320px
+      minmax(104px, .68fr)
+      minmax(168px, .94fr);
   }
-  .homepage-game-first .rules-column {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+
+  .homepage-game-first .trainer-layout > .board-column {
+    width: 320px;
+    max-width: 100%;
+    justify-self: center;
   }
-  .homepage-game-first .rules-column > .trainer-card {
-    min-width: 0;
+
+  .homepage-game-first .board-wrap {
+    width: fit-content;
+    max-width: none;
+    box-sizing: content-box;
+    margin-inline: auto;
+  }
+
+  .homepage-game-first .board-wrap > .board {
+    flex: 0 0 auto;
+    max-width: none;
   }
 }
+
 @media (max-width: 760px) {
-  .homepage-game-first .trainer-main { padding-inline: 10px !important; }
+  .homepage-game-first .trainer-main {
+    padding-inline: 10px;
+  }
+
+  .homepage-game-first .trainer-shell {
+    width: min(680px, 100%);
+  }
+
   .homepage-game-first .trainer-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       "board board"
       "left next"
-      "rules rules" !important;
-    gap: 12px !important;
-    align-items: start !important;
+      "rules rules";
+    gap: 12px;
+    align-items: start;
   }
-  .homepage-game-first .board-column {
-    grid-area: board !important;
-    grid-column: 1 / -1 !important;
-    grid-row: 1 !important;
-    min-width: 0 !important;
+
+  .homepage-game-first .trainer-layout > .board-column {
+    grid-area: board;
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
-  .homepage-game-first .trainer-side:first-of-type {
-    grid-area: left !important;
-    grid-column: 1 !important;
-    grid-row: 2 !important;
+
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type {
+    grid-area: left;
+    grid-column: 1;
+    grid-row: 2;
     display: grid;
     align-content: start;
-    gap: 10px !important;
+    gap: 10px;
   }
-  .homepage-game-first .trainer-side:nth-of-type(2) {
-    grid-area: next !important;
-    grid-column: 2 !important;
-    grid-row: 2 !important;
+
+  .homepage-game-first .trainer-layout > .trainer-side:nth-of-type(2) {
+    grid-area: next;
+    grid-column: 2;
+    grid-row: 2;
     display: block;
   }
-  .homepage-game-first .rules-column {
-    grid-area: rules !important;
-    grid-column: 1 / -1 !important;
-    grid-row: 3 !important;
-    grid-template-columns: minmax(0, 1fr) !important;
+
+  .homepage-game-first .trainer-layout > .rules-column {
+    grid-area: rules;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .homepage-game-first .trainer-card { padding: 12px !important; }
+
+  .homepage-game-first .trainer-card {
+    padding: 12px;
+  }
+
   .homepage-game-first .next-preview {
-    align-items: center !important;
-    justify-content: flex-start !important;
+    align-items: center;
+    justify-content: flex-start;
   }
 }
+
 @media (max-width: 390px) {
-  .homepage-game-first .trainer-layout { gap: 8px !important; }
-  .homepage-game-first .trainer-card { padding: 9px !important; }
-  .homepage-game-first .next-preview { gap: 3px !important; }
+  .homepage-game-first .trainer-layout {
+    gap: 8px;
+  }
+
+  .homepage-game-first .trainer-card {
+    padding: 9px;
+  }
+
+  .homepage-game-first .next-preview {
+    gap: 3px;
+  }
+
   .homepage-game-first .next-preview .mini-piece {
-    min-width: 0 !important;
-    padding: 2px !important;
+    min-width: 0;
+    padding: 2px;
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .homepage-game-first .next-preview .mini-piece,
   .homepage-game-first .trainer-side > .trainer-card,
   .homepage-game-first .rules-column > .trainer-card {
-    animation: none !important;
-    translate: none !important;
-  }
-}
-
-
-/* Human-first Aqua Space layout: keep Rules beside the Next queue on desktop. */
-@media (min-width: 761px) {
-  .homepage-game-first .trainer-layout {
-    grid-template-columns: minmax(116px, .78fr) minmax(260px, 300px) minmax(104px, .68fr) minmax(168px, .94fr) !important;
-    gap: clamp(10px, 1.25vw, 16px) !important;
-    align-items: start !important;
-  }
-  .homepage-game-first .trainer-layout > .trainer-side:first-of-type {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-  }
-  .homepage-game-first .trainer-layout > .board-column {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-  }
-  .homepage-game-first .trainer-layout > .trainer-side:nth-of-type(2) {
-    grid-column: 3 !important;
-    grid-row: 1 !important;
-  }
-  .homepage-game-first .trainer-layout > .rules-column {
-    grid-column: 4 !important;
-    grid-row: 1 !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    align-content: start !important;
-    gap: 12px !important;
-    padding-top: 0 !important;
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-  .homepage-game-first .rules-column > .rules-card {
-    width: 100% !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-}
-@media (max-width: 760px) {
-  .homepage-game-first .trainer-layout {
-    grid-template-areas:
-      "board board"
-      "left next"
-      "rules rules" !important;
-  }
-  .homepage-game-first .trainer-layout > .rules-column {
-    grid-area: rules !important;
-    grid-column: 1 / -1 !important;
-    grid-row: 3 !important;
+    animation: none;
+    translate: none;
   }
 }

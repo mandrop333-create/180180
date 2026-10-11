@@ -1,7 +1,6 @@
 import { Trainer } from './engine.js';
 import mode from './mode.js';
 import { getSettings, mountSettings, keyLabel } from './settings.js';
-import { runTrainerSelfTest } from './self-test.js';
 import { cellsFor } from './pieces.js';
 
 const settings=getSettings();
@@ -148,9 +147,16 @@ document.getElementById('restartButton')?.addEventListener('click',()=>trainer.r
 document.getElementById('holdButton')?.addEventListener('click',()=>trainer.hold());
 mountSettings({trainer});
 window.dispatchEvent(new Event('trainerready'));
-try{
-  runTrainerSelfTest();
-}catch(error){
-  console.error('180180 trainer self-test failed; continuing startup:',error);
+// The exhaustive planner self-test is opt-in so it never competes with
+// real-time training during ordinary startup. Run with ?selftest=1 when needed.
+if (new URLSearchParams(window.location.search).get('selftest') === '1') {
+  import('./self-test.js')
+    .then(({ runTrainerSelfTest }) => {
+      const result = runTrainerSelfTest();
+      console.info('180180 trainer self-test passed:', result);
+    })
+    .catch(error => {
+      console.error('180180 trainer self-test failed:', error);
+    });
 }
 trainer.start();
