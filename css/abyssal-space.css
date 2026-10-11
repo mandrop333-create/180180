@@ -1308,3 +1308,83 @@ textarea:focus-visible {
 @media (forced-colors: active) {
   .trainer-shell::before, .trainer-shell::after, .board-wrap::after { display: none !important; }
 }
+
+
+/* V2.3 — shift the metaphor from outer space to actual water.
+   Replace the inherited starfield with suspended marine snow and a readable
+   surface-to-abyss gradient. Keep the effect static: no gameplay motion. */
+body::before {
+  opacity: .52;
+  background:
+    radial-gradient(1px 1px at 7% 18%, rgba(202, 244, 233, .38) 50%, transparent 100%),
+    radial-gradient(1px 1px at 13% 61%, rgba(130, 222, 209, .24) 50%, transparent 100%),
+    radial-gradient(1px 1px at 24% 34%, rgba(191, 239, 233, .28) 50%, transparent 100%),
+    radial-gradient(1px 1px at 32% 79%, rgba(146, 217, 213, .2) 50%, transparent 100%),
+    radial-gradient(1px 1px at 47% 22%, rgba(195, 244, 231, .22) 50%, transparent 100%),
+    radial-gradient(1px 1px at 59% 66%, rgba(147, 220, 210, .25) 50%, transparent 100%),
+    radial-gradient(1px 1px at 68% 42%, rgba(206, 245, 236, .22) 50%, transparent 100%),
+    radial-gradient(1px 1px at 78% 83%, rgba(135, 209, 203, .2) 50%, transparent 100%),
+    radial-gradient(1px 1px at 91% 27%, rgba(196, 238, 229, .3) 50%, transparent 100%),
+    radial-gradient(ellipse 72% 19% at 50% 0%, rgba(157, 235, 217, .09), transparent 74%),
+    linear-gradient(180deg, rgba(122, 208, 204, .025), transparent 22% 100%);
+}
+body::after {
+  opacity: .66;
+  background:
+    radial-gradient(ellipse 82% 22% at 50% -6%, rgba(118, 213, 201, .11), transparent 74%),
+    linear-gradient(180deg, transparent 0%, rgba(3, 12, 22, .02) 22%, rgba(2, 8, 17, .18) 58%, rgba(1, 5, 12, .56) 100%),
+    radial-gradient(ellipse at 5% 77%, rgba(21, 108, 111, .11), transparent 34%),
+    radial-gradient(ellipse at 96% 66%, rgba(57, 90, 122, .10), transparent 35%);
+}
+/* A subtle surface line gives the page a vertical world, not a starry void. */
+.trainer-top { position: relative; }
+.trainer-top::before {
+  content: "";
+  position: absolute;
+  left: max(18px, 5vw);
+  right: max(18px, 5vw);
+  top: 8px;
+  height: 1px;
+  pointer-events: none;
+  opacity: .5;
+  background: linear-gradient(90deg, transparent, rgba(153, 235, 218, .22) 16%, rgba(153, 235, 218, .12) 50%, rgba(153, 235, 218, .2) 84%, transparent);
+}
+.trainer-top::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: min(620px, 80vw);
+  height: 100%;
+  opacity: .58;
+  background: radial-gradient(ellipse at 50% 0%, rgba(116, 221, 205, .10), transparent 72%);
+}
+.trainer-brand, .trainer-description { position: relative; z-index: 1; }
+/* Recessed content rather than uniform glass: a dark quiet pocket behind play. */
+.trainer-main { position: relative; }
+.trainer-main::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  top: 22px;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(980px, 100%);
+  border-radius: 46% 46% 18px 18px / 4% 4% 18px 18px;
+  background:
+    radial-gradient(ellipse at 50% 4%, rgba(19, 67, 78, .16), transparent 62%),
+    linear-gradient(180deg, rgba(1, 8, 16, .06), rgba(1, 6, 13, .18) 64%, transparent);
+}
+@media (max-width: 560px) {
+  .trainer-top::before { left: 14px; right: 14px; opacity: .35; }
+  .trainer-top::after { opacity: .32; }
+  .trainer-main::before { width: 100%; border-radius: 20px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .trainer-card { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .trainer-shell::before, .trainer-shell::after { opacity: .12; }
+}
