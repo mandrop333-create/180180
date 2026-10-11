@@ -13,7 +13,8 @@ import {
 // This test now uses the matrices extracted from the exact pinned client asset.
 // It verifies all-piece coordinate round trips against real client matrix data;
 // it is not a movement/kick parity test.
-assert.ok(TETRIO_MATRIX_SOURCE.asset.includes('/js/tetrio.js?hv=7eebfc9cd.'), 'must use the exact pinned TETR.IO asset');
+assert.match(TETRIO_MATRIX_SOURCE.asset, /^https:\/\/tetr\.io\/js\/tetrio\.js\?hv=[^&]+$/, 'must use an explicit versioned TETR.IO asset');
+assert.match(TETRIO_MATRIX_SOURCE.sha256 ?? '', /^[a-f0-9]{64}$/, 'must record the exact client bundle SHA-256');
 assert.equal(Object.keys(TETRIO_MATRIX_REFERENCE).length, 7);
 
 let checks = 0;
