@@ -70,7 +70,7 @@
   min-width: 0;
   max-width: 100%;
   gap: 5px;
-  transform: none;
+  transform: scale(var(--next-preview-scale,1));
   transform-origin: top center;
   overflow: visible;
 }
