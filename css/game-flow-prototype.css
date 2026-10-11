@@ -1,0 +1,81 @@
+/* Prototype: make Hold/Next feel like planning rails connected to the playfield.
+   Desktop-only first pass; mobile keeps its familiar stacked cards. */
+@media (min-width: 901px) {
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* Put Hold level with the board's top edge, not below the stats panel. */
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2) {
+    order: -1;
+  }
+
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2),
+  .homepage-game-first .trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card:first-of-type {
+    position: relative;
+    overflow: visible;
+    padding: 10px 8px 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transition: none;
+  }
+
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2)::before,
+  .homepage-game-first .trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card:first-of-type::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 8px;
+    right: 8px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #8b78b866 22%, #8b78b866 78%, transparent);
+    pointer-events: none;
+  }
+
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2) h2,
+  .homepage-game-first .trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card:first-of-type h2 {
+    margin-bottom: 8px;
+    color: #a99bc4;
+    letter-spacing: .2em;
+  }
+
+  .homepage-game-first .hold-preview {
+    min-height: 48px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .homepage-game-first .next-preview {
+    min-height: 48px;
+    background: transparent;
+  }
+
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2) .action-button {
+    margin-top: 4px !important;
+  }
+
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2) .action-button {
+    border-color: #413650;
+    background: #15121b;
+    box-shadow: none;
+  }
+
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2) .action-button:hover {
+    border-color: #8d79b2;
+    background: #1d1826;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type > .trainer-card:nth-of-type(2),
+  .homepage-game-first .trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card:first-of-type {
+    transition: none !important;
+  }
+}
