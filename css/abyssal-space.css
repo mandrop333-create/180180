@@ -830,7 +830,7 @@ body::after {
 }
 
 /* Depth is built in layers: distant light, marine snow, then the habitat.
-   Keep these as two static composited planes rather than many DOM particles. */
+   Keep atmosphere in a few composited planes rather than DOM particles. */
 .trainer-page {
   background:
     radial-gradient(ellipse at 50% 4%, rgba(41, 116, 119, .15), transparent 35%),
@@ -860,7 +860,6 @@ body::after {
     radial-gradient(1px 1px at 91% 63%, rgba(210,255,239,.56) 50%, transparent 100%),
     radial-gradient(1px 1px at 58% 87%, rgba(245,205,143,.52) 50%, transparent 100%),
     radial-gradient(1px 1px at 42% 11%, rgba(210,255,239,.4) 50%, transparent 100%);
-  animation: abyssal-water-column 34s ease-in-out infinite alternate;
 }
 .trainer-page::after {
   opacity: .26;
@@ -871,17 +870,7 @@ body::after {
     repeating-radial-gradient(ellipse at 50% -12%, transparent 0 22px, rgba(165, 236, 217, .018) 23px 24px, transparent 25px 48px);
   mask-image: linear-gradient(to bottom, black, transparent 78%);
   -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
-  animation: abyssal-caustic-drift 42s ease-in-out infinite alternate;
 }
-@keyframes abyssal-water-column {
-  from { transform: translate3d(-.25%, -.2%, 0); }
-  to { transform: translate3d(.25%, .35%, 0); }
-}
-@keyframes abyssal-caustic-drift {
-  from { transform: translate3d(-.3%, 0, 0) scale(1); opacity: .18; }
-  to { transform: translate3d(.3%, .4%, 0) scale(1.015); opacity: .34; }
-}
-
 /* Cards become small pieces of submerged hardware: asymmetric light,
    a fine inner rim, and an optical highlight rather than a uniform blue slab. */
 .trainer-card {
@@ -1469,11 +1458,7 @@ body::after {
     inset 0 0 0 3px rgba(1, 9, 17, .56) !important;
 }
 @media (max-width: 720px) {
-  body::after { animation: none; opacity: .25; }
   body::before { opacity: .4; }
-}
-@media (prefers-reduced-motion: reduce) {
-  body::after { animation: none !important; transform: none !important; }
 }
 @media (forced-colors: active) {
   body::before, body::after { display: none !important; }
