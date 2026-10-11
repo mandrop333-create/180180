@@ -1,3 +1,27 @@
+/* Aqua Space is a moving fluid volume, not a decorative color preset. */
+.aqua-flow-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: .62;
+  mix-blend-mode: screen;
+}
+.trainer-page { position: relative; z-index: 1; }
+.theme-picker { z-index: 700; }
+@media (max-width: 720px) {
+  .aqua-flow-canvas { opacity: .38; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aqua-flow-canvas { opacity: .2; }
+}
+@media (forced-colors: active) {
+  .aqua-flow-canvas { display: none; }
+}
+
 /* Keep the 300px playfield grid fully inside its Aqua Space frame.
    The grid's own width excludes the wrapper's padding and border; reserve
    that outer width in the desktop center track to prevent right-edge spill. */
