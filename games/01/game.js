@@ -51,6 +51,8 @@ mountStatsDashboard();
 const rhythmCard=document.getElementById('rhythmCard');
 const rhythmReport=document.getElementById('rhythmReport');
 function clearRhythmReport(){if(rhythmCard)rhythmCard.hidden=true;if(rhythmReport)rhythmReport.innerHTML='';}
+function showRhythmCollecting(){if(!rhythmCard||!rhythmReport)return;rhythmCard.hidden=false;rhythmReport.innerHTML='<div class="rhythm-metric"><span>STATUS</span><strong>Collecting placements</strong></div>';}
+window.setCalculateRhythmDisplay=enabled=>{if(enabled)showRhythmCollecting();else clearRhythmReport();};
 function renderFinesse(state){
   if(!finessePrompt)return;
   const steps=state.finesse||[];
@@ -115,7 +117,7 @@ function renderState(state){
 }
 trainer.options.onState=renderState;
 trainer.options.onRhythmReport=renderRhythmReport;
-trainer.options.onReset=reason=>{if(reason!=='gameover')clearRhythmReport();};
+trainer.options.onReset=reason=>{if(reason!=='gameover'){if(trainer.rhythm?.enabled)showRhythmCollecting();else clearRhythmReport();}};
 trainer.emitState();
 trainer.setToastCallback(message=>{const toast=document.getElementById('toast');if(toast){toast.textContent=message;toast.hidden=false;clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>toast.hidden=true,1400);}});
 window.addEventListener('keydown',e=>trainer.handleKeydown(e),true);
