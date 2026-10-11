@@ -50,3 +50,19 @@
 :root[data-piece-theme="nature"] .active-piece-svg .front-face,:root[data-piece-theme="nature"] .turn-face .front-face{stroke:#e4ffd1;stroke-width:1.15}
 :root[data-piece-theme="space"] .active-piece-svg .front-face,:root[data-piece-theme="space"] .turn-face .front-face{stroke:#d8f7ff;stroke-width:1.2}
 :root[data-piece-theme="glass"] .active-piece-svg .seam,:root[data-piece-theme="glass"] .turn-face .seam{stroke:#f0ffff;opacity:.85}:root[data-piece-theme="nature"] .active-piece-svg .seam,:root[data-piece-theme="nature"] .turn-face .seam{stroke:#e4ffd1;opacity:.72}:root[data-piece-theme="space"] .active-piece-svg .seam,:root[data-piece-theme="space"] .turn-face .seam{stroke:#d8f7ff;opacity:.78}
+
+/* Preview swatches and colored ghost share the active theme palette. */
+.mini-i{color:var(--piece-i-light,#8bd5ff);background:var(--piece-i-light,#8bd5ff)}
+.mini-o{color:var(--piece-o-light,#ffe68a);background:var(--piece-o-light,#ffe68a)}
+.mini-t{color:var(--piece-t-light,#d7a1ff);background:var(--piece-t-light,#d7a1ff)}
+.mini-s{color:var(--piece-s-light,#8be7a7);background:var(--piece-s-light,#8be7a7)}
+.mini-z{color:var(--piece-z-light,#ff8d9c);background:var(--piece-z-light,#ff8d9c)}
+.mini-j{color:var(--piece-j-light,#73a9ff);background:var(--piece-j-light,#73a9ff)}
+.mini-l{color:var(--piece-l-light,#ffb05f);background:var(--piece-l-light,#ffb05f)}
+.colored-ghost-piece .cell.ghost-i{--ghost-color:var(--piece-i-dark,#2f86b8)}
+.colored-ghost-piece .cell.ghost-o{--ghost-color:var(--piece-o-dark,#b8891f)}
+.colored-ghost-piece .cell.ghost-t{--ghost-color:var(--piece-t-dark,#7d4ca9)}
+.colored-ghost-piece .cell.ghost-s{--ghost-color:var(--piece-s-dark,#2f8a50)}
+.colored-ghost-piece .cell.ghost-z{--ghost-color:var(--piece-z-dark,#ad3f52)}
+.colored-ghost-piece .cell.ghost-j{--ghost-color:var(--piece-j-dark,#2e61ad)}
+.colored-ghost-piece .cell.ghost-l{--ghost-color:var(--piece-l-dark,#b9651d)}
