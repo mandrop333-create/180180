@@ -155,7 +155,7 @@ body{min-height:100vh}
   <header class="trainer-top" aria-label="180436">
     <div class="theme-launcher-wrap">
       <button class="theme-launcher" id="themeLauncher" type="button" aria-haspopup="dialog" aria-controls="themePicker" aria-expanded="false">
-        <span class="theme-planet theme-planet-aqua" aria-hidden="true"></span>
+        <span class="theme-planet theme-planet-space" aria-hidden="true"></span>
         <span class="theme-launcher-copy"><strong>THEMES</strong><small id="activeThemeLabel">AQUA SPACE</small></span>
       </button>
     </div>
@@ -227,15 +227,16 @@ body{min-height:100vh}
   <button class="theme-picker-backdrop" type="button" data-theme-close aria-label="Close themes"></button>
   <section class="theme-picker-panel" role="dialog" aria-modal="true" aria-labelledby="themePickerTitle">
     <div class="theme-picker-heading">
-      <div><p class="theme-kicker">COSMIC LOADOUT</p><h2 id="themePickerTitle">Choose your world</h2><p class="theme-picker-subtitle">Choose the visual preset you want to use.</p></div>
+      <div><p class="theme-kicker">PIECE SKIN LAB</p><h2 id="themePickerTitle">Choose your piece skin</h2><p class="theme-picker-subtitle">Original block materials, built for clear reads during fast play.</p></div>
       <button class="theme-picker-close" type="button" data-theme-close aria-label="Close themes">×</button>
     </div>
     <div class="theme-options" role="group" aria-label="Available piece themes">
-      <button class="theme-option is-selected" type="button" data-piece-theme="aqua-space" aria-pressed="true">
-        <span class="theme-option-planet theme-planet-aqua" aria-hidden="true"><i></i></span>
-        <span class="theme-option-copy"><strong>Aqua Space</strong><small>Liquid-cosmos interface · current look</small></span>
-        <span class="theme-option-state" aria-hidden="true">✓</span>
+      <button class="theme-option is-selected" type="button" data-piece-theme="space" aria-pressed="true">
+        <span class="theme-option-planet theme-planet-space" aria-hidden="true"><i></i></span>
+        <span class="theme-option-copy"><strong>Space</strong><small>Cosmic mineral · nebula glow · star flecks</small></span><span class="theme-option-state" aria-hidden="true">✓</span>
       </button>
+      <button class="theme-option" type="button" data-piece-theme="glass" aria-pressed="false"><span class="theme-option-planet theme-planet-glass" aria-hidden="true"><i></i></span><span class="theme-option-copy"><strong>Glass</strong><small>Crystal edges · translucent shine · cool refraction</small></span><span class="theme-option-state" aria-hidden="true">✓</span></button>
+      <button class="theme-option" type="button" data-piece-theme="nature" aria-pressed="false"><span class="theme-option-planet theme-planet-nature" aria-hidden="true"><i></i></span><span class="theme-option-copy"><strong>Nature</strong><small>Botanical grain · moss · living color</small></span><span class="theme-option-state" aria-hidden="true">✓</span></button>
       <button class="theme-option" type="button" data-piece-theme="generic" aria-pressed="false">
         <span class="theme-option-planet theme-planet-generic" aria-hidden="true"><i></i></span>
         <span class="theme-option-copy"><strong>Generic</strong><small>Standard piece colors · original artwork</small></span>
