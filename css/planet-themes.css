@@ -96,3 +96,28 @@ body.theme-picker-open{overflow:hidden}
 }
 .theme-planet-retro i { display:none; }
 .theme-option-planet.theme-planet-retro { border-radius: 3px; }
+
+
+/* Fruity theme swatch: vivid citrus, berry and melon bands with a fresh gloss. */
+.theme-planet-fruity {
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 28% 22%,#fffbdc 0 5%,transparent 6%),
+    linear-gradient(135deg,#ff6685 0 24%,#ffb52e 24% 45%,#a8e85b 45% 66%,#32d6b2 66% 82%,#a78bfa 82%);
+  box-shadow: inset 0 -5px 0 #68245b55, inset 0 2px 0 #ffffffa8, 0 0 13px #ff6b9a35;
+}
+.theme-planet-fruity::before {
+  inset: 5px 7px auto auto;
+  width: 30%;
+  height: 20%;
+  border: 0;
+  border-radius: 50%;
+  background: #fff9;
+  transform: rotate(-30deg);
+  box-shadow: none;
+}
+.theme-planet-fruity::after {
+  border-radius: 50%;
+  box-shadow: inset 0 -5px 0 #63214a33, inset 0 1px 0 #ffffff66;
+}
+.theme-planet-fruity i { display:none; }
