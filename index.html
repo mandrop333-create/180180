@@ -142,6 +142,7 @@ body{min-height:100vh}
 @media(max-width:520px){.mobile-control{width:40px;height:40px;margin:-20px 0 0 -20px;font-size:11px}}
 </style>
 <link rel="stylesheet" href="css/abyssal-space.css">
+<link rel="stylesheet" href="css/planet-themes.css">
 
 <div class="trainer-page">
   <div class="trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
@@ -150,7 +151,12 @@ body{min-height:100vh}
     <span class="trainer-settings-label">SETTINGS</span>
   </div>
   <header class="trainer-top" aria-label="180436">
-    <div></div>
+    <div class="theme-launcher-wrap">
+      <button class="theme-launcher" id="themeLauncher" type="button" aria-haspopup="dialog" aria-controls="themePicker" aria-expanded="false">
+        <span class="theme-planet theme-planet-aqua" aria-hidden="true"></span>
+        <span class="theme-launcher-copy"><strong>THEMES</strong><small id="activeThemeLabel">AQUA SPACE</small></span>
+      </button>
+    </div>
     <div>
       <h1 class="trainer-brand">180436</h1>
       <p class="trainer-description">Focused falling-block training through deliberate visual and input constraints.</p>
@@ -219,6 +225,28 @@ body{min-height:100vh}
   </main>
 </div>
 
+<div class="theme-picker" id="themePicker" hidden>
+  <button class="theme-picker-backdrop" type="button" data-theme-close aria-label="Close themes"></button>
+  <section class="theme-picker-panel" role="dialog" aria-modal="true" aria-labelledby="themePickerTitle">
+    <div class="theme-picker-heading">
+      <div><p class="theme-kicker">COSMIC LOADOUT</p><h2 id="themePickerTitle">Choose your world</h2><p class="theme-picker-subtitle">Select a planet preset for your piece-theme slot.</p></div>
+      <button class="theme-picker-close" type="button" data-theme-close aria-label="Close themes">×</button>
+    </div>
+    <div class="theme-options" role="group" aria-label="Available piece themes">
+      <button class="theme-option is-selected" type="button" data-piece-theme="aqua-space" aria-pressed="true">
+        <span class="theme-option-planet theme-planet-aqua" aria-hidden="true"><i></i></span>
+        <span class="theme-option-copy"><strong>Aqua Space</strong><small>Liquid cosmos · current world</small></span>
+        <span class="theme-option-state" aria-hidden="true">✓</span>
+      </button>
+      <button class="theme-option" type="button" data-piece-theme="ember-orbit" aria-pressed="false">
+        <span class="theme-option-planet theme-planet-ember" aria-hidden="true"><i></i></span>
+        <span class="theme-option-copy"><strong>Ember Orbit</strong><small>Volcanic amber · new planet</small></span>
+        <span class="theme-option-state" aria-hidden="true">✓</span>
+      </button>
+    </div>
+    <div class="theme-picker-footer"><span class="theme-status-dot"></span><p id="themePickerStatus" aria-live="polite">Aqua Space selected. Piece-art presets are ready for the next build step.</p></div>
+  </section>
+</div>
 <div class="settings-panel" data-settings-root hidden>
   <div class="settings-backdrop" data-settings-backdrop></div>
   <section class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
@@ -255,6 +283,7 @@ body{min-height:100vh}
 </script>
 
 <script type="module" src="games/01/game.js"></script>
+<script src="js/planet-themes.js" defer></script>
 
 
 <script>
