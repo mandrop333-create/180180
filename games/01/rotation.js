@@ -19,7 +19,12 @@ export function tryRotate(piece, delta, board, W, H, cellsFor, onHalfTurn, halfT
   const from = piece.o;
   const to = targetOrientation(from, delta);
   const isHalfTurn = delta === 2 || delta === -2;
-  const kicks = isHalfTurn ? (halfTurnKicks || getTetrio180Kicks(piece.type, from)) : getSrsKicks(piece.type, from, to);
+  const configuredKicks = isHalfTurn
+    ? (halfTurnKicks || getTetrio180Kicks(piece.type, from))
+    : getSrsKicks(piece.type, from, to);
+  // Always try the direct destination first. An empty kick table (such as O's
+  // 180 profile) means "no additional kicks", not "rotation is impossible".
+  const kicks = configuredKicks.length ? configuredKicks : [[0, 0]];
 
   for (const [dx, dy] of kicks) {
     if (!collides(piece.x + dx, piece.y + dy, to, board, W, H, cellsFor, piece.type)) {
