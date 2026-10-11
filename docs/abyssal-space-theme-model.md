@@ -619,3 +619,27 @@ Do not call the theme finished based on the stylesheet loading successfully. If 
 - **Reject:** theme changes that alter scoring, gravity, lock delay, controls, training semantics, or renderer geometry; any decoration that lowers piece readability; and any production merge without screenshots and regression evidence.
 
 This model is the working contract for the next iteration. It should guide the design toward a more convincing suspended-in-liquid cosmos while protecting the immediacy and precision that make the trainer useful.
+
+
+---
+
+## 20. Third-pass implementation record
+
+**Implemented on the draft branch:** a second, component-aware CSS layer now extends the initial palette and background rather than replacing the model with a new visual direction.
+
+The added layer includes:
+- A subtle atmospheric field attached to the trainer page itself, with broad water-light gradients and a restrained light-shaft suggestion that stays outside the board.
+- Instrument-specific edge highlights and label markers, while preserving the board as the highest-clarity surface.
+- A more deliberate Hold/Next scan: centered Hold content, a distinct first upcoming piece, and a compact horizontal queue at narrower widths.
+- More cohesive rule toggles and range controls, including a visible selected state for enabled rules.
+- A dedicated settings-dialog material treatment, including its actual `.settings-card`, backdrop, section dividers, close/reset controls and numeric outputs.
+- A calmer rhythm-report presentation and clearer finesse-key geometry.
+- Explicit blur fallback and reduced-motion handling for the newly styled components.
+
+### What this pass intentionally does not do
+
+No JavaScript gameplay hooks, engine state, input mapping, scoring, timing, board geometry, or piece colors were changed. No animated particles, synthetic line-clear events, or inferred Hold/lock pulses were added. These remain deferred until they can be driven by verified runtime events and validated in a browser.
+
+### Verification status
+
+This is a source-level implementation pass, **not a visual acceptance pass**. The GitHub workflow lookup for the latest CSS commit returned no pull-request workflow runs. Browser screenshots, measured composited contrast ratios, and device performance evidence are still outstanding. The release gate remains open until those checks can be performed; a richer stylesheet alone is not sufficient evidence of completion.
