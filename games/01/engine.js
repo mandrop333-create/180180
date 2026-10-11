@@ -33,7 +33,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.rhythm=new RhythmTracker(options.calculateRhythm===true);this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.halfTurnAnimationEnabled=options.halfTurnAnimationEnabled===true;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -71,7 +71,7 @@ export class Trainer {
     this.dasCutRemaining=this.rules.dcd||0; // Rotation preserves the active horizontal DAS clock; DCD is the only intentional cut.
     recordTrainingRotation(this.training,delta,before,this.piece);this.rhythm?.rotate(delta,performance.now());this.hook('rotate',{before,after:{...this.piece},delta,now:performance.now()});
     if(this.finesseEnabled&&delta){const finesseAction=delta===2||delta===-2?'half':delta===1?'cw':delta===-1?'ccw':null;if(finesseAction)this.recordFinesseObservation(finesseAction);}
-    if(halfTurnOld)this.startHalfTurn(halfTurnOld,{...this.piece});this.markRender();return true;
+    if(halfTurnOld&&this.halfTurnAnimationEnabled)this.startHalfTurn(halfTurnOld,{...this.piece});this.markRender();return true;
   }
   startHalfTurn(old,next){const animation={from:{...old},to:{...next},layer:null,started:0,duration:240};if(this.anim?.layer)this.anim.layer.remove();this.anim=animation;startHalfTurn(animation,this.boardEl,this.cellsFor,NS,()=>{if(this.anim!==animation)return;this.anim=null;this.render();});}
   hold(){
@@ -85,6 +85,7 @@ export class Trainer {
     else{this.holdType=current;this.ensureQueue();this.spawn();}
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
+  setHalfTurnAnimationEnabled(enabled){this.halfTurnAnimationEnabled=!!enabled;if(!this.halfTurnAnimationEnabled&&this.anim?.layer){this.anim.layer.remove();this.anim=null;this.render();}}
   setColorOnlyFocalPiece(enabled){this.colorOnlyFocalPiece=!!enabled;this.render();}
   setCalculateRhythm(enabled){this.rhythm.enabled=!!enabled;this.rhythm.reset();}
   finishRhythm(){const report=this.rhythm?.report();if(report)this.options.onRhythmReport(report);}
