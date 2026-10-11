@@ -8,7 +8,7 @@ import { tryRotate } from './rotation.js';
 import { drawActivePiece,renderBoard,startHalfTurn } from './renderer.js';
 import { createTrainingState,recordTrainingAction,recordTrainingRotation,tickTrainingState } from './training-state.js';
 import { RhythmTracker } from './rhythm.js';
-import { planFinesse } from './finesse.js';
+import { planFinesse } from './finesse-core.js';
 
 const defaultMode={id:null,rules:{},hooks:{}};
 const SCORE={single:100,double:300,triple:500,tetris:800,tspin:400,tspinSingle:800,tspinDouble:1200,tspinTriple:1600,mini:100,miniSingle:200,miniDouble:400,miniTriple:800,hardDropPerRow:2,softDropPerRow:1};
@@ -33,7 +33,7 @@ export class Trainer {
     this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0};
     this.gameOver=false;this.rhythm=new RhythmTracker(options.calculateRhythm===true);this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.dasCutRemaining=0;this.anim=null;
-    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
+    this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.lastAction=null;this.lastRotation=false;this.finesseEnabled=!!options.finesseEnabled;this.finesseRouteCandidates=[];this.finesseExecutionRoute=[];this.colorOnlyFocalPiece=!!options.colorOnlyFocalPiece;this.finesseActions=[];this.finesseProgress=0;this.finesseMistakes=0;this.finesseFaulted=false;
     this.binds={...defaultBinds,...(this.rules.binds||{})};this.depth=options.depth??.55;this.softScale=options.softScale??0;this.shadowOpacity=options.shadowOpacity??.6;this.shadowBrightness=options.shadowBrightness??1;
     this.cells=[];this.pieceSvg=null;this.toastCallback=null;this.renderDirty=true;this.running=false;this.renderCache={cellClasses:[],activeKey:null};if(!options.deferInit)this.init();
   }
@@ -46,7 +46,7 @@ export class Trainer {
     this.ensureQueue();
     const type=forcedType||this.queue.shift();
     this.ensureQueue();
-    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
+    this.piece=spawnFor(type);this.pieceInputCount=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.finesseProgress=0;this.finesseFaulted=false;this.finessePlacementResolved=false;this.finesseDASPending=null;this.lockResets=0;this.dasCutRemaining=this.rules.dcd||0;this.anim=null;this.lastRotation=false;this.lastAction=null;this.moveState={dir:0,elapsed:0,repeatElapsed:0,startedAt:0,nextRepeatAt:Infinity};this.moveSuppressedAt=0;
     this.hook('beforeSpawn',{...this.piece});if(this.collides(this.piece.x,this.piece.y,this.piece.o,this.piece.type)){this.gameOver=true;this.hook('gameOver',{...this.piece});this.finishRhythm();this.render();queueMicrotask(()=>{if(this.gameOver)this.reset('gameover');});return;}
     this.hook('spawn',{...this.piece});this.reapplyHeldHorizontalInput();this.generateFinessePrompt();this.markRender();
   }
@@ -91,6 +91,7 @@ export class Trainer {
   setFinesseEnabled(enabled){
     this.finesseEnabled=!!enabled;
     this.finesseActions=[];
+    this.finesseExecutionRoute=[];
     this.finesseRouteCandidates=[];
     this.finesseProgress=0;
     this.finesseMistakes=0;
@@ -114,6 +115,7 @@ export class Trainer {
       a.route.map(step=>step.action+':'+step.mode).join('|').localeCompare(b.route.map(step=>step.action+':'+step.mode).join('|')));
     const chosen=ranked[0];
     this.finesseActions=chosen.route.map(step=>({...step}));
+    this.finesseExecutionRoute=(chosen.executionRoute||chosen.route).map(step=>({...step}));
     this.finesseProgress=chosen.progress;
     this.finesseDASPending=chosen.pendingDasAction?{action:chosen.pendingDasAction}:null;
   }
@@ -170,12 +172,16 @@ export class Trainer {
   }
   finesseLabel(step){
     const action=typeof step==='string'?step:step.action;
-    const code=this.binds?.[action];
-    const key=keyNames[code]||String(code||action).replace(/^Key/,'').replace(/^Digit/,'');
+    // Navigation routes call this step "softDrop", while the player's
+    // configured input binding is named "soft".
+    const bindAction=action==='softDrop'?'soft':action;
+    const code=this.binds?.[bindAction];
+    const key=keyNames[code]||String(code||bindAction).replace(/^Key/,'').replace(/^Digit/,'');
     return typeof step==='object'&&step.mode==='das'?key+' HOLD':key;
   }
   generateFinessePrompt(){
     this.finesseActions=[];
+    this.finesseExecutionRoute=[];
     this.finesseRouteCandidates=[];
     this.finesseProgress=0;
     this.finesseTarget=null;
@@ -201,9 +207,14 @@ export class Trainer {
     if(!plan)return;
     this.finesseTarget={...plan.target};
     this.finesseActions=plan.actions.map(step=>({...step}));
-    this.finesseRouteCandidates=(plan.routes?.length?plan.routes:[plan.actions]).map(route=>({
-      route:route.map(step=>({...step})),progress:0,pendingDasAction:null
+    const routes=plan.routes?.length?plan.routes:[plan.actions];
+    const executionRoutes=plan.executionRoutes?.length?plan.executionRoutes:[plan.executionRoute||plan.actions];
+    this.finesseRouteCandidates=routes.map((route,index)=>({
+      route:route.map(step=>({...step})),
+      executionRoute:(executionRoutes[index]||plan.executionRoute||route).map(step=>({...step})),
+      progress:0,pendingDasAction:null
     }));
+    this.finesseExecutionRoute=(plan.executionRoute||plan.actions).map(step=>({...step}));
   }
   reapplyHeldHorizontalInput(){
     if(this.gameOver||!this.piece)return;
@@ -250,7 +261,9 @@ export class Trainer {
     this.stats.pieceInputs=this.pieceInputCount;
     if(this.finesseEnabled&&!this.finessePlacementResolved){
       const target=this.finesseTarget;
-      const targetOk=!target||(lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&(!Number.isInteger(target.y)||lockedPiece.y===target.y));
+      // A missing prompt means planning failed; it must never count as a perfect placement.
+      const targetOk=!!target&&lockedPiece.x===target.x&&(lockedPiece.type==='O'?0:lockedPiece.o)===target.o&&
+        (!Number.isInteger(target.y)||lockedPiece.y===target.y);
       const sequenceComplete=this.finesseRouteCandidates.length
         ?this.finesseRouteCandidates.some(candidate=>candidate.progress>=candidate.route.length&&!candidate.pendingDasAction)
         :this.finesseProgress>=this.finesseActions.length;
@@ -283,9 +296,25 @@ export class Trainer {
       mode:typeof step==='string'?'tap':(step.mode||'tap'),
       label:this.finesseLabel(step),
       state:i<this.finesseProgress?'done':i===this.finesseProgress&&!this.finesseFaulted?'next':'pending'
-    })):[];
+    })):[]; 
+    // The guide follows the physical execution sequence, including zero-cost
+    // soft-drop navigation. Scoring progress still advances only for finesse
+    // actions, so navigation steps are shown without inflating finesse cost.
+    let finesseGuideIndex=0;
+    const finesseGuide=this.finesseEnabled?this.finesseExecutionRoute.map(step=>{
+      if(step.action==='softDrop')return {
+        action:step.action,mode:'navigation',label:this.finesseLabel({action:'soft'}),
+        state:'navigation'
+      };
+      const index=finesseGuideIndex++;
+      return {
+        action:step.action,mode:step.mode||'tap',label:this.finesseLabel(step),
+        state:index<this.finesseProgress?'done':index===this.finesseProgress&&!this.finesseFaulted?'next':'pending'
+      };
+    }):[];
     this.options.onState({
       finesse:finesseSteps,
+      finesseGuide,
       finesseState:this.finesseEnabled?{
         target:this.finesseTarget?{...this.finesseTarget}:null,
         progress:this.finesseProgress,
@@ -301,7 +330,18 @@ export class Trainer {
   }
   tick(t){
     if(!this.lastTime)this.lastTime=t;const dt=Math.min(50,Math.max(0,t-this.lastTime));this.lastTime=t;tickTrainingState(this.training,t);if(this.gameOver||!this.piece){this.hook('tick',dt,t);return;}
-    if(this.dasCutRemaining>0)this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
+    if(this.dasCutRemaining>0){
+      // DCD pauses the charged DAS clock, it does not merely suppress the
+      // movement frame. Shift both timing anchors by the portion of this
+      // frame spent inside DCD so a long DAS hold cannot fire immediately
+      // when the cut expires.
+      const pausedMs=Math.min(dt,this.dasCutRemaining);
+      this.dasCutRemaining=Math.max(0,this.dasCutRemaining-dt);
+      if(this.moveState.dir){
+        if(Number.isFinite(this.moveState.startedAt)&&this.moveState.startedAt>0)this.moveState.startedAt+=pausedMs;
+        if(Number.isFinite(this.moveState.nextRepeatAt))this.moveState.nextRepeatAt+=pausedMs;
+      }
+    }
     // Soft drop owns the vertical clock while held. Horizontal input/DAS
     // must never reset or suppress that clock, so moving sideways while
     // holding soft drop cannot make the piece appear to float.

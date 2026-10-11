@@ -1,0 +1,111 @@
+name: Finesse independent reference fixtures
+
+on:
+  push:
+    branches: ["rebuild/finesse-core"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  reference-fixtures:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Acquire current TETR.IO matrix candidate and preserve exact bundle for movement audit
+        env:
+          TETRIO_BUNDLE_OUTPUT: tetrio-current-client-bundle.js
+        run: node scripts/fetch-tetrio-matrix-fixtures.mjs games/01/tetrio-matrix-reference-candidate.js
+      - name: Upload current matrix candidate and source bundle for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetrio-current-reference-candidate-${{ github.run_id }}
+          path: |
+            games/01/tetrio-matrix-reference-candidate.js
+            tetrio-current-client-bundle.js
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Test pinned TETR.IO matrix fixture extractor
+        run: node scripts/test-extract-tetrio-matrix-fixtures.mjs
+      - name: Audit current TETR.IO matrix and SRS+ kick tables against accepted Finesse data
+        run: node --experimental-default-type=module scripts/audit-tetrio-current-reference.mjs tetrio-current-client-bundle.js games/01/tetrio-matrix-reference-candidate.js
+      - name: Generate review-only current-client movement outcomes
+        run: node --experimental-default-type=module scripts/generate-tetrio-movement-candidate.mjs tetrio-current-client-bundle.js games/01/tetrio-matrix-reference-candidate.js tetrio-current-movement-candidate.json
+      - name: Compare trainer rotations against generated current-client outcomes
+        run: node --experimental-default-type=module games/01/tetrio-current-movement-candidate-test.js tetrio-current-movement-candidate.json
+      - name: Upload generated current-client movement candidate for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetrio-current-movement-candidate-${{ github.run_id }}
+          path: tetrio-current-movement-candidate.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Test TETR.IO coordinate adapter round trips
+        run: node --experimental-default-type=module games/01/tetrio-coordinate-adapter-test.js
+      - name: Inventory legacy finesse.js references across tracked source
+        shell: bash
+        run: |
+          echo "=== All tracked references to the legacy finesse.js path ==="
+          git grep -n 'finesse.js' -- '*.js' '*.mjs' '*.html' || true
+          echo "=== Direct runtime imports of the legacy module path ==="
+          git grep -n 'from .*finesse.js' -- '*.js' '*.mjs' '*.html' || true
+          git grep -n 'import(.*finesse.js' -- '*.js' '*.mjs' '*.html' || true
+          echo "Inventory is informational until each reference is classified; do not remove the compatibility facade before review."
+      - name: Compare empty-board I-piece turns to pinned TETR.IO movement snapshots
+        run: node --experimental-default-type=module games/01/tetrio-i-empty-rotation-parity-test.js
+      - name: Compare kicked SRS+ outcomes and candidate order to pinned TETR.IO
+        run: node --experimental-default-type=module games/01/tetrio-srs-plus-movement-parity-test.js
+      - name: Check unobstructed T-piece rotation geometry
+        run: node --experimental-default-type=module -e "import('./games/01/finesse-t-rotation-reference-test.js').then(({runFinesseTRotationReferenceTest}) => console.log(JSON.stringify(runFinesseTRotationReferenceTest()))).catch(error => { console.error(error); process.exit(1); })"
+      - name: Check independent geometry and orientation fixtures
+        run: node --experimental-default-type=module -e "import('./games/01/finesse-reference-test.js').then(({runFinesseReferenceTests}) => console.log(JSON.stringify(runFinesseReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+      - name: Check independent SRS+ I-piece kick fixtures
+        run: node --experimental-default-type=module -e "import('./games/01/finesse-kick-reference-test.js').then(({runFinesseKickReferenceTests}) => console.log(JSON.stringify(runFinesseKickReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+      - name: Compare production planner against independent shortest-path oracle
+        run: node --experimental-default-type=module -e "import('./games/01/finesse-oracle-reference-test.js').then(({runIndependentFinesseOracleTests}) => console.log(JSON.stringify(runIndependentFinesseOracleTests()))).catch(error => { console.error(error); process.exit(1); })"
+      - name: Force every ordered rotation kick against independent fixtures
+        run: node --experimental-default-type=module -e "import('./games/01/finesse-kick-execution-reference-test.js').then(({runFinesseKickExecutionReferenceTests}) => console.log(JSON.stringify(runFinesseKickExecutionReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+
+      - name: Verify accepted TETR.IO reference is still current
+        run: node scripts/check-tetrio-reference-freshness.mjs
+      - name: Capture actionable parity-test diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          log=/tmp/finesse-ci-diagnostics.log
+          : > "$log"
+          run_test() {
+            label="$1"
+            shift
+            {
+              echo
+              echo "===== $label ====="
+              printf 'Command:'
+              printf ' %q' "$@"
+              echo
+              "$@"
+              status=$?
+              echo "EXIT_STATUS=$status"
+            } >> "$log" 2>&1
+          }
+          run_test "fixture extractor" node scripts/test-extract-tetrio-matrix-fixtures.mjs
+          run_test "coordinate adapter" node --experimental-default-type=module games/01/tetrio-coordinate-adapter-test.js
+          run_test "empty-board I rotations" node --experimental-default-type=module games/01/tetrio-i-empty-rotation-parity-test.js
+          run_test "kicked SRS+ movement parity" node --experimental-default-type=module games/01/tetrio-srs-plus-movement-parity-test.js
+          run_test "independent geometry fixtures" node --experimental-default-type=module -e "import('./games/01/finesse-reference-test.js').then(({runFinesseReferenceTests}) => console.log(JSON.stringify(runFinesseReferenceTests()))).catch(error => { console.error(error); process.exit(1); })"
+          cat "$log"
+      - name: Upload parity diagnostics even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finesse-ci-diagnostics-${{ github.run_id }}
+          path: /tmp/finesse-ci-diagnostics.log
+          if-no-files-found: error
+          retention-days: 14

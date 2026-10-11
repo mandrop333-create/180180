@@ -1,0 +1,43 @@
+name: Fetch pinned TETR.IO matrix fixture (manual)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["rebuild/finesse-core"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch exact pinned client and extract matrix fixture
+        run: node scripts/fetch-tetrio-matrix-fixtures.mjs /tmp/tetrio-matrix-reference-fixtures.js
+      - name: Validate generated fixture shape
+        run: |
+          test -s /tmp/tetrio-matrix-reference-fixtures.js
+          grep -q 'TETRIO_MATRIX_SOURCE' /tmp/tetrio-matrix-reference-fixtures.js
+          grep -q 'TETRIO_MATRIX_REFERENCE' /tmp/tetrio-matrix-reference-fixtures.js
+          for piece in I O T S Z J L; do
+            grep -q "\"$piece\":" /tmp/tetrio-matrix-reference-fixtures.js || {
+              echo "Missing piece in generated fixture: $piece"
+              exit 1
+            }
+          done
+          echo "Generated fixture exports and all seven piece keys are present."
+      - name: Upload generated fixture for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetrio-pinned-matrix-fixture
+          path: /tmp/tetrio-matrix-reference-fixtures.js
+          if-no-files-found: error
+          retention-days: 14

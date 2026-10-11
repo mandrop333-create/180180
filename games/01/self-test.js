@@ -1,10 +1,11 @@
 import { PIECE_TYPES, cellsFor, spawnFor } from './pieces.js';
+import { W, H } from './state.js';
 import { Trainer } from './engine.js';
 import { SevenBagGenerator } from './generator.js';
 import { getSrsKicks, getTetrio180Kicks } from './kicks.js';
 import { targetOrientation } from './pieces.js';
 import { listTrainingRules, TRAINING_RULE_SCHEMA } from './rules.js';
-import { enumerateFinesseTargets, minimumRoutesForTargets, planFinesse } from './finesse.js';
+import { enumerateFinesseTargets, enumerateFinesseNavigationTargets, minimumRoutesForTargets, planFinesse } from './finesse-core.js';
 import { collides, move } from './collision.js';
 import { tryRotate } from './rotation.js';
 import { routeCost,placementKey,placementIdentity,normalizeFinesseTarget,selectFinesseTarget,chooseTrainingTarget,reachablePlacementIdentities,reachableLandingTargets,minimumFinesseTargets,isFinessePerfect,finesseInputCost,profileFor,FINESSE_PROFILES,FINESSE_OBSERVATIONS,normalizeFinesseObservation,FINESSE_INPUT_MODES,finesseActionCost,wallX } from './finesse-rules.js';
@@ -31,14 +32,44 @@ export function runTrainerSelfTest(){
   // Rotation invariant: CW+CCW returns to the original orientation.
   for(let o=0;o<4;o++)assert(targetOrientation(targetOrientation(o,1),-1)===o,'rotation orientation cycle failed');
 
+  // Unsupported deltas must not create transitions in the runtime graph.
+  const invalidRotationPiece={type:'T',x:3,y:0,o:0};
+  const invalidRotationBefore=JSON.stringify(invalidRotationPiece);
+  assert(!tryRotate(invalidRotationPiece,0,Array.from({length:H},()=>Array(W).fill(0)),W,H,cellsFor),
+    'zero-degree rotation should be rejected');
+  assert(JSON.stringify(invalidRotationPiece)===invalidRotationBefore,
+    'rejected rotation mutated the piece');
+  assert(!tryRotate(invalidRotationPiece,3,Array.from({length:H},()=>Array(W).fill(0)),W,H,cellsFor),
+    'unsupported 270-degree delta should be rejected');
+  assert(JSON.stringify(invalidRotationPiece)===invalidRotationBefore,
+    'unsupported rotation delta mutated the piece');
+
+  // Malformed piece states must be rejected atomically, not normalized into
+  // valid-looking rotations through fallback kick data.
+  for (const malformed of [
+    {type:'?',x:3,y:0,o:0},
+    {type:'T',x:3,y:0,o:-1},
+    {type:'T',x:3,y:0,o:4},
+    {type:'T',x:3.5,y:0,o:0},
+    {type:'T',x:3,y:0.5,o:0}
+  ]) {
+    const before=JSON.stringify(malformed);
+    assert(!tryRotate(malformed,1,Array.from({length:H},()=>Array(W).fill(0)),W,H,cellsFor),
+      'malformed piece state should not rotate: '+before);
+    assert(JSON.stringify(malformed)===before,
+      'rejected malformed rotation mutated its piece: '+before);
+  }
+
   // TETR.IO-style direct 180 exists independently of two 90 turns.
   for(const type of ['I','T','J','L','S','Z']){
     for(let o=0;o<4;o++)assert(getTetrio180Kicks(type,o).length>0,type+' 180 kick table missing state '+o);
   }
   assert(getTetrio180Kicks('O',0).length===0,'O should not receive a fake 180 kick');
 
-  // Kick tables always have a no-kick first test for normal rotations.
-  for(const type of ['I','T','J','L','S','Z'])assert(getSrsKicks(type,0,1)[0][0]===0&&getSrsKicks(type,0,1)[0][1]===0,type+' SRS basic rotation missing');
+  // JLSTZ use the conventional no-kick-first order. TETR.IO SRS+ has
+  // piece-specific I-kick ordering and may apply an origin-compensating kick
+  // even on an open board; its exact ordered data is checked independently.
+  for(const type of ['T','J','L','S','Z'])assert(getSrsKicks(type,0,1)[0][0]===0&&getSrsKicks(type,0,1)[0][1]===0,type+' SRS basic rotation missing');
 
   // Exact TETR.IO SRS+ kick-order regression. Kick order changes which
   // legal destination wins when more than one offset fits.
@@ -54,13 +85,13 @@ export function runTrainerSelfTest(){
   };
   const expectedI={
     '0>1':[[0,0],[1,0],[-2,0],[-2,1],[1,-2]],
-    '1>0':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
     '1>2':[[0,0],[-1,0],[2,0],[-1,-2],[2,1]],
-    '2>1':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
     '2>3':[[0,0],[2,0],[-1,0],[2,-1],[-1,2]],
-    '3>2':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
     '3>0':[[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
-    '0>3':[[0,0],[-1,0],[2,0],[2,1],[-1,-2]]
+    '0>3':[[0,0],[-1,0],[2,0],[2,1],[-1,-2]],
+    '1>0':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+    '2>1':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '3>2':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]]
   };
   for(const [transition,expected] of Object.entries(expectedJLSTZ)){
     assert(JSON.stringify(getSrsKicks('T',...transition.split('>').map(Number)))===JSON.stringify(expected),
@@ -220,20 +251,35 @@ export function runTrainerSelfTest(){
   assert(placementIdentity({x:4,o:2,y:18})!==placementIdentity({x:4,o:2,y:7}),'distinct landing heights must remain distinct placements');
   assert(placementKey({x:4,o:2,y:7})!==placementKey({x:4,o:2,y:18}),'physical landing key must retain y');
 
-  // Exact planner contract: BFS cost must equal the number of deliberate
-  // movement/rotation inputs, and hard drop remains outside the route.
+  // Exact planner contract: reported cost must equal the profile-weighted
+  // deliberate input cost; hard drop remains outside the route.
   assert(FINESSE_PROFILES.SRS_0G_60HZ.supportsDirectHalfTurn===false,'standard SRS must not advertise direct 180');
   assert(FINESSE_PROFILES.TETRIO_SRS_PLUS_180.supportsDirectHalfTurn===true&&FINESSE_PROFILES.TETRIO_SRS_PLUS_180.halfTurnCost===1,'TETR.IO profile must explicitly define direct 180 cost');
   const planned=planFinesse({
     piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,seed:0,
-    move:(p,dx,dy)=>{if(dx&& (p.x+dx<0||p.x+dx>9))return false;p.x+=dx;p.y+=dy;return p.y<20;},
+    move:(p,dx,dy)=>{if(p.x+dx<0||p.x+dx>9||p.y+dy<0||p.y+dy>=20)return false;p.x+=dx;p.y+=dy;return true;},
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
-    cellsFor:()=>[]
+    cellsFor:()=>[[0,0]]
   });
-  assert(planned&&planned.cost===planned.actions.length,'planner cost must equal deliberate route length');
+  assert(planned&&planned.cost===routeCost(planned.actions,FINESSE_PROFILES.TETRIO_SRS_PLUS_180),'planner cost must equal profile-weighted deliberate route cost: planned='+JSON.stringify(planned)+' routeCost='+(planned?routeCost(planned.actions,FINESSE_PROFILES.TETRIO_SRS_PLUS_180):'no-plan'));
   assert(planned.actions.every(step=>['left','right','cw','ccw','half'].includes(step.action)),'planner must not count gravity or hard drop as finesse input');
   assert(planned.actions.every(step=>step.action!=='half'||step.mode==='tap'),'direct 180 must be represented as a deliberate tap action');
   assert(planned.target&&Number.isInteger(planned.target.x)&&Number.isInteger(planned.target.o),'planner must return canonical target identity');
+  const invalidLockPlan=planFinesse({
+    piece:{x:4,y:0,o:0,type:'T'},W:10,H:20,maxCost:2,
+    move:(p,dx,dy)=>{if(p.x+dx<0||p.x+dx>9||p.y+dy<0||p.y+dy>=20)return false;p.x+=dx;p.y+=dy;return true;},
+    tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
+    cellsFor:()=>[]
+  });
+  assert(invalidLockPlan===null,'planner must fail closed when no landing can be locked');
+  const malformedMovementPlan=planFinesse({
+    piece:{x:4,y:19,o:0,type:'T'},W:10,H:20,maxCost:2,
+    move:()=>true,
+    tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
+    cellsFor:()=>[[0,1]]
+  });
+  assert(malformedMovementPlan===null,
+    'planner must reject successful movement callbacks that do not apply the requested coordinate change');
 
   // Minimum-route regression: a longer route must never replace a shorter
   // route merely because its action labels sort earlier alphabetically.
@@ -305,9 +351,9 @@ export function runTrainerSelfTest(){
   // planner must never include rotation in its recommended route.
   const squarePlan=planFinesse({
     piece:{x:4,y:0,o:0,type:'O'},W:10,H:20,maxCost:2,seed:0,
-    move:(p,dx,dy)=>{if(dx&&(p.x+dx<0||p.x+dx>8))return false;p.x+=dx;p.y+=dy;return p.y<20;},
+    move:(p,dx,dy)=>{if(p.x+dx<0||p.x+dx>8||p.y+dy<0||p.y+dy>=20)return false;p.x+=dx;p.y+=dy;return true;},
     tryRotate:(p,d)=>{p.o=(p.o+d+4)%4;return true;},
-    cellsFor:()=>[]
+    cellsFor:()=>[[0,0]]
   });
   assert(squarePlan&&squarePlan.actions.every(step=>!['cw','ccw','half'].includes(step.action)),'O-piece finesse must never recommend rotation');
   assert(squarePlan.target&&squarePlan.target.o===0,'O-piece target orientation must be canonicalized');
@@ -434,6 +480,10 @@ export function runTrainerSelfTest(){
   const emptyBoard=Array.from({length:20},()=>Array(10).fill(0));
   const alternateRuntime=new Trainer(null,{mode:testMode,generator:testGenerator,deferInit:true,finesseEnabled:true});
   alternateRuntime.emptyBoard();
+  // Use the same obstacle geometry as the independent plan under test.
+  // An empty board can coincidentally select the same target today, but the
+  // assertion must remain meaningful if reachability expands in future.
+  alternateRuntime.board=routeRegressionBoard.map(row=>row.slice());
   alternateRuntime.piece={...equivalentStart};
   alternateRuntime.placed=alternativeTargetIndex;
   alternateRuntime.generateFinessePrompt();
@@ -441,8 +491,10 @@ export function runTrainerSelfTest(){
     alternateRuntime.finesseTarget.o===equivalentPlan.target.o&&
     alternateRuntime.finesseTarget.y===equivalentPlan.target.y,
     'runtime must select the same physical target as the planner');
-  for(const step of alternateRoute){
-    const code=alternateRuntime.binds[step.action];
+  const alternateRouteIndex=equivalentPlan.routes.indexOf(alternateRoute);
+  const alternateExecutionRoute=equivalentPlan.executionRoutes?.[alternateRouteIndex]||alternateRoute;
+  for(const step of alternateExecutionRoute){
+    const code=alternateRuntime.binds[step.action==='softDrop'?'soft':step.action];
     alternateRuntime.handleKeydown(keyEvent(code));
     alternateRuntime.handleKeyup(keyEvent(code));
   }
@@ -458,7 +510,7 @@ export function runTrainerSelfTest(){
     move:(p,dx,dy,b,W,H,cf)=>move(p,dx,dy,b,W,H,cf),
     tryRotate:(p,d,b,W,H,cf)=>tryRotate(p,d,b,W,H,cf)
   };
-  const dasTargets=enumerateFinesseTargets(dasOptions);
+  const dasTargets=enumerateFinesseNavigationTargets(dasOptions);
   const hardestDAS=dasTargets.filter(target=>target.cost===dasTargets[0]?.cost);
   const rightWallIndex=hardestDAS.findIndex(target=>target.target.x===8&&target.route.length===1&&target.route[0].mode==='das');
   assert(rightWallIndex>=0,'DAS regression must identify the one-input right-wall target');
@@ -616,6 +668,11 @@ export function runTrainerSelfTest(){
             const recordLanding=(state,cost)=>{
               const landed={...state};
               while(move(landed,0,1,board,10,20,cellsFor)){}
+              // Match the lockability contract independently: reachable states
+              // above the ceiling are top-outs, not legal placement targets.
+              const lockCells=cellsFor(type,landed.o);
+              if(!Array.isArray(lockCells)||!lockCells.length||
+                !lockCells.every(([cx,cy])=>landed.y+cy>=0&&landed.y+cy<20))return;
               const orientation=type==='O'?0:landed.o;
               const key=landed.x+','+orientation+','+landed.y;
               const old=oracle.get(key);

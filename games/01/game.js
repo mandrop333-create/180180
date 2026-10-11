@@ -46,7 +46,9 @@ const rhythmReport=document.getElementById('rhythmReport');
 function clearRhythmReport(){if(rhythmCard)rhythmCard.hidden=true;if(rhythmReport)rhythmReport.innerHTML='';}
 function renderFinesse(state){
   if(!finessePrompt)return;
-  const steps=state.finesse||[];
+  // Prefer the executable guide when available so soft-drop navigation
+  // appears in the right order without becoming a finesse-scoring action.
+  const steps=state.finesseGuide?.length?state.finesseGuide:(state.finesse||[]);
   if(!steps.length){
     finessePrompt.hidden=true;
     finessePrompt.innerHTML='';
@@ -60,7 +62,7 @@ function renderFinesse(state){
     const el=document.createElement('span');
     el.className='finesse-key '+step.state+(faulted?' faulted':'');
     el.textContent=step.label;
-    const status=step.state==='done'?'Completed ':step.state==='next'?'Required ':'Pending ';
+    const status=step.state==='done'?'Completed ':step.state==='next'?'Required ':step.state==='navigation'?'Navigation: ':'Pending ';
     el.setAttribute('aria-label',status+step.label+(faulted?' — placement has a finesse fault':''));
     finessePrompt.appendChild(el);
   });
