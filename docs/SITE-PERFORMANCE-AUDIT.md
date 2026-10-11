@@ -66,11 +66,11 @@ Baseline: `main` at `c9cc2fbac24f766c57048ab787b5b2919799d50b`, after the first 
 3. Trace imports and page references before removing any legacy module or feature.
 4. Measure first input, startup main-thread tasks, transferred bytes, and frame/input latency in a real browser. Do not claim zero lag from source inspection alone.
 
-The new stylesheet extraction is not a production deployment. Keep the branch isolated until tests pass and the live deployment target is verifiable.
+The second-audit cleanup was merged through PR #30 at commit `067ccf148b23f40c6c6c1e075b58f21ca54cf298` after Finesse regression and Playwright gameplay/mobile-layout checks passed. Merge is not proof of production deployment; the live website remains unverified.
 
 ## Deployment blocker
 
-Cloudflare Workers Builds reported a failed preview for an earlier PR #29 commit (`e42d2d8`). The later head (`8ceff4b`) passed the GitHub Finesse and Playwright checks, but its Cloudflare preview result has not been verified. A Workers Builds preview for service `180trainertool` is not, by itself, proof that the public static website was deployed. Confirm the preview result and identify the production website deployment target before claiming a live release. The repository workflow in `.github/workflows/deploy-diagnostics-worker.yml` deploys a separate diagnostics Worker.
+Cloudflare Workers Builds reported failed previews for PR #29 and again for the second-audit PR #30 head (`bf93189`) on service `180trainertool`. The exact error is available in the [Cloudflare build log](https://dash.cloudflare.com/?to=/9965aaa4ea53734bec1392b232330098/workers/services/view/180trainertool/production/builds/e349ad2b-bb2a-4efb-aa0a-55ab394bccf8). This preview failure does not, by itself, establish whether the public static website deployment succeeded or failed. No production deployment record was available through the repository workflows checked here, and `https://180436.xyz/` could not be verified through the available browser check. Identify the actual production website deployment target and verify its build separately before claiming a live release. The repository workflow in `.github/workflows/deploy-diagnostics-worker.yml` deploys a separate diagnostics Worker.
 
 ## Acceptance gates for each section
 
