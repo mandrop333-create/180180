@@ -1,0 +1,42 @@
+/* Planet picker: compact instrument button + accessible, responsive loadout panel. */
+.theme-launcher-wrap{position:fixed;top:60px;left:26px;z-index:120}
+.theme-launcher{display:flex;align-items:center;gap:11px;min-height:58px;padding:8px 13px 8px 9px;border:1px solid rgba(132,222,219,.27);border-radius:13px;background:linear-gradient(145deg,rgba(9,35,45,.94),rgba(4,15,27,.94));color:#e6fbff;box-shadow:0 10px 28px #0005,inset 0 1px 0 #d7fff20c;cursor:pointer;text-align:left;transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.theme-launcher:hover{border-color:#81e8dcaa;transform:translateY(-1px);box-shadow:0 13px 32px #0007,0 0 22px #65e7e81a}
+.theme-launcher:focus-visible,.theme-option:focus-visible,.theme-picker-close:focus-visible{outline:2px solid #9af7d5;outline-offset:3px}
+.theme-launcher-copy{display:grid;gap:5px}
+.theme-launcher-copy strong{font:900 10px/1 ui-monospace,monospace;letter-spacing:.18em}
+.theme-launcher-copy small{color:#92b8c7;font:800 8px/1 ui-monospace,monospace;letter-spacing:.08em}
+.theme-planet{position:relative;display:block;flex:0 0 auto;width:35px;height:35px;border-radius:50%;isolation:isolate}
+.theme-planet::before{content:"";position:absolute;inset:-5px;border:1px solid #9af7d52e;border-radius:50%;transform:rotate(-24deg) scaleY(.48);box-shadow:0 0 8px #65e7e81c}
+.theme-planet::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset -7px -7px 11px #020711b8,inset 3px 3px 6px #ffffff5c,0 0 12px #65e7e82b}
+.theme-planet-aqua{background:radial-gradient(ellipse at 28% 25%,#d5fff1 0 3%,#72f1d7 10%,transparent 29%),radial-gradient(ellipse at 38% 39%,#43d8d4 0 13%,transparent 14%),radial-gradient(ellipse at 62% 63%,#155f8d 0 20%,transparent 21%),linear-gradient(135deg,#b5ffe8,#28b8c8 40%,#10416d 74%,#070d29)}
+.theme-planet-aqua i{position:absolute;z-index:1;left:7px;top:14px;width:24px;height:5px;border-radius:50%;border-top:1px solid #cafff5c9;transform:rotate(-25deg);filter:drop-shadow(0 0 3px #8effef)}
+.theme-planet-ember{background:radial-gradient(ellipse at 28% 22%,#fff0bd 0 3%,#ffc875 10%,transparent 28%),radial-gradient(ellipse at 35% 58%,#ff824a 0 17%,transparent 18%),radial-gradient(ellipse at 66% 37%,#9b3549 0 21%,transparent 22%),linear-gradient(135deg,#ffdc8d,#df633f 42%,#722d55 73%,#160f2b)}
+.theme-planet-ember::before{border-color:#ffc87555;transform:rotate(24deg) scaleY(.42);border-style:dashed}
+.theme-planet-ember i{position:absolute;z-index:1;left:-4px;top:15px;width:43px;height:10px;border:1px solid #ffcb7cba;border-left-color:#ffcb7c35;border-right-color:#ffcb7c35;border-radius:50%;transform:rotate(-22deg);box-shadow:0 0 6px #ff824a3b}
+.theme-picker[hidden]{display:none}
+.theme-picker{position:fixed;inset:0;z-index:700;display:grid;place-items:center;padding:18px}
+.theme-picker-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(1,7,15,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:default}
+.theme-picker-panel{position:relative;width:min(450px,100%);padding:22px;border:1px solid #75d9d14a;border-radius:20px;background:radial-gradient(ellipse at 12% 0%,#1a6b7030,transparent 45%),linear-gradient(145deg,#0d2634f7,#050d1afc 75%);box-shadow:0 28px 100px #000b,0 0 55px #37d8d51a,inset 0 1px 0 #d8fff21a;color:#e6faff}
+.theme-picker-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
+.theme-kicker{margin:0 0 9px;color:#80e9d5;font:900 9px/1 ui-monospace,monospace;letter-spacing:.2em}
+.theme-picker-heading h2{margin:0;color:#e9fcff;font:900 clamp(20px,5vw,26px)/1.1 ui-monospace,monospace;letter-spacing:-.04em}
+.theme-picker-subtitle{margin:9px 0 0;color:#91b1c1;font-size:12px;line-height:1.5}
+.theme-picker-close{width:34px;height:34px;flex:0 0 auto;border:1px solid #7ecdc72b;border-radius:10px;background:#0a1b29;color:#bde7e7;font-size:23px;line-height:1;cursor:pointer}
+.theme-options{display:grid;gap:10px}
+.theme-option{display:grid;grid-template-columns:54px minmax(0,1fr) 25px;align-items:center;gap:14px;width:100%;padding:13px;border:1px solid #7ecdc728;border-radius:14px;background:linear-gradient(120deg,#0c202d,#07121f);color:inherit;text-align:left;cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.theme-option:hover{transform:translateY(-1px);border-color:#7ee8d88a}
+.theme-option.is-selected{border-color:#8bf1d8a8;background:linear-gradient(120deg,#103a3bba,#0a1a29);box-shadow:inset 0 0 0 1px #9af7d51a,0 0 20px #65e7e80c}
+.theme-option-planet{width:46px;height:46px}
+.theme-option-copy{display:grid;gap:6px;min-width:0}
+.theme-option-copy strong{font:900 13px/1.1 ui-monospace,monospace;letter-spacing:.01em}
+.theme-option-copy small{color:#90adbd;font-size:10px;line-height:1.35}
+.theme-option-state{display:grid;place-items:center;width:23px;height:23px;border:1px solid #5f7f8a66;border-radius:50%;color:transparent;font-size:12px}
+.theme-option.is-selected .theme-option-state{border-color:#83e8c5;background:#83e8c51c;color:#aaffdf}
+.theme-picker-footer{display:flex;align-items:flex-start;gap:9px;margin-top:18px;padding-top:15px;border-top:1px solid #7ecdc71c}
+.theme-picker-footer p{margin:0;color:#88a9b9;font-size:10px;line-height:1.5}
+.theme-status-dot{width:6px;height:6px;flex:0 0 auto;margin-top:4px;border-radius:50%;background:#8af1d0;box-shadow:0 0 10px #8af1d080}
+body.theme-picker-open{overflow:hidden}
+@media(max-width:560px){.theme-launcher-wrap{top:53px;left:10px}.theme-launcher{gap:8px;min-height:48px;padding:6px 9px 6px 7px;border-radius:11px}.theme-launcher .theme-planet{width:29px;height:29px}.theme-launcher-copy{gap:4px}.theme-launcher-copy strong{font-size:9px}.theme-launcher-copy small{font-size:7px}.theme-picker{padding:12px}.theme-picker-panel{padding:18px;border-radius:17px}.theme-option{grid-template-columns:48px minmax(0,1fr) 23px;gap:10px;padding:11px}.theme-option-planet{width:41px;height:41px}}
+@media(prefers-reduced-motion:reduce){.theme-launcher,.theme-option{transition:none}.theme-launcher:hover,.theme-option:hover{transform:none}}
+@media(forced-colors:active){.theme-launcher,.theme-option,.theme-picker-panel{border:1px solid ButtonText}.theme-planet{forced-color-adjust:none}}
