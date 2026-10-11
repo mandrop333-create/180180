@@ -21,27 +21,3 @@
 @media (forced-colors: active) {
   .aqua-flow-canvas { display: none; }
 }
-
-/* Keep the 300px playfield grid fully inside its Aqua Space frame.
-   The grid's own width excludes the wrapper's padding and border; reserve
-   that outer width in the desktop center track to prevent right-edge spill. */
-@media (min-width: 901px) {
-  .homepage-game-first .trainer-layout {
-    grid-template-columns: minmax(190px, 1fr) 320px minmax(190px, 1fr) !important;
-  }
-  .homepage-game-first .trainer-layout > .board-column {
-    width: 320px !important;
-    max-width: 100% !important;
-    justify-self: center !important;
-  }
-  .homepage-game-first .board-wrap {
-    width: fit-content !important;
-    max-width: none !important;
-    box-sizing: content-box !important;
-    margin-inline: auto !important;
-  }
-  .homepage-game-first .board-wrap > .board {
-    flex: 0 0 auto;
-    max-width: none !important;
-  }
-}
