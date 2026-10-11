@@ -1141,3 +1141,170 @@ body::after {
   .trainer-top::after, .trainer-layout::before,
   .mini-home::before, .mini-home::after { display: none !important; }
 }
+
+
+/* ==========================================================================
+   ABYSSAL ECOSYSTEM / V2.2 — make the water feel inhabited
+   Surface light above, deep-water void around the play instrument, and
+   organic habitat contours at the far edges. The center stays quiet.
+   ========================================================================== */
+:root {
+  --abyss-light: rgba(155, 242, 226, .22);
+  --abyss-living-edge: rgba(101, 231, 202, .28);
+  --abyss-ink: #020912;
+}
+body {
+  background:
+    radial-gradient(ellipse 74% 30% at 50% -7%, rgba(103, 207, 204, .15), transparent 76%),
+    radial-gradient(ellipse 34% 42% at -8% 36%, rgba(22, 117, 133, .11), transparent 74%),
+    radial-gradient(ellipse 28% 36% at 108% 64%, rgba(92, 75, 142, .10), transparent 74%),
+    linear-gradient(180deg, #081a29 0%, #06121e 28%, #030b15 68%, #020710 100%) !important;
+  background-attachment: fixed;
+}
+.trainer-page::before {
+  opacity: .76;
+  background:
+    linear-gradient(112deg, transparent 0 14%, rgba(102, 213, 203, .025) 18%, transparent 24% 100%),
+    linear-gradient(77deg, transparent 0 35%, rgba(125, 225, 211, .04) 40%, transparent 47% 100%),
+    linear-gradient(101deg, transparent 0 67%, rgba(130, 157, 224, .035) 73%, transparent 80% 100%),
+    radial-gradient(ellipse at 50% 8%, rgba(78, 181, 187, .14), transparent 42%),
+    radial-gradient(ellipse at 6% 74%, rgba(21, 97, 112, .13), transparent 38%),
+    radial-gradient(ellipse at 96% 60%, rgba(94, 76, 142, .09), transparent 37%);
+  mask-image: linear-gradient(180deg, transparent, black 8%, black 70%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, transparent, black 8%, black 70%, transparent);
+}
+.trainer-page::after {
+  opacity: .56;
+  background:
+    radial-gradient(ellipse at 50% 44%, transparent 0 25%, rgba(2, 7, 16, .12) 56%, rgba(2, 7, 16, .72) 100%),
+    radial-gradient(ellipse at 3% 96%, rgba(29, 113, 113, .12), transparent 28%),
+    radial-gradient(ellipse at 97% 100%, rgba(100, 75, 147, .10), transparent 31%);
+}
+/* The habitat lives at the margins: asymmetric, soft reef-like silhouettes. */
+.trainer-shell::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: 18px -28px 0;
+  opacity: .72;
+  background:
+    radial-gradient(ellipse 17% 12% at 0% 18%, rgba(30, 104, 112, .15), transparent 76%),
+    radial-gradient(ellipse 13% 19% at 1% 36%, rgba(19, 79, 94, .13), transparent 74%),
+    radial-gradient(ellipse 19% 10% at 100% 28%, rgba(63, 90, 127, .12), transparent 78%),
+    radial-gradient(ellipse 12% 18% at 100% 48%, rgba(46, 71, 103, .12), transparent 76%),
+    linear-gradient(90deg, transparent 0 2%, rgba(92, 205, 185, .08) 2.2%, transparent 2.6% 97.2%, rgba(116, 165, 196, .07) 97.5%, transparent 98%);
+  filter: blur(8px);
+}
+.trainer-shell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: 0 -16px;
+  opacity: .32;
+  background:
+    radial-gradient(ellipse 21% 4% at 0% 0%, rgba(132, 230, 207, .18), transparent 78%),
+    radial-gradient(ellipse 16% 5% at 100% 0%, rgba(155, 170, 235, .14), transparent 78%);
+}
+/* Pressure-rated viewing window; the actual playfield remains untouched. */
+.board-wrap {
+  border-color: rgba(143, 229, 223, .48) !important;
+  background:
+    linear-gradient(145deg, rgba(34, 73, 82, .97), rgba(6, 20, 31, .99) 36%, rgba(3, 12, 23, .99) 72%) !important;
+  box-shadow:
+    0 30px 72px rgba(0, 0, 0, .54),
+    0 0 0 1px rgba(120, 236, 219, .09),
+    0 0 52px rgba(42, 165, 167, .12),
+    inset 0 1px 0 rgba(226, 255, 249, .17),
+    inset 0 0 0 3px rgba(2, 10, 17, .55) !important;
+}
+.board-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(181, 244, 230, .075);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.board {
+  background-color: var(--abyss-ink) !important;
+  outline-color: rgba(156, 224, 220, .12);
+}
+/* Related instruments, deliberately not identical cards. */
+.trainer-side:first-of-type .trainer-card:nth-child(2) {
+  border-radius: 18px 9px 14px 9px !important;
+  box-shadow: inset 0 1px 0 rgba(190, 255, 235, .075), 0 14px 34px rgba(0,0,0,.24) !important;
+}
+.trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card {
+  border-radius: 9px 18px 9px 14px !important;
+}
+.hud-item {
+  border-color: rgba(143, 211, 213, .17) !important;
+  background: linear-gradient(135deg, rgba(15, 44, 54, .8), rgba(4, 17, 29, .86)) !important;
+}
+.hud-item strong {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 16px rgba(110, 231, 215, .09);
+}
+.hold-preview {
+  border-color: rgba(123, 218, 197, .2) !important;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(66, 157, 145, .16), transparent 65%),
+    linear-gradient(180deg, rgba(3, 18, 27, .95), rgba(3, 11, 20, .98)) !important;
+}
+.action-button {
+  border-color: rgba(130, 212, 205, .29) !important;
+  background: linear-gradient(180deg, rgba(18, 54, 63, .96), rgba(5, 22, 34, .98)) !important;
+  box-shadow: inset 0 1px 0 rgba(210, 255, 245, .10), 0 3px 12px rgba(0,0,0,.15) !important;
+}
+.action-button:hover {
+  border-color: rgba(158, 247, 220, .66) !important;
+  box-shadow: inset 0 1px 0 rgba(210, 255, 245, .14), 0 0 18px rgba(69, 203, 183, .09) !important;
+}
+.action-button:active {
+  transform: translateY(1px) !important;
+  box-shadow: inset 0 2px 7px rgba(0,0,0,.24) !important;
+}
+.action-button:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #b1f7e4 !important;
+  outline-offset: 3px !important;
+}
+.next-preview .mini-piece {
+  border-color: rgba(128, 204, 205, .16) !important;
+  border-radius: 10px 6px 9px 6px !important;
+  background: linear-gradient(145deg, rgba(12, 40, 51, .76), rgba(3, 14, 24, .7)) !important;
+  box-shadow: inset 0 1px 0 rgba(218, 255, 245, .045);
+}
+.next-preview .mini-piece:first-child {
+  border-color: rgba(134, 237, 214, .36) !important;
+  background: linear-gradient(145deg, rgba(23, 71, 75, .82), rgba(4, 23, 31, .82)) !important;
+  box-shadow: inset 0 1px 0 rgba(218, 255, 245, .1), 0 0 18px rgba(80, 213, 187, .045);
+}
+.rhythm-outlier {
+  border-radius: 5px 11px 5px 11px !important;
+  border-color: rgba(147, 185, 217, .2) !important;
+}
+.rules-column > .trainer-card {
+  border-color: rgba(135, 197, 209, .17) !important;
+}
+@media (max-width: 900px) {
+  .trainer-shell::before { inset-inline: -8px; opacity: .34; filter: blur(5px); }
+  .trainer-shell::after { opacity: .18; }
+}
+@media (max-width: 560px) {
+  body { background-attachment: scroll; }
+  .trainer-shell::before, .trainer-shell::after { display: none; }
+  .board-wrap { box-shadow: 0 18px 42px rgba(0,0,0,.48), 0 0 28px rgba(42,165,167,.08), inset 0 1px 0 rgba(226,255,249,.12) !important; }
+  .trainer-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-button { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .trainer-shell::before, .trainer-shell::after, .board-wrap::after { display: none !important; }
+}
