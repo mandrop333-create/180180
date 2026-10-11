@@ -38,9 +38,9 @@ const snapshotPaths = [
 const staleSnapshots = [];
 for (const snapshotPath of snapshotPaths) {
   const snapshot = await readFile(snapshotPath, 'utf8');
-  const sourceMatch = snapshot.match(/SOURCE_ASSET\s*=\s*'([^']+)'/);
+  const sourceMatch = snapshot.match(/VERIFIED_ASSET\s*=\s*'([^']+)'/);
   if (!sourceMatch) {
-    staleSnapshots.push(snapshotPath.pathname.split('/').pop() + ' has no SOURCE_ASSET declaration');
+    staleSnapshots.push(snapshotPath.pathname.split('/').pop() + ' has no VERIFIED_ASSET declaration');
   } else if (sourceMatch[1] !== currentAsset) {
     staleSnapshots.push(snapshotPath.pathname.split('/').pop() + ' pins ' + sourceMatch[1]);
   }
