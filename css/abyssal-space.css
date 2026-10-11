@@ -261,3 +261,291 @@ body::after {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Second pass: make the liquid-space material specific to the real interface. */
+:root {
+  --glass-line-soft: rgba(135, 207, 230, .12);
+  --glass-fill-deep: rgba(4, 15, 27, .94);
+  --water-glow: rgba(69, 203, 202, .12);
+  --instrument-label: #91cbd6;
+}
+.trainer-page {
+  isolation: isolate;
+}
+.trainer-page::before,
+.trainer-page::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1120px, 100%);
+}
+.trainer-page::before {
+  top: 90px;
+  height: 580px;
+  opacity: .8;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(36, 143, 159, .13), transparent 38%),
+    radial-gradient(ellipse at 14% 42%, rgba(21, 100, 125, .09), transparent 34%),
+    radial-gradient(ellipse at 88% 58%, rgba(89, 74, 161, .08), transparent 36%);
+}
+.trainer-page::after {
+  top: 170px;
+  height: 430px;
+  opacity: .55;
+  background:
+    linear-gradient(118deg, transparent 0 22%, rgba(117, 229, 233, .035) 31%, transparent 42%),
+    linear-gradient(68deg, transparent 0 60%, rgba(126, 111, 221, .03) 68%, transparent 78%);
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 75%, transparent);
+}
+.trainer-main, .trainer-shell, .trainer-layout, .trainer-side, .board-column, .rules-column {
+  min-width: 0;
+}
+.trainer-shell {
+  position: relative;
+}
+.mini-home {
+  position: relative;
+  padding: 8px 0 20px;
+}
+.mini-home::after {
+  content: "";
+  display: block;
+  width: 76px;
+  height: 1px;
+  margin: 14px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(101,231,232,.55), transparent);
+}
+.trainer-description {
+  max-width: 52ch;
+  margin-inline: auto;
+  line-height: 1.65 !important;
+}
+.trainer-card {
+  overflow: hidden;
+  background-clip: padding-box !important;
+}
+.trainer-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 13%;
+  right: 13%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(190,244,249,.2), transparent);
+}
+.trainer-card h2 {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5 !important;
+}
+.trainer-card h2::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: var(--biolume-teal);
+  box-shadow: 0 0 9px rgba(88,203,185,.32);
+}
+.hold-preview {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.next-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 10px 0 4px;
+}
+.next-preview .mini-piece {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--glass-line-soft);
+  border-radius: 7px;
+  background: linear-gradient(145deg, rgba(11,34,47,.72), rgba(3,13,23,.58));
+}
+.next-preview .mini-piece:first-child {
+  border-color: rgba(101,231,232,.32);
+  background: linear-gradient(145deg, rgba(20,64,76,.68), rgba(4,18,29,.76));
+  box-shadow: inset 0 1px 0 rgba(216,247,255,.06), 0 0 18px rgba(101,231,232,.035);
+}
+.next-preview .mini-grid {
+  display: grid;
+  align-content: center;
+  justify-content: center;
+}
+.hud-item {
+  transition: border-color var(--abyss-fast) var(--abyss-ease), background var(--abyss-fast) var(--abyss-ease);
+}
+.hud-item:focus-within {
+  border-color: var(--glass-edge-active) !important;
+}
+.rules-card .rule-control,
+.rules-card .rules-toggle {
+  border-color: var(--glass-line-soft) !important;
+}
+.rules-card .rule-control {
+  padding-block: 10px !important;
+}
+.rules-card .rule-control-head,
+.settings-control-head {
+  gap: 12px;
+}
+.rules-card label,
+.settings-card label {
+  color: var(--text-secondary);
+}
+.rules-card output,
+.settings-card output {
+  color: var(--biolume-cyan);
+  font-variant-numeric: tabular-nums;
+}
+.rules-card .rules-toggle {
+  padding: 10px 9px !important;
+  border-radius: 7px;
+  transition: background var(--abyss-fast) var(--abyss-ease), border-color var(--abyss-fast) var(--abyss-ease);
+}
+.rules-card .rules-toggle:has(input:checked) {
+  background: rgba(31, 94, 98, .16);
+  border-color: rgba(101,231,232,.28) !important;
+}
+.rules-card .rules-toggle:has(input:focus-visible) {
+  outline: 2px solid var(--biolume-cyan);
+  outline-offset: 2px;
+}
+.trainer-card [data-content-region] p,
+.trainer-card p {
+  color: var(--text-secondary);
+}
+.trainer-card[data-content-region="training-signal"] {
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(37, 130, 140, .1), transparent 68%),
+    linear-gradient(145deg, rgba(10,29,42,.9), rgba(4,14,25,.9)) !important;
+}
+.trainer-card[data-content-region="training-signal"] p {
+  line-height: 1.7 !important;
+}
+.rhythm-card:not([hidden]) {
+  border-color: rgba(101,231,232,.24) !important;
+}
+.rhythm-metric {
+  padding-block: 7px;
+  border-bottom: 1px solid var(--glass-line-soft);
+}
+.rhythm-metric:last-child { border-bottom: 0; }
+.rhythm-metric span {
+  letter-spacing: .09em;
+  font-size: 9px;
+}
+.rhythm-metric strong {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.finesse-prompt {
+  isolation: isolate;
+}
+.finesse-prompt .finesse-key {
+  min-width: 26px;
+  text-align: center;
+  line-height: 1.35;
+}
+.settings-panel {
+  color: var(--text-primary) !important;
+}
+.settings-backdrop {
+  background: rgba(1, 6, 14, .78) !important;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.settings-card {
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(135,207,230,.28) !important;
+  border-radius: 16px !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(42,116,130,.16), transparent 40%),
+    linear-gradient(145deg, rgba(12,31,45,.99), rgba(3,11,21,.99)) !important;
+  box-shadow: 0 30px 100px rgba(0,0,0,.62), inset 0 1px 0 rgba(216,247,255,.07) !important;
+}
+.settings-heading {
+  border-bottom-color: var(--glass-line-soft) !important;
+}
+.settings-title, .settings-section-title {
+  color: var(--text-primary) !important;
+}
+.settings-section {
+  border-bottom-color: var(--glass-line-soft) !important;
+}
+.settings-hint {
+  color: var(--text-quiet) !important;
+}
+.settings-close, .settings-reset {
+  color: var(--text-primary) !important;
+  border-color: rgba(135,207,230,.22) !important;
+  background: rgba(7,23,36,.92) !important;
+}
+.settings-close:hover, .settings-reset:hover {
+  border-color: var(--glass-edge-active) !important;
+  background: rgba(17,55,67,.95) !important;
+}
+.settings-bind-list > *, .settings-control, .settings-checks label {
+  border-color: var(--glass-line-soft) !important;
+}
+.settings-card input[type="range"] {
+  accent-color: var(--biolume-cyan);
+}
+.settings-card input[type="checkbox"] {
+  accent-color: var(--biolume-cyan);
+}
+.trainer-settings-control {
+  filter: drop-shadow(0 5px 16px rgba(0,0,0,.28));
+}
+.trainer-settings-label {
+  letter-spacing: .18em !important;
+}
+.toast {
+  border-radius: 9px !important;
+  letter-spacing: .035em;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .trainer-card, .mobile-control, .settings-backdrop {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+@media (max-width: 900px) {
+  .trainer-page::before { top: 70px; height: 440px; }
+  .trainer-page::after { display: none; }
+  .next-preview { flex-direction: row; flex-wrap: wrap; gap: 5px; }
+  .next-preview .mini-piece { min-width: 43px; min-height: 31px; padding: 3px 5px; }
+}
+@media (max-width: 560px) {
+  .mini-home { padding-bottom: 12px; }
+  .trainer-card { border-radius: 10px !important; }
+  .trainer-card h2 { letter-spacing: .12em !important; }
+  .next-preview { gap: 4px; }
+  .next-preview .mini-piece { min-width: 36px; min-height: 28px; }
+  .settings-card { border-radius: 12px !important; }
+  .settings-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-card, .hud-item, .action-button, .rules-card .rules-toggle {
+    transition: none !important;
+  }
+}
