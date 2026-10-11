@@ -11,8 +11,6 @@ on:
       - "games/**"
       - "js/**"
       - "assets/**"
-      - "robots.txt"
-      - "sitemap.xml"
       - ".github/workflows/prompt-playwright-test.yml"
   workflow_dispatch:
     inputs:
