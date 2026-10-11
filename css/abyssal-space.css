@@ -810,3 +810,671 @@ body::after {
   .trainer-side > .trainer-card,
   .rules-column > .trainer-card { animation: none; }
 }
+
+
+/* ==========================================================================
+   ABYSSAL ECOSYSTEM / V2
+   Shift the metaphor from "blue glass UI" to a habitat with depth, suspended
+   matter, refracted light and precision instruments. Ambient layers never
+   touch game state, board geometry, or input timing.
+   ========================================================================== */
+:root {
+  --abyss-blackwater: #02070d;
+  --abyss-midwater: #071a25;
+  --abyss-shelf: #102d36;
+  --abyss-phosphor: #9af7d5;
+  --abyss-lantern: #f4c98b;
+  --abyss-violet-light: #b8a6ff;
+  --abyss-glass: rgba(8, 25, 34, .76);
+  --abyss-glass-rim: rgba(166, 230, 219, .22);
+}
+
+/* Depth is built in layers: distant light, marine snow, then the habitat.
+   Keep these as two static composited planes rather than many DOM particles. */
+.trainer-page {
+  background:
+    radial-gradient(ellipse at 50% 4%, rgba(41, 116, 119, .15), transparent 35%),
+    radial-gradient(ellipse at 4% 52%, rgba(35, 102, 106, .11), transparent 28%),
+    radial-gradient(ellipse at 96% 38%, rgba(105, 73, 130, .10), transparent 30%);
+}
+.trainer-page::before,
+.trainer-page::after {
+  content: "";
+  position: fixed;
+  inset: -8vh -6vw;
+  z-index: -1;
+  pointer-events: none;
+}
+.trainer-page::before {
+  opacity: .46;
+  background:
+    radial-gradient(ellipse at 17% 17%, rgba(177, 245, 223, .20) 0, transparent 1.2%),
+    radial-gradient(ellipse at 17% 17%, rgba(108, 204, 188, .08) 0, transparent 12%),
+    radial-gradient(ellipse at 83% 29%, rgba(193, 178, 255, .16) 0, transparent 1.1%),
+    radial-gradient(ellipse at 83% 29%, rgba(144, 127, 217, .07) 0, transparent 13%),
+    radial-gradient(ellipse at 74% 79%, rgba(245, 205, 143, .11) 0, transparent 1%),
+    radial-gradient(ellipse at 74% 79%, rgba(245, 205, 143, .045) 0, transparent 10%),
+    radial-gradient(1px 1px at 12% 35%, rgba(210,255,239,.7) 50%, transparent 100%),
+    radial-gradient(1px 1px at 27% 74%, rgba(210,255,239,.46) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 69% 19%, rgba(213,204,255,.62) 50%, transparent 100%),
+    radial-gradient(1px 1px at 91% 63%, rgba(210,255,239,.56) 50%, transparent 100%),
+    radial-gradient(1px 1px at 58% 87%, rgba(245,205,143,.52) 50%, transparent 100%),
+    radial-gradient(1px 1px at 42% 11%, rgba(210,255,239,.4) 50%, transparent 100%);
+  animation: abyssal-water-column 34s ease-in-out infinite alternate;
+}
+.trainer-page::after {
+  opacity: .26;
+  background:
+    linear-gradient(112deg, transparent 0 24%, rgba(135, 225, 209, .055) 29%, transparent 35% 100%),
+    linear-gradient(72deg, transparent 0 58%, rgba(174, 161, 255, .05) 63%, transparent 70% 100%),
+    radial-gradient(ellipse at 50% 0%, rgba(181, 245, 222, .11), transparent 45%),
+    repeating-radial-gradient(ellipse at 50% -12%, transparent 0 22px, rgba(165, 236, 217, .018) 23px 24px, transparent 25px 48px);
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
+  animation: abyssal-caustic-drift 42s ease-in-out infinite alternate;
+}
+@keyframes abyssal-water-column {
+  from { transform: translate3d(-.25%, -.2%, 0); }
+  to { transform: translate3d(.25%, .35%, 0); }
+}
+@keyframes abyssal-caustic-drift {
+  from { transform: translate3d(-.3%, 0, 0) scale(1); opacity: .18; }
+  to { transform: translate3d(.3%, .4%, 0) scale(1.015); opacity: .34; }
+}
+
+/* Cards become small pieces of submerged hardware: asymmetric light,
+   a fine inner rim, and an optical highlight rather than a uniform blue slab. */
+.trainer-card {
+  overflow: hidden;
+  border-color: var(--abyss-glass-rim) !important;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(123, 221, 195, .075), transparent 48%),
+    linear-gradient(155deg, rgba(12, 34, 41, .90), rgba(4, 14, 24, .88) 68%) !important;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, .27),
+    inset 0 1px 0 rgba(220, 255, 241, .075),
+    inset 1px 0 0 rgba(166, 230, 219, .025) !important;
+}
+.trainer-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(174, 246, 222, .35), transparent);
+  opacity: .72;
+}
+.trainer-card h2 {
+  color: #a5e6d4 !important;
+  text-shadow: 0 0 18px rgba(113, 225, 192, .10);
+}
+.trainer-card:hover {
+  border-color: rgba(154, 247, 213, .34) !important;
+}
+
+/* The board reads as a lit viewing port, with a quiet spectral rim.
+   No transforms are applied to the board or its cells. */
+.board-wrap {
+  border-color: rgba(154, 225, 211, .48) !important;
+  background:
+    linear-gradient(145deg, rgba(28, 66, 69, .97), rgba(4, 17, 25, .99) 62%, rgba(24, 19, 42, .96)) !important;
+  box-shadow:
+    0 30px 78px rgba(0, 0, 0, .58),
+    0 0 0 1px rgba(154, 247, 213, .075),
+    0 0 42px rgba(64, 189, 157, .10),
+    0 0 100px rgba(89, 104, 169, .055),
+    inset 0 1px 0 rgba(222, 255, 242, .18),
+    inset 0 0 0 1px rgba(0, 0, 0, .22) !important;
+}
+.board-wrap::before {
+  z-index: 2;
+  background:
+    linear-gradient(118deg, rgba(199, 255, 233, .085), transparent 17% 78%, rgba(186, 166, 255, .065)),
+    linear-gradient(180deg, rgba(192, 255, 232, .025), transparent 18% 84%, rgba(0, 0, 0, .11));
+}
+.board-wrap::after {
+  inset: -14px;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 18% 8%, rgba(133, 244, 208, .22), transparent 42%),
+    radial-gradient(ellipse at 85% 92%, rgba(165, 145, 255, .13), transparent 43%);
+  filter: blur(17px);
+  opacity: .34;
+}
+
+/* Previews are held in dark water, not laid on empty page space. */
+.hold-preview {
+  border-color: rgba(149, 222, 204, .22) !important;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(116, 228, 193, .12), transparent 58%),
+    linear-gradient(160deg, rgba(6, 24, 30, .9), rgba(3, 10, 18, .92)) !important;
+  box-shadow: inset 0 1px 0 rgba(223, 255, 241, .055), inset 0 0 22px rgba(72, 180, 151, .035);
+}
+.next-preview {
+  border-radius: 9px;
+  background:
+    radial-gradient(ellipse at 50% 4%, rgba(113, 215, 187, .065), transparent 56%) !important;
+}
+.hud-item {
+  border-color: rgba(149, 222, 204, .15) !important;
+  background:
+    linear-gradient(145deg, rgba(13, 37, 42, .88), rgba(5, 16, 24, .88)) !important;
+}
+.hud-item strong { text-shadow: 0 0 16px rgba(154, 247, 213, .09); }
+.trainer-brand {
+  text-shadow: 0 0 16px rgba(154, 247, 213, .18), 0 0 44px rgba(70, 180, 153, .09) !important;
+}
+.mini-home-title {
+  text-shadow: 0 0 26px rgba(154, 247, 213, .14) !important;
+}
+
+/* A second, warmer organism-light is reserved for rare accents, not body text. */
+.mini-home-number { color: #b5dfce !important; }
+.rhythm-pattern { color: var(--abyss-violet-light) !important; }
+.finesse-prompt .finesse-key.done {
+  color: var(--abyss-phosphor) !important;
+  border-color: var(--abyss-phosphor) !important;
+  box-shadow: 0 0 14px rgba(154, 247, 213, .12);
+}
+.action-button:hover {
+  border-color: rgba(154, 247, 213, .48) !important;
+  background: linear-gradient(145deg, rgba(20, 57, 56, .96), rgba(5, 24, 31, .98)) !important;
+}
+:where(button, input, select, textarea, [tabindex]):focus-visible {
+  outline-color: var(--abyss-phosphor) !important;
+  box-shadow: 0 0 0 4px rgba(154, 247, 213, .10) !important;
+}
+
+/* Avoid fixed-screen visual work on narrow devices and honor system motion. */
+@media (max-width: 720px) {
+  .trainer-page::before,
+  .trainer-page::after {
+    animation: none;
+    inset: 0;
+    opacity: .22;
+  }
+  .trainer-card { backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
+  .board-wrap::after { filter: blur(10px); opacity: .24; }
+}
+@media (max-width: 560px) {
+  .trainer-page::after { display: none; }
+  .trainer-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-page::before,
+  .trainer-page::after { animation: none !important; transform: none !important; }
+}
+@media (forced-colors: active) {
+  .trainer-page::before, .trainer-page::after { display: none !important; }
+}
+
+
+/* ==========================================================================
+   ABYSSAL ECOSYSTEM / V2.1 — authored depth, not extra neon
+   A more legible spatial composition: distant vertical water columns,
+   a soft habitat horizon, and localized instrument light. No new markup.
+   ========================================================================== */
+.trainer-top {
+  isolation: isolate;
+}
+.trainer-top::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(113, 194, 174, .10) 12%,
+    rgba(173, 238, 213, .42) 48%,
+    rgba(164, 143, 224, .18) 72%,
+    transparent 100%);
+  box-shadow: 0 0 18px rgba(94, 205, 174, .07);
+}
+.trainer-layout {
+  position: relative;
+  isolation: isolate;
+}
+.trainer-layout::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: -42px -5vw -28px;
+  opacity: .42;
+  background:
+    linear-gradient(180deg, transparent, rgba(100, 206, 181, .025) 22%, transparent 76%),
+    linear-gradient(90deg, transparent 0 8%, rgba(121, 226, 198, .045) 8.2%, transparent 8.8% 26%, rgba(159, 145, 235, .035) 26.2%, transparent 27% 72%, rgba(121, 226, 198, .03) 72.2%, transparent 73% 92%, rgba(121, 226, 198, .035) 92.2%, transparent 93%);
+  mask-image: linear-gradient(180deg, transparent, black 14%, black 72%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, transparent, black 14%, black 72%, transparent);
+}
+.mini-home {
+  position: relative;
+  isolation: isolate;
+}
+.mini-home::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -26px;
+  left: 50%;
+  width: min(52vw, 460px);
+  height: 82px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(106, 215, 181, .105), transparent 62%),
+    radial-gradient(ellipse at 50% 90%, rgba(167, 149, 239, .055), transparent 70%);
+  filter: blur(9px);
+}
+.mini-home::after {
+  content: "";
+  display: block;
+  width: clamp(48px, 7vw, 86px);
+  height: 2px;
+  margin: 13px auto 0;
+  border-radius: 100%;
+  background: linear-gradient(90deg, transparent, rgba(154, 247, 213, .68), rgba(184, 166, 255, .44), transparent);
+  box-shadow: 0 0 12px rgba(154, 247, 213, .13);
+  opacity: .75;
+}
+
+/* The instruments share a habitat, but not the same surface treatment.
+   Hold is a contained chamber; Next is a vertical sightline; metrics are
+   discrete readouts. This separation makes the layout feel authored. */
+.trainer-side:first-of-type .trainer-card:nth-child(2) {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(112, 223, 190, .10), transparent 48%),
+    linear-gradient(155deg, rgba(9, 31, 35, .94), rgba(3, 13, 20, .94) 72%) !important;
+}
+.trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(176, 165, 255, .07), transparent 50%),
+    linear-gradient(155deg, rgba(12, 29, 38, .92), rgba(4, 14, 23, .91) 72%) !important;
+}
+.rules-column > .trainer-card {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(184, 166, 255, .065), transparent 42%),
+    linear-gradient(155deg, rgba(13, 26, 38, .91), rgba(4, 13, 23, .93) 72%) !important;
+}
+
+/* A local reflection appears only when the person points to or focuses an
+   instrument. Avoid a permanent moving sheen over important information. */
+@media (hover: hover) and (pointer: fine) {
+  .trainer-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(112deg, transparent 12%, rgba(190, 255, 231, .045) 42%, transparent 67%);
+    transition: opacity 220ms ease;
+  }
+  .trainer-card:hover::after { opacity: 1; }
+}
+.trainer-card:focus-within {
+  border-color: rgba(154, 247, 213, .34) !important;
+}
+.trainer-card:focus-within::before {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent, rgba(154, 247, 213, .45), transparent);
+}
+@media (max-width: 900px) {
+  .trainer-layout::before { inset-inline: -12px; opacity: .2; }
+  .mini-home::before { width: 90vw; }
+}
+@media (max-width: 560px) {
+  .trainer-layout::before { display: none; }
+  .mini-home::before { width: 100vw; opacity: .7; }
+  .mini-home::after { margin-top: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-card::after { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .trainer-top::after, .trainer-layout::before,
+  .mini-home::before, .mini-home::after { display: none !important; }
+}
+
+
+/* ==========================================================================
+   ABYSSAL ECOSYSTEM / V2.2 — make the water feel inhabited
+   Surface light above, deep-water void around the play instrument, and
+   organic habitat contours at the far edges. The center stays quiet.
+   ========================================================================== */
+:root {
+  --abyss-light: rgba(155, 242, 226, .22);
+  --abyss-living-edge: rgba(101, 231, 202, .28);
+  --abyss-ink: #020912;
+}
+body {
+  background:
+    radial-gradient(ellipse 74% 30% at 50% -7%, rgba(103, 207, 204, .15), transparent 76%),
+    radial-gradient(ellipse 34% 42% at -8% 36%, rgba(22, 117, 133, .11), transparent 74%),
+    radial-gradient(ellipse 28% 36% at 108% 64%, rgba(92, 75, 142, .10), transparent 74%),
+    linear-gradient(180deg, #081a29 0%, #06121e 28%, #030b15 68%, #020710 100%) !important;
+  background-attachment: fixed;
+}
+.trainer-page::before {
+  opacity: .76;
+  background:
+    linear-gradient(112deg, transparent 0 14%, rgba(102, 213, 203, .025) 18%, transparent 24% 100%),
+    linear-gradient(77deg, transparent 0 35%, rgba(125, 225, 211, .04) 40%, transparent 47% 100%),
+    linear-gradient(101deg, transparent 0 67%, rgba(130, 157, 224, .035) 73%, transparent 80% 100%),
+    radial-gradient(ellipse at 50% 8%, rgba(78, 181, 187, .14), transparent 42%),
+    radial-gradient(ellipse at 6% 74%, rgba(21, 97, 112, .13), transparent 38%),
+    radial-gradient(ellipse at 96% 60%, rgba(94, 76, 142, .09), transparent 37%);
+  mask-image: linear-gradient(180deg, transparent, black 8%, black 70%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, transparent, black 8%, black 70%, transparent);
+}
+.trainer-page::after {
+  opacity: .56;
+  background:
+    radial-gradient(ellipse at 50% 44%, transparent 0 25%, rgba(2, 7, 16, .12) 56%, rgba(2, 7, 16, .72) 100%),
+    radial-gradient(ellipse at 3% 96%, rgba(29, 113, 113, .12), transparent 28%),
+    radial-gradient(ellipse at 97% 100%, rgba(100, 75, 147, .10), transparent 31%);
+}
+/* The habitat lives at the margins: asymmetric, soft reef-like silhouettes. */
+.trainer-shell::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: 18px -28px 0;
+  opacity: .72;
+  background:
+    radial-gradient(ellipse 17% 12% at 0% 18%, rgba(30, 104, 112, .15), transparent 76%),
+    radial-gradient(ellipse 13% 19% at 1% 36%, rgba(19, 79, 94, .13), transparent 74%),
+    radial-gradient(ellipse 19% 10% at 100% 28%, rgba(63, 90, 127, .12), transparent 78%),
+    radial-gradient(ellipse 12% 18% at 100% 48%, rgba(46, 71, 103, .12), transparent 76%),
+    linear-gradient(90deg, transparent 0 2%, rgba(92, 205, 185, .08) 2.2%, transparent 2.6% 97.2%, rgba(116, 165, 196, .07) 97.5%, transparent 98%);
+  filter: blur(8px);
+}
+.trainer-shell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: 0 -16px;
+  opacity: .32;
+  background:
+    radial-gradient(ellipse 21% 4% at 0% 0%, rgba(132, 230, 207, .18), transparent 78%),
+    radial-gradient(ellipse 16% 5% at 100% 0%, rgba(155, 170, 235, .14), transparent 78%);
+}
+/* Pressure-rated viewing window; the actual playfield remains untouched. */
+.board-wrap {
+  border-color: rgba(143, 229, 223, .48) !important;
+  background:
+    linear-gradient(145deg, rgba(34, 73, 82, .97), rgba(6, 20, 31, .99) 36%, rgba(3, 12, 23, .99) 72%) !important;
+  box-shadow:
+    0 30px 72px rgba(0, 0, 0, .54),
+    0 0 0 1px rgba(120, 236, 219, .09),
+    0 0 52px rgba(42, 165, 167, .12),
+    inset 0 1px 0 rgba(226, 255, 249, .17),
+    inset 0 0 0 3px rgba(2, 10, 17, .55) !important;
+}
+.board-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(181, 244, 230, .075);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.board {
+  background-color: var(--abyss-ink) !important;
+  outline-color: rgba(156, 224, 220, .12);
+}
+/* Related instruments, deliberately not identical cards. */
+.trainer-side:first-of-type .trainer-card:nth-child(2) {
+  border-radius: 18px 9px 14px 9px !important;
+  box-shadow: inset 0 1px 0 rgba(190, 255, 235, .075), 0 14px 34px rgba(0,0,0,.24) !important;
+}
+.trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card {
+  border-radius: 9px 18px 9px 14px !important;
+}
+.hud-item {
+  border-color: rgba(143, 211, 213, .17) !important;
+  background: linear-gradient(135deg, rgba(15, 44, 54, .8), rgba(4, 17, 29, .86)) !important;
+}
+.hud-item strong {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 16px rgba(110, 231, 215, .09);
+}
+.hold-preview {
+  border-color: rgba(123, 218, 197, .2) !important;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(66, 157, 145, .16), transparent 65%),
+    linear-gradient(180deg, rgba(3, 18, 27, .95), rgba(3, 11, 20, .98)) !important;
+}
+.action-button {
+  border-color: rgba(130, 212, 205, .29) !important;
+  background: linear-gradient(180deg, rgba(18, 54, 63, .96), rgba(5, 22, 34, .98)) !important;
+  box-shadow: inset 0 1px 0 rgba(210, 255, 245, .10), 0 3px 12px rgba(0,0,0,.15) !important;
+}
+.action-button:hover {
+  border-color: rgba(158, 247, 220, .66) !important;
+  box-shadow: inset 0 1px 0 rgba(210, 255, 245, .14), 0 0 18px rgba(69, 203, 183, .09) !important;
+}
+.action-button:active {
+  transform: translateY(1px) !important;
+  box-shadow: inset 0 2px 7px rgba(0,0,0,.24) !important;
+}
+.action-button:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #b1f7e4 !important;
+  outline-offset: 3px !important;
+}
+.next-preview .mini-piece {
+  border-color: rgba(128, 204, 205, .16) !important;
+  border-radius: 10px 6px 9px 6px !important;
+  background: linear-gradient(145deg, rgba(12, 40, 51, .76), rgba(3, 14, 24, .7)) !important;
+  box-shadow: inset 0 1px 0 rgba(218, 255, 245, .045);
+}
+.next-preview .mini-piece:first-child {
+  border-color: rgba(134, 237, 214, .36) !important;
+  background: linear-gradient(145deg, rgba(23, 71, 75, .82), rgba(4, 23, 31, .82)) !important;
+  box-shadow: inset 0 1px 0 rgba(218, 255, 245, .1), 0 0 18px rgba(80, 213, 187, .045);
+}
+.rhythm-outlier {
+  border-radius: 5px 11px 5px 11px !important;
+  border-color: rgba(147, 185, 217, .2) !important;
+}
+.rules-column > .trainer-card {
+  border-color: rgba(135, 197, 209, .17) !important;
+}
+@media (max-width: 900px) {
+  .trainer-shell::before { inset-inline: -8px; opacity: .34; filter: blur(5px); }
+  .trainer-shell::after { opacity: .18; }
+}
+@media (max-width: 560px) {
+  body { background-attachment: scroll; }
+  .trainer-shell::before, .trainer-shell::after { display: none; }
+  .board-wrap { box-shadow: 0 18px 42px rgba(0,0,0,.48), 0 0 28px rgba(42,165,167,.08), inset 0 1px 0 rgba(226,255,249,.12) !important; }
+  .trainer-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-button { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .trainer-shell::before, .trainer-shell::after, .board-wrap::after { display: none !important; }
+}
+
+
+/* V2.3 — shift the metaphor from outer space to actual water.
+   Replace the inherited starfield with suspended marine snow and a readable
+   surface-to-abyss gradient. Keep the effect static: no gameplay motion. */
+body::before {
+  opacity: .52;
+  background:
+    radial-gradient(1px 1px at 7% 18%, rgba(202, 244, 233, .38) 50%, transparent 100%),
+    radial-gradient(1px 1px at 13% 61%, rgba(130, 222, 209, .24) 50%, transparent 100%),
+    radial-gradient(1px 1px at 24% 34%, rgba(191, 239, 233, .28) 50%, transparent 100%),
+    radial-gradient(1px 1px at 32% 79%, rgba(146, 217, 213, .2) 50%, transparent 100%),
+    radial-gradient(1px 1px at 47% 22%, rgba(195, 244, 231, .22) 50%, transparent 100%),
+    radial-gradient(1px 1px at 59% 66%, rgba(147, 220, 210, .25) 50%, transparent 100%),
+    radial-gradient(1px 1px at 68% 42%, rgba(206, 245, 236, .22) 50%, transparent 100%),
+    radial-gradient(1px 1px at 78% 83%, rgba(135, 209, 203, .2) 50%, transparent 100%),
+    radial-gradient(1px 1px at 91% 27%, rgba(196, 238, 229, .3) 50%, transparent 100%),
+    radial-gradient(ellipse 72% 19% at 50% 0%, rgba(157, 235, 217, .09), transparent 74%),
+    linear-gradient(180deg, rgba(122, 208, 204, .025), transparent 22% 100%);
+}
+body::after {
+  opacity: .66;
+  background:
+    radial-gradient(ellipse 82% 22% at 50% -6%, rgba(118, 213, 201, .11), transparent 74%),
+    linear-gradient(180deg, transparent 0%, rgba(3, 12, 22, .02) 22%, rgba(2, 8, 17, .18) 58%, rgba(1, 5, 12, .56) 100%),
+    radial-gradient(ellipse at 5% 77%, rgba(21, 108, 111, .11), transparent 34%),
+    radial-gradient(ellipse at 96% 66%, rgba(57, 90, 122, .10), transparent 35%);
+}
+/* A subtle surface line gives the page a vertical world, not a starry void. */
+.trainer-top { position: relative; }
+.trainer-top::before {
+  content: "";
+  position: absolute;
+  left: max(18px, 5vw);
+  right: max(18px, 5vw);
+  top: 8px;
+  height: 1px;
+  pointer-events: none;
+  opacity: .5;
+  background: linear-gradient(90deg, transparent, rgba(153, 235, 218, .22) 16%, rgba(153, 235, 218, .12) 50%, rgba(153, 235, 218, .2) 84%, transparent);
+}
+.trainer-top::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: min(620px, 80vw);
+  height: 100%;
+  opacity: .58;
+  background: radial-gradient(ellipse at 50% 0%, rgba(116, 221, 205, .10), transparent 72%);
+}
+.trainer-brand, .trainer-description { position: relative; z-index: 1; }
+/* Recessed content rather than uniform glass: a dark quiet pocket behind play. */
+.trainer-main { position: relative; }
+.trainer-main::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  top: 22px;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(980px, 100%);
+  border-radius: 46% 46% 18px 18px / 4% 4% 18px 18px;
+  background:
+    radial-gradient(ellipse at 50% 4%, rgba(19, 67, 78, .16), transparent 62%),
+    linear-gradient(180deg, rgba(1, 8, 16, .06), rgba(1, 6, 13, .18) 64%, transparent);
+}
+@media (max-width: 560px) {
+  .trainer-top::before { left: 14px; right: 14px; opacity: .35; }
+  .trainer-top::after { opacity: .32; }
+  .trainer-main::before { width: 100%; border-radius: 20px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .trainer-card { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .trainer-shell::before, .trainer-shell::after { opacity: .12; }
+}
+
+
+/* ==========================================================================
+   AQUA SPACE / V2.4 — the hybrid is the point
+   Not "underwater instead of space": a liquid cosmic abyss. Distinguish
+   distant pinprick stars from nearer suspended particles by scale, density,
+   hue and motion. Preserve the playfield as the stable visual anchor.
+   ========================================================================== */
+:root {
+  --aqua-space-void: #01050d;
+  --aqua-space-midnight: #061522;
+  --aqua-space-current: rgba(86, 205, 199, .075);
+  --aqua-space-starlight: rgba(205, 237, 255, .48);
+}
+body {
+  background:
+    radial-gradient(ellipse 70% 34% at 50% -9%, rgba(100, 202, 206, .16), transparent 72%),
+    radial-gradient(ellipse 38% 40% at 2% 26%, rgba(19, 111, 139, .12), transparent 75%),
+    radial-gradient(ellipse 32% 44% at 99% 45%, rgba(91, 66, 151, .12), transparent 76%),
+    radial-gradient(ellipse 50% 55% at 50% 54%, rgba(8, 44, 60, .16), transparent 78%),
+    linear-gradient(180deg, #081a2a 0%, #061321 31%, #030b16 70%, #01050d 100%) !important;
+}
+/* Far-field stars are tiny and sharp; near-field marine snow is softer,
+   slightly larger and concentrated in the lower water column. */
+body::before {
+  opacity: .62;
+  background:
+    radial-gradient(1px 1px at 5% 14%, rgba(218, 244, 255, .58) 50%, transparent 100%),
+    radial-gradient(1px 1px at 18% 43%, rgba(184, 231, 244, .34) 50%, transparent 100%),
+    radial-gradient(1px 1px at 29% 9%, rgba(226, 245, 255, .5) 50%, transparent 100%),
+    radial-gradient(1px 1px at 41% 31%, rgba(195, 230, 247, .32) 50%, transparent 100%),
+    radial-gradient(1px 1px at 56% 13%, rgba(220, 241, 255, .48) 50%, transparent 100%),
+    radial-gradient(1px 1px at 73% 24%, rgba(209, 238, 251, .36) 50%, transparent 100%),
+    radial-gradient(1px 1px at 88% 11%, rgba(227, 245, 255, .54) 50%, transparent 100%),
+    radial-gradient(1px 1px at 95% 49%, rgba(187, 227, 241, .32) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 12% 76%, rgba(148, 224, 219, .22) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 35% 88%, rgba(151, 219, 219, .18) 50%, transparent 100%),
+    radial-gradient(2px 2px at 67% 73%, rgba(156, 230, 220, .23) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 84% 91%, rgba(167, 224, 230, .18) 50%, transparent 100%),
+    radial-gradient(ellipse 70% 20% at 50% 0%, rgba(159, 238, 222, .09), transparent 75%),
+    linear-gradient(180deg, rgba(113, 204, 209, .018), transparent 34% 100%);
+}
+/* The current is a broad, almost imperceptible curved lens—not a grid,
+   wireframe, or decorative sci-fi HUD. Drift only this ambient layer. */
+body::after {
+  opacity: .48;
+  background:
+    radial-gradient(ellipse 68% 42% at 50% 48%, transparent 55%, rgba(75, 181, 190, .045) 57%, transparent 60%),
+    radial-gradient(ellipse 88% 57% at 50% 50%, transparent 66%, rgba(126, 146, 215, .035) 67%, transparent 69%),
+    linear-gradient(108deg, transparent 0 19%, rgba(112, 227, 212, .025) 25%, transparent 32% 100%),
+    linear-gradient(76deg, transparent 0 64%, rgba(157, 143, 239, .028) 70%, transparent 76% 100%),
+    linear-gradient(180deg, transparent 0%, rgba(2, 8, 17, .06) 44%, rgba(1, 5, 12, .52) 100%);
+  animation: aqua-space-current-drift 58s ease-in-out infinite alternate;
+}
+@keyframes aqua-space-current-drift {
+  from { transform: translate3d(-.18%, -.1%, 0) scale(1); }
+  to { transform: translate3d(.18%, .18%, 0) scale(1.012); }
+}
+/* Float is communicated by optical separation and slight ambient parallax;
+   controls and gameplay pieces remain stationary and exact. */
+.trainer-card {
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(116, 229, 210, .075), transparent 46%),
+    linear-gradient(150deg, rgba(10, 31, 43, .78), rgba(3, 12, 23, .91) 76%) !important;
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, .28),
+    0 1px 0 rgba(205, 250, 240, .035),
+    inset 0 1px 0 rgba(218, 255, 246, .07),
+    inset 0 0 0 1px rgba(117, 209, 214, .025) !important;
+}
+.board-wrap {
+  border-color: rgba(145, 231, 226, .5) !important;
+  box-shadow:
+    0 28px 76px rgba(0, 0, 0, .58),
+    0 0 0 1px rgba(131, 225, 223, .085),
+    0 0 38px rgba(48, 180, 177, .09),
+    0 0 92px rgba(98, 89, 170, .045),
+    inset 0 1px 0 rgba(228, 255, 251, .17),
+    inset 0 0 0 3px rgba(1, 9, 17, .56) !important;
+}
+@media (max-width: 720px) {
+  body::after { animation: none; opacity: .25; }
+  body::before { opacity: .4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none !important; transform: none !important; }
+}
+@media (forced-colors: active) {
+  body::before, body::after { display: none !important; }
+}

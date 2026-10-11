@@ -881,3 +881,144 @@ For every proposed effect, answer five questions before implementation:
 5. How will we verify that it improves recognition or atmosphere rather than merely adding activity?
 
 If these questions have no clear answers, leave the effect out. The target is not maximal motion; it is a world whose smallest details feel like they belong together.
+
+
+## 24. Reference-informed upgrade criteria: habitat, not theme
+
+This section translates current platform guidance into concrete acceptance criteria for the next visual iterations. The cited sources are implementation references, not aesthetic templates; the design must remain specific to 180436.
+
+### 24.1 Performance as a design constraint
+
+MDN's CSS performance guidance recommends limiting unnecessary animation and preferring properties such as transforms and opacity when motion is needed. Its animation performance guide explains why layout and paint costs can destabilize frame delivery. The web.dev animation guide likewise emphasizes selecting properties that can be handled efficiently by the browser. These principles lead to the following rules:
+
+- The water column is ambient and low-frequency; it must never animate the board, cells, text, or layout geometry.
+- Use a small number of layered gradients instead of hundreds of animated particle elements.
+- Do not add `will-change` indiscriminately; compositing hints have costs.
+- Avoid continuous animated blur, shadow, or large-area repaint when a static optical treatment achieves the same depth.
+- Validate on a real mid-range phone; desktop smoothness does not establish mobile performance.
+
+References:
+- MDN, CSS performance optimization: https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/CSS
+- MDN, animation performance and frame rate: https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Animation_performance_and_frame_rate
+- web.dev, high-performance CSS animations: https://web.dev/articles/animations-guide
+
+### 24.2 Motion and access are first-class behavior
+
+The `prefers-reduced-motion` media feature communicates a system-level preference to reduce non-essential motion. It is not enough to make motion slower: essential information must remain legible with animation removed. The experience must also offer clear focus feedback and maintain readable contrast across the game and training controls.
+
+- Reduced-motion mode removes ambient movement and interaction sheens without hiding state.
+- Keyboard focus remains visible independent of hover.
+- Forced-colors mode removes decorative atmospheric layers and preserves instrument boundaries.
+- Mobile mode reduces compositing and background complexity before reducing game clarity.
+
+References:
+- MDN, `prefers-reduced-motion`: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/%40media/prefers-reduced-motion
+- web.dev, animation and motion accessibility: https://web.dev/learn/accessibility/motion
+
+### 24.3 The spatial composition has distinct jobs
+
+The page is not one background plus a set of matching cards. It has four perceptual distances:
+
+1. **Far water:** broad, quiet light gradients and sparse marine snow. It establishes scale, not detail.
+2. **Habitat volume:** barely visible vertical water columns and distant spectral blooms. These should be noticed subconsciously, not read as interface content.
+3. **Instrument plane:** Hold, Next, metrics, and rules have related but distinguishable surface materials. They should feel built for different jobs.
+4. **Precision plane:** the playfield, active piece, ghost, and controls remain the fastest elements to parse. Atmospheric effects may frame them but never distort their geometry.
+
+### 24.4 Acceptance questions for each release
+
+- Does a first-time viewer perceive depth and an environment, rather than a blue color scheme?
+- Are Hold, Next, statistics, and training rules distinguishable by purpose, not just position?
+- Does the game remain readable during rapid queue changes and sustained play?
+- Does the composition retain its identity on a narrow screen without excessive blur or visual noise?
+- Can every gameplay-critical task be completed with reduced motion, keyboard focus, and forced colors?
+- Has the result been observed in an actual browser and on a real phone, with the conditions recorded?
+
+A source-level check is not a visual test. A successful pull request is not proof of a good frame rate. A polished screenshot is not proof that the interface remains comfortable after ten minutes of play.
+
+
+## 25. V2.2 implementation brief: authored habitat, not blue glass
+
+The latest pass is an art-direction change, not another blanket increase in saturation. It establishes four distinct visual distances:
+
+1. **Surface light** — broad, nearly still shafts and a faint luminous ceiling. These are environmental, not UI indicators.
+2. **Habitat edge** — asymmetric, blurred reef-like silhouettes at the outer margins of the content. They imply an inhabited space without introducing image assets, network requests, or a busy particle field.
+3. **Pressure window** — the board frame gets a more deliberate, layered edge and inner seal. The playfield itself stays dark, sharp, and geometrically unchanged.
+4. **Instrument material** — Hold, Next, metrics, and actions retain a shared aquatic material vocabulary but differ in corner rhythm, light source, and surface treatment so the whole page is not one repeated card component.
+
+This is a deliberate rejection of “more cyan = more underwater.” The composition should read as a quiet, deep environment surrounding a precise instrument. The organic forms stay peripheral and blurred; the central board remains the first fixation point.
+
+### 25.1 Constraints retained
+
+- No changes to game.js, engine.js, pieces.js, training rules, input bindings, queue state, scoring, gravity, lock timing, or board geometry.
+- No new remote fonts, scripts, images, animation libraries, or runtime dependencies.
+- No animation on the active piece, ghost, board cells, or gameplay values.
+- Touch-control position and hit geometry remain owned by the existing implementation.
+- On narrow screens, remove the decorative habitat silhouettes and expensive backdrop blur; keep only static material, edge, and contrast treatments.
+- Reduced-motion and forced-colors modes remove nonessential decoration and preserve functional focus.
+
+### 25.2 Why the effects are deliberately mostly static
+
+Current MDN performance guidance warns that large or numerous animations can degrade performance and that properties affecting geometry or paint can be costly. Its reduced-motion guidance also makes clear that motion should be reduced or replaced for users who request it. This pass therefore uses layered static gradients and only immediate, local control feedback. It does not add an animated reef, particle simulation, page parallax, or animated blur.
+
+References:
+- MDN, CSS performance optimization: https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/CSS
+- MDN, CSS and JavaScript animation performance: https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/CSS_JavaScript_animation_performance
+- MDN, prefers-reduced-motion: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/%40media/prefers-reduced-motion
+
+### 25.3 Acceptance criteria for this pass
+
+- At a glance, the composition must feel spatially underwater, not merely tinted blue.
+- The board is the strongest high-contrast focal area; the outer habitat cannot compete with it.
+- Hold, Next, HUD, and training controls are visibly related but not interchangeable-looking.
+- All text remains readable against the new surfaces, and keyboard focus remains explicit.
+- The design must not depend on animation to communicate any gameplay state.
+- Mobile must preserve existing board size and touch behavior while dropping peripheral decoration.
+- These criteria remain unverified until a real browser/device review. A valid CSS parse and a clean Git diff cannot prove the visual hierarchy or phone performance.
+
+## 26. Next quality gate: perception over author intent
+
+Do not accept this iteration simply because its CSS is more elaborate. Review the rendered result at a normal viewing distance and ask:
+
+- Does the page have an identifiable “surface above / deep water below” structure?
+- Do the edges imply habitat while the central board feels like a protected instrument?
+- Are the materials different enough to feel designed, but restrained enough to support rapid play?
+- Is any decorative shape visibly clipping, overlapping content, or expanding the scrollable page?
+- Does the mobile view feel intentionally simplified rather than like a broken desktop composition?
+- Can a person play for several minutes without noticing the background as an attention competitor?
+
+If the answer to the first two is no, the next iteration should change the composition and silhouettes, not add more glows. If the answer to any of the last four is no, simplify before adding more detail.
+
+
+## 27. V2.3 correction: water is not outer space
+
+A critical audit found that the original theme's persistent pinpoint field still read as stars. That is a direct metaphor conflict: the page was saying “cosmos” while the brief requires a deeply aquatic world. V2.3 replaces those points with low-contrast suspended matter, gives the top of the page a faint surface boundary, and increases depth toward the lower viewport. This is not intended to look like an aquarium wallpaper; it should be a peripheral environmental cue that makes the central training instrument feel housed underwater.
+
+The top rule and header light establish a surface reference. The recessed central pocket creates spatial contrast. The existing board frame then reads as a pressure window inside that environment. The board, pieces, ghost, previews' data, timing, controls, and rules remain gameplay-owned and are not animated or repositioned.
+
+The prefers-reduced-transparency query is an additional progressive enhancement: where supported, it removes card backdrop blur and tones down the peripheral habitat layer. This complements the existing reduced-motion and forced-colors treatments.
+
+### 27.1 Reference-informed technical guardrails
+
+MDN explains that backdrop-filter applies effects to pixels behind an element and has backdrop-root constraints, so blur is not a universal material effect; MDN also recommends measuring actual rendering costs rather than optimizing by guesswork. See:
+- https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/backdrop-filter
+- https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Performance/CSS
+- https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Animation_performance_and_frame_rate
+
+### 27.2 New acceptance test
+
+Hide the brand and cards mentally for a moment: the background alone should read as surface light descending into dark water, not stars in space. Then restore the content: the playfield must be the sharpest, most legible object, while the environment stays peripheral. If that reading does not survive on a phone at normal brightness, simplify and recompose rather than layering on more effects.
+
+
+## 11. Clarification: Aqua Space is a deliberate hybrid
+
+The identity is **aqua space**: a cosmic ocean, not a literal underwater simulator and not a generic starship dashboard. The surface-to-abyss water column and suspended matter establish fluidity; sparse distant stars, immense dark scale, and subtle orbital curvature establish cosmic space. Neither metaphor should erase the other.
+
+- **Far field:** pinprick stars, nearly still, cold pearl-white and sparse.
+- **Mid field:** broad spectral haze and curved lens-like currents, barely visible.
+- **Near field:** a few larger, softer marine-snow particles and refracted aqua light.
+- **Instrument plane:** floating, dark translucent instruments with varied silhouettes and fine optical edges.
+- **Precision plane:** the game board and its cells remain geometrically stable, crisp, high-contrast, and untouched by ambient motion.
+
+Do not use evenly distributed dots alone: that reads as a starfield. Do not remove all celestial cues: that reads as a standard underwater theme. The signature comes from the contrast between sharp distant stars and soft near-field matter, all suspended in a liquid-feeling dark cosmos.
+
+Motion is environmental only and extremely slow; it should imply drift, not movement of the interface. Keep it transform/opacity-based, remove it for reduced-motion preferences, and reduce or remove ambient layers on narrow/low-power devices. Validate the actual page at mobile and desktop sizes before calling the art direction successful.
