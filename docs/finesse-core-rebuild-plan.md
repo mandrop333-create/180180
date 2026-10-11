@@ -1,6 +1,6 @@
 # Finesse Core Rebuild: Rules and Verification Plan
 
-Status: implementation and verification in progress on `rebuild/finesse-core`. At branch head `c671985c796365cfb1cf36707b9ed4b92b770101`, the planner regression, independent reference fixtures, independent Playwright route fixtures, and prompt-requested Playwright workflows all pass. The planner rejects malformed/no-op/teleporting transitions, and lock-time scoring fails closed when prompt generation produces no target; a browser regression confirms a missing target records one fault and zero perfect placements. This remains an incremental core replacement, not proof of a fully ground-up engine rewrite. Open gates: second-source kick/pivot compatibility review, the documented soft-drop/tuck model boundary, a complete repository-wide legacy-import audit, and reproduction/fix verification for the read-only live-site I-kick/180 mismatch. Keep the compatibility facade until the import audit is complete. Do not merge or deploy without explicit authorization.
+Status: implementation and verification in progress on `rebuild/finesse-core`. At branch head `485a2acb00bb36b61d7eef74454cc79f139a9710`, planner regression tests, independent reference fixtures, independent Playwright route fixtures, and prompt-requested Playwright diagnostics all pass. The planner rejects malformed/no-op/teleporting transitions, and lock-time scoring fails closed when prompt generation produces no target; browser tests verify actual inputs, locked placement, and exactly-once scoring for the covered cases. This remains an incremental core replacement, not proof of a fully ground-up engine rewrite. Open gates: second-source kick/pivot compatibility review, explicit documentation and boundary tests for soft-drop/tuck coverage, expanding the independent planner oracle beyond the current cost envelope where required, and a complete repository-wide legacy-import audit. The deployed site is the old implementation; its read-only probe failures are not a release gate for the candidate and must not be used as the candidate's correctness oracle. Keep the compatibility facade until the import audit is complete. Do not merge or deploy without explicit authorization.
 
 ## Objective
 
@@ -55,7 +55,7 @@ Define an explicit profile function `cost(action, mode, profile)`. For the initi
 - CW/CCW rotation: one deliberate rotation input;
 - direct 180° rotation: one deliberate rotation input;
 - hard drop and automatic gravity: excluded from finesse input cost;
-- soft drop: excluded from finesse input cost only if that is the explicitly selected trainer rule;
+- soft drop: for the current candidate, a navigation/execution transition with zero finesse cost; it is omitted from the scoring-route projection. Coverage of this transition does not imply exhaustive coverage of every timed tuck or lock-delay interaction;
 - DAS/hold: do not silently equate with a tap. Its cost and execution conditions must be explicit and tested against the selected wall-finesse model and actual DAS/ARR settings.
 
 Then, for a target placement (p):
@@ -96,7 +96,7 @@ For each failure, report the first divergent layer: expected geometry, legal tra
 ### Gate 0 — Freeze the contract
 - Lock down the exact profile: TETR.IO-style SRS+, separate direct 180° rotation, one finesse input for a direct half-turn, hard drop excluded from finesse cost, and the explicit treatment of soft drop and DAS.
 - Document what "minimum" means for this trainer. Do not silently mix 0G, finite-gravity, 20G, and wall-finesse assumptions.
-- **Explicit vertical-movement boundary:** the current 180 Flip candidate searches horizontal taps, wall-directed DAS, 90° rotations, and direct 180° rotations from the active piece state, then computes landing. Gravity and hard drop do not add finesse cost. Soft drop is ignored by the score observer but is not currently a planner transition; therefore the planner must not be described as enumerating every TETR.IO-reachable tuck. TETR.IO reference material documents 180 tucks that require soft drop before rotation. If full tuck coverage is required, add soft-drop/vertical-state transitions as a separate model change, with independent tests; do not quietly broaden the current oracle's claims.
+- **Explicit vertical-movement boundary:** the current candidate includes soft drop as a zero-cost navigation/execution transition while excluding it from the finesse-scoring route. Independent browser tests cover selected descent-before-rotation/tuck cases under active gravity, but not every possible soft-drop, gravity, or lock-delay interaction. Keep claims limited to the verified corpus; expand the independent oracle and timing corpus before claiming exhaustive TETR.IO placement reachability.
 - Keep the current UI and all unrelated modes out of scope.
 
 ### Gate 1 — Prove the rules layer
@@ -116,10 +116,10 @@ For each failure, report the first divergent layer: expected geometry, legal tra
 - Playwright must begin from the actual spawn state, independently check the displayed target against the oracle, press real keys, and verify the active state, final locked cells, and exactly-once score.
 - Keep isolated input/lock tests with frozen gravity, but do not confuse them with end-to-end timing validation.
 
-### Gate 4 — Prove the live regression is fixed
-- Reproduce the live discrepancy with a read-only browser test.
-- Run the same independent fixture against the isolated candidate and compare expected target, actual active state, and final locked cells.
-- Confirm the original user-visible failure is absent; a successful build or an internally consistent planner is not enough.
+### Gate 4 — Prove candidate behavior independently
+- Run the independent fixtures against the isolated candidate branch, not the old deployed Finesse implementation.
+- Compare actual prompt targets and minimum costs with the independent oracle; replay real key events and verify active state, final locked cells, and exactly-once scoring.
+- Keep any read-only probe of the old deployed site diagnostic-only. Its known broken Finesse behavior is expected to differ and is not a blocker or acceptance oracle for this rebuild.
 
 ### Gate 5 — Review and integrate
 - Preserve the existing UI, other training modes, and the separate diagnostics branch.
@@ -135,5 +135,5 @@ For each failure, report the first divergent layer: expected geometry, legal tra
 - No route is marked perfect when its measured input cost is above the independently computed minimum or its locked placement differs from the target.
 - Timing-sensitive behavior matches the declared gravity, DAS/ARR, and lock-delay model.
 - Existing unrelated modes and UI regression tests remain green.
-- The observed live failure is reproduced before the fix and demonstrably absent on the isolated candidate before integration.
+- Candidate behavior is independently verified on the isolated branch against the declared fixtures and browser oracle. Differences from the old deployed Finesse implementation are not treated as regressions.
 - No merge or production deployment occurs without explicit authorization.
