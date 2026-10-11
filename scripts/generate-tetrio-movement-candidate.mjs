@@ -66,7 +66,76 @@ const snapshot = {
   cases
 };
 await writeFile(resolve(outputPath), JSON.stringify(snapshot, null, 2) + '\n');
-console.log(JSON.stringify({ ok: true, output: resolve(outputPath), source: snapshot.source, caseCount: cases.length, coverage }));
+const staticAudit = await verifyExistingSnapshots();
+console.log(JSON.stringify({ ok: staticAudit.errors.length === 0, output: resolve(outputPath), source: snapshot.source, caseCount: cases.length, coverage, staticSnapshotAudit: staticAudit.summary, staticMismatches: staticAudit.errors.slice(0, 30) }, null, 2));
+if (staticAudit.errors.length) process.exitCode = 1;
+
+async function verifyExistingSnapshots() {
+  const emptySource = await readFile(new URL('../games/01/tetrio-i-empty-rotation-parity-test.js', import.meta.url), 'utf8');
+  const kickedSource = await readFile(new URL('../games/01/tetrio-srs-plus-movement-parity-test.js', import.meta.url), 'utf8');
+  const emptyCases = evaluateArray(extractArrayAfterDeclaration(emptySource, 'const CASES ='));
+  const blockedCases = evaluateArray(extractArrayAfterDeclaration(emptySource, 'const BLOCKED_CASES ='));
+  const kickedCases = evaluateArray(extractArrayAfterDeclaration(kickedSource, 'const CASES ='));
+  const errors = [];
+  const verify = (name, piece, rows, from, direction, expected, expectedKickIndex) => {
+    const actual = resolveRotation(rows, piece, from, direction);
+    if (!actual.success) {
+      errors.push(name + ': current client reports rotation failure but static fixture expects success');
+      return;
+    }
+    for (const field of ['rotation', 'x', 'y']) {
+      if (actual[field] !== expected[field]) {
+        errors.push(name + ': current ' + field + '=' + actual[field] + ', fixture=' + expected[field]);
+      }
+    }
+    if (actual.kickIndex !== expectedKickIndex) {
+      errors.push(name + ': current kickIndex=' + actual.kickIndex + ', fixture=' + expectedKickIndex);
+    }
+  };
+  for (const testCase of emptyCases) {
+    verify(testCase.name, 'i', emptyRows(), testCase.from, testCase.direction, testCase.expected, null);
+  }
+  for (const testCase of blockedCases) {
+    verify(testCase.name, 'i', testCase.rows, testCase.from, testCase.direction, testCase.expected, testCase.sourceKickIndex);
+  }
+  for (const testCase of kickedCases) {
+    verify(testCase.name, testCase.piece.toLowerCase(), testCase.rows, testCase.from, testCase.direction, testCase.expected, testCase.sourceKickIndex);
+  }
+  return {
+    summary: { emptyI: emptyCases.length, blockedI: blockedCases.length, kickedSrsPlus: kickedCases.length, checked: emptyCases.length + blockedCases.length + kickedCases.length },
+    errors
+  };
+}
+function extractArrayAfterDeclaration(source, declaration) {
+  const declarationIndex = source.indexOf(declaration);
+  if (declarationIndex === -1) throw new Error('Could not find ' + declaration);
+  const start = source.indexOf('[', declarationIndex + declaration.length);
+  if (start === -1) throw new Error('Could not find array start for ' + declaration);
+  let depth = 0;
+  let quote;
+  let escaped = false;
+  for (let index = start; index < source.length; index += 1) {
+    const char = source[index];
+    if (quote !== undefined) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = undefined;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === '\`') { quote = char; continue; }
+    if (char === '[') depth += 1;
+    else if (char === ']') {
+      depth -= 1;
+      if (depth === 0) return source.slice(start, index + 1);
+    }
+  }
+  throw new Error('Could not find array end for ' + declaration);
+}
+function evaluateArray(source) {
+  const value = Function('"use strict"; return (' + source + ');')();
+  if (!Array.isArray(value)) throw new Error('Extracted snapshot fixture is not an array');
+  return value;
+}
 
 function addCase(name, piece, rows, from, direction) {
   const expected = resolveRotation(rows, piece, from, direction);
