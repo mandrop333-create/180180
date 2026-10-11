@@ -1432,8 +1432,8 @@ body::after {
   animation: aqua-space-current-drift 58s ease-in-out infinite alternate;
 }
 @keyframes aqua-space-current-drift {
-  from { transform: translate3d(-.18%, -.1%, 0) scale(1); }
-  to { transform: translate3d(.18%, .18%, 0) scale(1.012); }
+  from { transform: translate3d(-.8%, -.4%, 0) scale(1); }
+  to { transform: translate3d(.8%, .6%, 0) scale(1.025); }
 }
 /* Float is communicated by optical separation and slight ambient parallax;
    controls and gameplay pieces remain stationary and exact. */
@@ -1474,13 +1474,14 @@ body::after {
 }
 
 body::after {
-  animation: aqua-space-current-drift 38s ease-in-out infinite alternate;
+  inset: -3vh -3vw;
+  animation: aqua-space-current-drift 34s ease-in-out infinite alternate;
   will-change: transform;
 }
 
 @media (max-width: 720px) {
   body::after {
-    animation-duration: 46s;
+    animation-duration: 42s;
     opacity: .38;
   }
 }
