@@ -1007,3 +1007,18 @@ MDN explains that backdrop-filter applies effects to pixels behind an element an
 ### 27.2 New acceptance test
 
 Hide the brand and cards mentally for a moment: the background alone should read as surface light descending into dark water, not stars in space. Then restore the content: the playfield must be the sharpest, most legible object, while the environment stays peripheral. If that reading does not survive on a phone at normal brightness, simplify and recompose rather than layering on more effects.
+
+
+## 11. Clarification: Aqua Space is a deliberate hybrid
+
+The identity is **aqua space**: a cosmic ocean, not a literal underwater simulator and not a generic starship dashboard. The surface-to-abyss water column and suspended matter establish fluidity; sparse distant stars, immense dark scale, and subtle orbital curvature establish cosmic space. Neither metaphor should erase the other.
+
+- **Far field:** pinprick stars, nearly still, cold pearl-white and sparse.
+- **Mid field:** broad spectral haze and curved lens-like currents, barely visible.
+- **Near field:** a few larger, softer marine-snow particles and refracted aqua light.
+- **Instrument plane:** floating, dark translucent instruments with varied silhouettes and fine optical edges.
+- **Precision plane:** the game board and its cells remain geometrically stable, crisp, high-contrast, and untouched by ambient motion.
+
+Do not use evenly distributed dots alone: that reads as a starfield. Do not remove all celestial cues: that reads as a standard underwater theme. The signature comes from the contrast between sharp distant stars and soft near-field matter, all suspended in a liquid-feeling dark cosmos.
+
+Motion is environmental only and extremely slow; it should imply drift, not movement of the interface. Keep it transform/opacity-based, remove it for reduced-motion preferences, and reduce or remove ambient layers on narrow/low-power devices. Validate the actual page at mobile and desktop sizes before calling the art direction successful.
