@@ -810,3 +810,202 @@ body::after {
   .trainer-side > .trainer-card,
   .rules-column > .trainer-card { animation: none; }
 }
+
+
+/* ==========================================================================
+   ABYSSAL ECOSYSTEM / V2
+   Shift the metaphor from "blue glass UI" to a habitat with depth, suspended
+   matter, refracted light and precision instruments. Ambient layers never
+   touch game state, board geometry, or input timing.
+   ========================================================================== */
+:root {
+  --abyss-blackwater: #02070d;
+  --abyss-midwater: #071a25;
+  --abyss-shelf: #102d36;
+  --abyss-phosphor: #9af7d5;
+  --abyss-lantern: #f4c98b;
+  --abyss-violet-light: #b8a6ff;
+  --abyss-glass: rgba(8, 25, 34, .76);
+  --abyss-glass-rim: rgba(166, 230, 219, .22);
+}
+
+/* Depth is built in layers: distant light, marine snow, then the habitat.
+   Keep these as two static composited planes rather than many DOM particles. */
+.trainer-page {
+  background:
+    radial-gradient(ellipse at 50% 4%, rgba(41, 116, 119, .15), transparent 35%),
+    radial-gradient(ellipse at 4% 52%, rgba(35, 102, 106, .11), transparent 28%),
+    radial-gradient(ellipse at 96% 38%, rgba(105, 73, 130, .10), transparent 30%);
+}
+.trainer-page::before,
+.trainer-page::after {
+  content: "";
+  position: fixed;
+  inset: -8vh -6vw;
+  z-index: -1;
+  pointer-events: none;
+}
+.trainer-page::before {
+  opacity: .46;
+  background:
+    radial-gradient(ellipse at 17% 17%, rgba(177, 245, 223, .20) 0, transparent 1.2%),
+    radial-gradient(ellipse at 17% 17%, rgba(108, 204, 188, .08) 0, transparent 12%),
+    radial-gradient(ellipse at 83% 29%, rgba(193, 178, 255, .16) 0, transparent 1.1%),
+    radial-gradient(ellipse at 83% 29%, rgba(144, 127, 217, .07) 0, transparent 13%),
+    radial-gradient(ellipse at 74% 79%, rgba(245, 205, 143, .11) 0, transparent 1%),
+    radial-gradient(ellipse at 74% 79%, rgba(245, 205, 143, .045) 0, transparent 10%),
+    radial-gradient(1px 1px at 12% 35%, rgba(210,255,239,.7) 50%, transparent 100%),
+    radial-gradient(1px 1px at 27% 74%, rgba(210,255,239,.46) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 69% 19%, rgba(213,204,255,.62) 50%, transparent 100%),
+    radial-gradient(1px 1px at 91% 63%, rgba(210,255,239,.56) 50%, transparent 100%),
+    radial-gradient(1px 1px at 58% 87%, rgba(245,205,143,.52) 50%, transparent 100%),
+    radial-gradient(1px 1px at 42% 11%, rgba(210,255,239,.4) 50%, transparent 100%);
+  animation: abyssal-water-column 34s ease-in-out infinite alternate;
+}
+.trainer-page::after {
+  opacity: .26;
+  background:
+    linear-gradient(112deg, transparent 0 24%, rgba(135, 225, 209, .055) 29%, transparent 35% 100%),
+    linear-gradient(72deg, transparent 0 58%, rgba(174, 161, 255, .05) 63%, transparent 70% 100%),
+    radial-gradient(ellipse at 50% 0%, rgba(181, 245, 222, .11), transparent 45%),
+    repeating-radial-gradient(ellipse at 50% -12%, transparent 0 22px, rgba(165, 236, 217, .018) 23px 24px, transparent 25px 48px);
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
+  animation: abyssal-caustic-drift 42s ease-in-out infinite alternate;
+}
+@keyframes abyssal-water-column {
+  from { transform: translate3d(-.25%, -.2%, 0); }
+  to { transform: translate3d(.25%, .35%, 0); }
+}
+@keyframes abyssal-caustic-drift {
+  from { transform: translate3d(-.3%, 0, 0) scale(1); opacity: .18; }
+  to { transform: translate3d(.3%, .4%, 0) scale(1.015); opacity: .34; }
+}
+
+/* Cards become small pieces of submerged hardware: asymmetric light,
+   a fine inner rim, and an optical highlight rather than a uniform blue slab. */
+.trainer-card {
+  overflow: hidden;
+  border-color: var(--abyss-glass-rim) !important;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(123, 221, 195, .075), transparent 48%),
+    linear-gradient(155deg, rgba(12, 34, 41, .90), rgba(4, 14, 24, .88) 68%) !important;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, .27),
+    inset 0 1px 0 rgba(220, 255, 241, .075),
+    inset 1px 0 0 rgba(166, 230, 219, .025) !important;
+}
+.trainer-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(174, 246, 222, .35), transparent);
+  opacity: .72;
+}
+.trainer-card h2 {
+  color: #a5e6d4 !important;
+  text-shadow: 0 0 18px rgba(113, 225, 192, .10);
+}
+.trainer-card:hover {
+  border-color: rgba(154, 247, 213, .34) !important;
+}
+
+/* The board reads as a lit viewing port, with a quiet spectral rim.
+   No transforms are applied to the board or its cells. */
+.board-wrap {
+  border-color: rgba(154, 225, 211, .48) !important;
+  background:
+    linear-gradient(145deg, rgba(28, 66, 69, .97), rgba(4, 17, 25, .99) 62%, rgba(24, 19, 42, .96)) !important;
+  box-shadow:
+    0 30px 78px rgba(0, 0, 0, .58),
+    0 0 0 1px rgba(154, 247, 213, .075),
+    0 0 42px rgba(64, 189, 157, .10),
+    0 0 100px rgba(89, 104, 169, .055),
+    inset 0 1px 0 rgba(222, 255, 242, .18),
+    inset 0 0 0 1px rgba(0, 0, 0, .22) !important;
+}
+.board-wrap::before {
+  z-index: 2;
+  background:
+    linear-gradient(118deg, rgba(199, 255, 233, .085), transparent 17% 78%, rgba(186, 166, 255, .065)),
+    linear-gradient(180deg, rgba(192, 255, 232, .025), transparent 18% 84%, rgba(0, 0, 0, .11));
+}
+.board-wrap::after {
+  inset: -14px;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 18% 8%, rgba(133, 244, 208, .22), transparent 42%),
+    radial-gradient(ellipse at 85% 92%, rgba(165, 145, 255, .13), transparent 43%);
+  filter: blur(17px);
+  opacity: .34;
+}
+
+/* Previews are held in dark water, not laid on empty page space. */
+.hold-preview {
+  border-color: rgba(149, 222, 204, .22) !important;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(116, 228, 193, .12), transparent 58%),
+    linear-gradient(160deg, rgba(6, 24, 30, .9), rgba(3, 10, 18, .92)) !important;
+  box-shadow: inset 0 1px 0 rgba(223, 255, 241, .055), inset 0 0 22px rgba(72, 180, 151, .035);
+}
+.next-preview {
+  border-radius: 9px;
+  background:
+    radial-gradient(ellipse at 50% 4%, rgba(113, 215, 187, .065), transparent 56%) !important;
+}
+.hud-item {
+  border-color: rgba(149, 222, 204, .15) !important;
+  background:
+    linear-gradient(145deg, rgba(13, 37, 42, .88), rgba(5, 16, 24, .88)) !important;
+}
+.hud-item strong { text-shadow: 0 0 16px rgba(154, 247, 213, .09); }
+.trainer-brand {
+  text-shadow: 0 0 16px rgba(154, 247, 213, .18), 0 0 44px rgba(70, 180, 153, .09) !important;
+}
+.mini-home-title {
+  text-shadow: 0 0 26px rgba(154, 247, 213, .14) !important;
+}
+
+/* A second, warmer organism-light is reserved for rare accents, not body text. */
+.mini-home-number { color: #b5dfce !important; }
+.rhythm-pattern { color: var(--abyss-violet-light) !important; }
+.finesse-prompt .finesse-key.done {
+  color: var(--abyss-phosphor) !important;
+  border-color: var(--abyss-phosphor) !important;
+  box-shadow: 0 0 14px rgba(154, 247, 213, .12);
+}
+.action-button:hover {
+  border-color: rgba(154, 247, 213, .48) !important;
+  background: linear-gradient(145deg, rgba(20, 57, 56, .96), rgba(5, 24, 31, .98)) !important;
+}
+:where(button, input, select, textarea, [tabindex]):focus-visible {
+  outline-color: var(--abyss-phosphor) !important;
+  box-shadow: 0 0 0 4px rgba(154, 247, 213, .10) !important;
+}
+
+/* Avoid fixed-screen visual work on narrow devices and honor system motion. */
+@media (max-width: 720px) {
+  .trainer-page::before,
+  .trainer-page::after {
+    animation: none;
+    inset: 0;
+    opacity: .22;
+  }
+  .trainer-card { backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
+  .board-wrap::after { filter: blur(10px); opacity: .24; }
+}
+@media (max-width: 560px) {
+  .trainer-page::after { display: none; }
+  .trainer-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-page::before,
+  .trainer-page::after { animation: none !important; transform: none !important; }
+}
+@media (forced-colors: active) {
+  .trainer-page::before, .trainer-page::after { display: none !important; }
+}
