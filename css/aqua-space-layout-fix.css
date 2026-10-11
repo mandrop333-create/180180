@@ -135,3 +135,54 @@
     translate: none !important;
   }
 }
+
+
+/* Human-first Aqua Space layout: keep Rules beside the Next queue on desktop. */
+@media (min-width: 761px) {
+  .homepage-game-first .trainer-layout {
+    grid-template-columns: minmax(116px, .78fr) minmax(260px, 300px) minmax(104px, .68fr) minmax(168px, .94fr) !important;
+    gap: clamp(10px, 1.25vw, 16px) !important;
+    align-items: start !important;
+  }
+  .homepage-game-first .trainer-layout > .trainer-side:first-of-type {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+  .homepage-game-first .trainer-layout > .board-column {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+  .homepage-game-first .trainer-layout > .trainer-side:nth-of-type(2) {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+  }
+  .homepage-game-first .trainer-layout > .rules-column {
+    grid-column: 4 !important;
+    grid-row: 1 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-content: start !important;
+    gap: 12px !important;
+    padding-top: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .homepage-game-first .rules-column > .rules-card {
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+@media (max-width: 760px) {
+  .homepage-game-first .trainer-layout {
+    grid-template-areas:
+      "board board"
+      "left next"
+      "rules rules" !important;
+  }
+  .homepage-game-first .trainer-layout > .rules-column {
+    grid-area: rules !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+  }
+}
