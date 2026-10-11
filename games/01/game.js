@@ -31,21 +31,14 @@ const description=document.getElementById('miniHomeDescription');
 if(title)title.textContent=mode.name;
 if(number)number.textContent=mode.number;
 if(description)description.textContent=mode.description;
-const score=document.getElementById('hudScore');
-const lines=document.getElementById('hudLines');
-const combo=document.getElementById('hudCombo');
-const b2b=document.getElementById('hudB2B');
-const pieces=document.getElementById('hudPieces');
 const hold=document.getElementById('holdPreview');
 const next=document.getElementById('nextPreview');
 const finessePrompt=document.getElementById('finessePrompt');
-const hudFinesse=document.getElementById('hudFinesse');
 let statsDashboard=null;
 function mountStatsDashboard(){
   const originalSide=document.querySelector('.trainer-layout > .trainer-side');
   const card=originalSide?.querySelector('.trainer-card');
   if(!originalSide||!card||statsDashboard)return;
-  originalSide.classList.add('regular-stats-side');
   const nextSide=[...document.querySelectorAll('.trainer-layout > .trainer-side')].find(el=>el!==originalSide);
   if(nextSide)nextSide.classList.add('next-side');
 
@@ -110,12 +103,6 @@ window.setColorOnlyHold=enabled=>{colorOnlyHoldEnabled=!!enabled;if(latestState)
 window.setColorOnlyNext=enabled=>{colorOnlyNextEnabled=!!enabled;if(latestState)renderState(latestState);};
 function renderState(state){
   latestState=state;
-  if(score)score.textContent=String(state.stats.score);
-  if(lines)lines.textContent=String(state.lines);
-  if(combo)combo.textContent=state.combo<0?'—':String(state.combo);
-  if(b2b){b2b.textContent=state.b2b?'B2B ×'+(state.stats.b2bCurrent||1):'READY';b2b.title=state.b2b?'Current back-to-back chain: '+(state.stats.b2bCurrent||1)+' qualifying clears.':'Make a Tetris or spin clear to start a back-to-back chain.';b2b.setAttribute('aria-label',b2b.title);}
-  if(pieces)pieces.textContent=String(state.stats.piecesPlaced);
-  if(hudFinesse)hudFinesse.textContent=String(state.stats.finesseFaults)+' flagged · '+String(state.stats.finessePerfect)+' efficient';
   const s=state.stats||{},placed=Math.max(0,Number(s.piecesPlaced)||0),cleared=Math.max(0,Number(s.linesCleared)||0),efficient=Math.max(0,Number(s.finessePerfect)||0),faults=Math.max(0,Number(s.finesseFaults)||0),attempts=efficient+faults,efficiency=attempts?Math.round(efficient/attempts*100):0;
   setStat('statScore',s.score||0);setStat('statLines',cleared);setStat('statPieces',placed);setStat('statCombo',state.combo>=0?state.combo:'—');
   setStat('statB2BCurrent',s.b2bCurrent||0);setStat('statB2BLabel',s.b2bCurrent?(s.b2bCurrent===1?'CHAIN STARTED':'CHAIN ×'+s.b2bCurrent):'CHAIN READY');setStat('statB2BMeta',s.b2bCurrent?'Keep landing Tetrises or line-clearing T-spins. No-clear placements keep the chain alive.':'A Tetris or line-clearing T-spin starts the chain. A non-B2B line clear breaks it.');setStat('statB2BBest',s.b2bBest||0);setStat('statB2BTotal',String(s.b2bClears||0)+' bonus clears this run');document.querySelectorAll('[data-b2b-milestone]').forEach(el=>el.classList.toggle('reached',(s.b2bBest||0)>=Number(el.getAttribute('data-b2b-milestone'))));
