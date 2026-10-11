@@ -27,7 +27,7 @@ export class Trainer {
     this.board=[];this.piece=null;this.generator=options.generator||(this.mode.createGenerator?this.mode.createGenerator({seed:options.seed}):new SevenBagGenerator({seed:options.seed}));
     this.queue=[];this.holdType=null;this.holdUsed=false;
     this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;
-    this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0,piecesWithLineClear:0};
+    this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0,piecesWithLineClear:0,b2bCurrent:0,b2bBest:0,b2bClears:0,comboBest:0,singles:0,doubles:0,triples:0,noClearPlacements:0,bestDrop:0};
     this.gameOver=false;this.session=this.mode.createSession?this.mode.createSession():{};this.training=createTrainingState();
     this.lastTime=0;this.gravityAcc=0;this.softAcc=0;this.lockAcc=0;this.lockResets=0;this.pieceInputCount=0;this.hardDropBlockedUntil=0;this.dasCutRemaining=0;this.anim=null;
     this.downKeys=new Set();this.moveState={dir:0,elapsed:0,repeatElapsed:0};this.lastAction=null;this.lastRotation=false;
@@ -73,7 +73,7 @@ export class Trainer {
     this.hook('hold',current,this.holdType);this.emitState();return true;
   }
   applySoftDrop(){if(this.gameOver||!this.piece)return;const factor=this.rules.softFactors[this.softScale]??1;if(factor===Infinity){while(this.movePiece(0,1,{countSoftDrop:true})){}this.softAcc=0;return;}if(this.movePiece(0,1,{countSoftDrop:true})){this.softAcc=0;this.lockAcc=0;}}
-  hardDrop(){if(this.gameOver||!this.piece)return;if(this.rules.safeLock&&performance.now()<this.hardDropBlockedUntil)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
+  hardDrop(){if(this.gameOver||!this.piece)return;if(this.rules.safeLock&&performance.now()<this.hardDropBlockedUntil)return;const startY=this.piece.y;while(this.movePiece(0,1)){}const rows=this.piece.y-startY;this.stats.hardDropRows+=rows;this.stats.bestDrop=Math.max(this.stats.bestDrop,rows);this.stats.score+=rows*(this.rules.scoring?.hardDropPerRow??SCORE.hardDropPerRow);this.hook('hardDrop',startY,this.piece.y);this.lockPiece(false);}
   isTSpin(piece){
     if(!piece||piece.type!=='T'||!this.lastRotation)return null;
     const cx=piece.x+1,cy=piece.y+1;let corners=0;
@@ -92,14 +92,16 @@ export class Trainer {
     const beforeClear=this.hook('beforeClear',lockedPiece,afterLock);if(beforeClear===false)shouldClear=false;
     const spin=this.isTSpin(lockedPiece);let clearRows=[];
     if(shouldClear){const remaining=this.board.filter(row=>{const full=row.every(Boolean);if(full){cleared++;clearRows.push(row);}return!full;});if(cleared){while(remaining.length<this.H)remaining.unshift(Array(this.W).fill(0));this.board=remaining;this.lines+=cleared;this.stats.linesCleared+=cleared;}}
-    if(cleared===0)this.combo=-1;else{this.combo++;if(this.combo>0)this.stats.combos++;}
+    if(cleared===0){this.combo=-1;this.stats.noClearPlacements++;}else{this.combo++;if(this.combo>0)this.stats.combos++;this.stats.comboBest=Math.max(this.stats.comboBest,this.combo+1);}
     if(cleared>0)this.stats.piecesWithLineClear++;
-    if(cleared===4)this.stats.tetrises++;
+    if(cleared===1)this.stats.singles++;if(cleared===2)this.stats.doubles++;if(cleared===3)this.stats.triples++;if(cleared===4)this.stats.tetrises++;
     if(spin)this.stats.tspins++;
-    if(cleared===0&&spin===null)this.b2b=false;
     const difficult=(cleared===4)||!!spin;
-    if(difficult&&cleared>0){if(this.b2b)this.stats.score+=Math.round((this.rules.scoring?.b2bMultiplier??1.5)*this.spinOrLineScore(cleared,spin));else this.stats.score+=this.spinOrLineScore(cleared,spin);this.b2b=true;}
-    else if(cleared>0){this.stats.score+=this.spinOrLineScore(cleared,spin);this.b2b=false;}
+    if(difficult&&cleared>0){
+      if(this.b2b){this.stats.b2bCurrent++;this.stats.b2bClears++;this.stats.score+=Math.round((this.rules.scoring?.b2bMultiplier??1.5)*this.spinOrLineScore(cleared,spin));}
+      else{this.stats.b2bCurrent=1;this.stats.score+=this.spinOrLineScore(cleared,spin);}
+      this.stats.b2bBest=Math.max(this.stats.b2bBest,this.stats.b2bCurrent);this.b2b=true;
+    }else if(cleared>0){this.stats.score+=this.spinOrLineScore(cleared,spin);this.b2b=false;this.stats.b2bCurrent=0;}
     if(this.combo>0)this.stats.score+=50*this.combo;
     const afterClear=this.board.map(r=>[...r]);
     if(countFilled(this.board)===0&&cleared>0){this.stats.perfectClears++;this.stats.score+=3500;}
@@ -145,7 +147,7 @@ export class Trainer {
   handleBlur(){this.downKeys.clear();this.moveState.dir=0;}
   say(s){if(this.toastCallback)this.toastCallback(s);}setToastCallback(cb){this.toastCallback=cb;}
   reset(){
-    this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0,piecesWithLineClear:0};
+    this.turns=0;this.placed=0;this.lines=0;this.combo=-1;this.b2b=false;this.stats={piecesPlaced:0,linesCleared:0,rotations:0,halfTurns:0,pieceInputs:0,finessePerfect:0,finesseFaults:0,hardDropRows:0,softDropRows:0,lockResets:0,score:0,combos:0,tetrises:0,tspins:0,perfectClears:0,piecesWithLineClear:0,b2bCurrent:0,b2bBest:0,b2bClears:0,comboBest:0,singles:0,doubles:0,triples:0,noClearPlacements:0,bestDrop:0};
     this.softAcc=0;this.gravityAcc=0;this.lockAcc=0;this.lockResets=0;this.dasCutRemaining=0;this.lastTime=0;this.gameOver=false;this.downKeys.clear();this.moveState={dir:0,elapsed:0,repeatElapsed:0};this.training=createTrainingState();
     this.holdUsed=false;
     this.session=this.mode.createSession?this.mode.createSession():{};if(this.generator.reset)this.generator.reset();this.queue=[];this.holdType=null;this.holdUsed=false;this.emptyBoard();this.piece=null;this.anim=null;this.ensureQueue();this.spawn();this.hook('reset');this.options.onReset();this.emitState();
