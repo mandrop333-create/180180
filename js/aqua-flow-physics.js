@@ -38,7 +38,7 @@
     wave = new Float32Array(cols * rows);
     previous = new Float32Array(cols * rows);
     nextWave = new Float32Array(cols * rows);
-    const count = Math.round(clamp(width * height / (width < 600 ? 13000 : 10000), 22, 96));
+    const count = Math.round(clamp(width * height / (finePointer.matches ? 10000 : 16000), 18, finePointer.matches ? 96 : 36));
     particles = Array.from({ length: count }, () => makeParticle(true));
     accumulator = 0;
   }
@@ -163,8 +163,10 @@
 
   function drawCaustics(t) {
     ctx.lineWidth = .7;
-    for (let y = 2; y < rows - 2; y += 2) {
-      for (let x = 2; x < cols - 2; x += 3) {
+    const yStep = finePointer.matches ? 2 : 3;
+    const xStep = finePointer.matches ? 3 : 5;
+    for (let y = 2; y < rows - 2; y += yStep) {
+      for (let x = 2; x < cols - 2; x += xStep) {
         const i = y * cols + x;
         const gx = wave[i + 1] - wave[i - 1];
         const gy = wave[i + cols] - wave[i - cols];
@@ -204,19 +206,49 @@
     frame++;
   }
 
+  let animationFrame = 0;
+  let running = false;
+  let lastDraw = 0;
+
   function tick(t) {
-    if (document.hidden) { last = t; requestAnimationFrame(tick); return; }
+    if (!running || document.hidden || reduced.matches) {
+      running = false;
+      animationFrame = 0;
+      return;
+    }
+
     const elapsed = last ? Math.min((t - last) / 1000, .08) : 0;
     last = t;
-    if (elapsed > 0 && !reduced.matches) accumulator += elapsed;
-    if (t - (tick.lastDraw || 0) >= (reduced.matches ? 160 : 40)) {
-      tick.lastDraw = t;
+    if (elapsed > 0) accumulator += elapsed;
+
+    // Fine-pointer devices get the full 25fps decorative pass. Touch devices
+    // use a lighter 15fps pass; gameplay itself runs independently.
+    const drawInterval = finePointer.matches ? 40 : 66;
+    if (t - lastDraw >= drawInterval) {
+      lastDraw = t;
       draw(t);
     }
-    requestAnimationFrame(tick);
+    animationFrame = requestAnimationFrame(tick);
   }
 
-  window.addEventListener('resize', resize, { passive: true });
+  function stopAnimation() {
+    running = false;
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    animationFrame = 0;
+  }
+
+  function startAnimation() {
+    if (running || document.hidden || reduced.matches) return;
+    running = true;
+    last = 0;
+    lastDraw = 0;
+    animationFrame = requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('resize', () => {
+    resize();
+    if (reduced.matches) draw(performance.now());
+  }, { passive: true });
   if (finePointer.matches) window.addEventListener('pointermove', onPointer, { passive: true });
   window.addEventListener('pointerdown', e => {
     if (finePointer.matches) {
@@ -224,7 +256,20 @@
       disturb(pointer.x, pointer.y, .18);
     }
   }, { passive: true });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) last = 0; });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopAnimation();
+    else if (reduced.matches) draw(performance.now());
+    else startAnimation();
+  });
+
+  reduced.addEventListener?.('change', () => {
+    stopAnimation();
+    if (reduced.matches) draw(performance.now());
+    else startAnimation();
+  });
+
   resize();
-  requestAnimationFrame(tick);
+  if (reduced.matches) draw(performance.now());
+  else startAnimation();
 })();
