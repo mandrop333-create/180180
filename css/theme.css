@@ -1,0 +1,129 @@
+/* 180436 Midnight Arcade theme layer
+   Visual-only overrides: intentionally does not touch board geometry, piece rendering,
+   gameplay state, controls, timing, scoring, or training rules. */
+:root {
+  color-scheme: dark;
+  --theme-bg: #0b0a10;
+  --theme-surface: #14121b;
+  --theme-surface-raised: #1d1927;
+  --theme-line: #342b46;
+  --theme-line-strong: #51416d;
+  --theme-text: #f4f0fc;
+  --theme-muted: #a59bb8;
+  --theme-accent: #b8a0ff;
+  --theme-accent-soft: #8f72dc;
+  --theme-success: #83e6b4;
+  --theme-focus: #d4c4ff;
+  --bg: var(--theme-bg);
+  --panel: var(--theme-surface);
+  --line: var(--theme-line);
+  --text: var(--theme-text);
+  --muted: var(--theme-muted);
+  --purple: var(--theme-accent);
+}
+html { background: var(--theme-bg); }
+body {
+  background:
+    radial-gradient(ellipse at 50% -16%, #30234755 0%, transparent 52%),
+    linear-gradient(180deg, #0d0b12 0%, var(--theme-bg) 42%, #09090d 100%);
+  color: var(--theme-text);
+  accent-color: var(--theme-accent);
+}
+.trainer-page { isolation: isolate; }
+.trainer-top {
+  border-bottom: 1px solid #ffffff09;
+  background: linear-gradient(180deg, #100e17c9, #0d0b1200);
+}
+.trainer-brand {
+  color: #f2ecff !important;
+  letter-spacing: .13em !important;
+  text-shadow: 0 0 28px #a98bfa20 !important;
+}
+.trainer-description { color: #a49ab5 !important; }
+.trainer-card {
+  border-color: var(--theme-line) !important;
+  background: linear-gradient(145deg, #201a2a 0%, #17141f 58%, #121018 100%) !important;
+  box-shadow: 0 14px 34px #0006, inset 0 1px 0 #ffffff09 !important;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.trainer-card:hover {
+  border-color: var(--theme-line-strong) !important;
+  box-shadow: 0 16px 38px #0007, 0 0 0 1px #b8a0ff0b !important;
+}
+.trainer-card h2 { color: #b8a6df !important; }
+.hud-item {
+  border-color: #393047 !important;
+  background: linear-gradient(180deg, #1a1723, #121018) !important;
+}
+.hud-item span, .rhythm-metric, .mini-home-description { color: #a49ab5; }
+.hud-item strong, .rhythm-metric strong { color: #f1ebff; }
+.hold-preview {
+  border-color: #403450 !important;
+  background: radial-gradient(ellipse at 50% 20%, #241d33, #0d0c11 75%) !important;
+}
+.rhythm-outlier {
+  border-color: #393047 !important;
+  background: #100e16 !important;
+}
+.mini-home-number { color: #b8a0ef !important; }
+.mini-home-title { color: #f0e9ff !important; }
+.action-button, button:not(.mobile-control) {
+  transition: color .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.action-button {
+  border-color: #5b4877 !important;
+  background: linear-gradient(180deg, #292137, #191420) !important;
+}
+.action-button:hover {
+  border-color: var(--theme-accent) !important;
+  background: linear-gradient(180deg, #392c4e, #21182d) !important;
+  box-shadow: 0 0 0 1px #b8a0ff15, 0 7px 18px #0004;
+}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--theme-focus) !important;
+  outline-offset: 3px;
+}
+input[type="range"] { accent-color: var(--theme-accent) !important; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--theme-accent) !important; }
+.rules-toggle, .rule-control-head label { color: #d5cce4 !important; }
+.rule-control-head output { color: #f1ebff !important; }
+.settings-backdrop { background: #07060bd9 !important; }
+.settings-card {
+  border-color: #4a3c61 !important;
+  background: linear-gradient(145deg, #211b2b, #14111c 76%) !important;
+  box-shadow: 0 24px 80px #000b, 0 0 34px #b8a0ff12 !important;
+}
+.settings-title { color: #f0e8ff !important; }
+.settings-section { border-color: #342b46 !important; }
+.settings-section-title, .settings-control-head output { color: #b8a0ff !important; }
+.settings-close, .settings-key {
+  border-color: #443653 !important;
+  background: #17131f !important;
+}
+.settings-close:hover, .settings-key:hover, .settings-key.listening {
+  border-color: var(--theme-accent) !important;
+  box-shadow: 0 0 14px #b8a0ff20;
+}
+.settings-reset:hover { color: #e0d3ff !important; }
+.power-orb { box-shadow: 0 0 8px #c8adff99, 0 0 18px #9b6fff55, inset -6px -7px 10px #1a0d31aa, inset 5px 5px 8px #ffffff55; }
+.power-orbit { box-shadow: 0 0 8px #a77cff25; }
+.trainer-settings-label { color: #c2adff !important; }
+#toast {
+  border-color: #655084 !important;
+  background: #191421 !important;
+  color: #f2ecff !important;
+  box-shadow: 0 10px 30px #0008;
+}
+.mobile-control, .mobile-controls-editbar button {
+  border-color: #5b4877 !important;
+  background: #1a1524eF !important;
+  color: #f0e8ff !important;
+  box-shadow: 0 5px 18px #0006;
+}
+.mobile-control:active { background: #392c4e !important; }
+@media (prefers-reduced-motion: reduce) {
+  .trainer-card, .action-button, button:not(.mobile-control), .settings-key, .settings-close {
+    transition: none !important;
+  }
+  .power-star { animation: none !important; }
+}
