@@ -1388,3 +1388,93 @@ body::after {
   .trainer-card { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
   .trainer-shell::before, .trainer-shell::after { opacity: .12; }
 }
+
+
+/* ==========================================================================
+   AQUA SPACE / V2.4 — the hybrid is the point
+   Not "underwater instead of space": a liquid cosmic abyss. Distinguish
+   distant pinprick stars from nearer suspended particles by scale, density,
+   hue and motion. Preserve the playfield as the stable visual anchor.
+   ========================================================================== */
+:root {
+  --aqua-space-void: #01050d;
+  --aqua-space-midnight: #061522;
+  --aqua-space-current: rgba(86, 205, 199, .075);
+  --aqua-space-starlight: rgba(205, 237, 255, .48);
+}
+body {
+  background:
+    radial-gradient(ellipse 70% 34% at 50% -9%, rgba(100, 202, 206, .16), transparent 72%),
+    radial-gradient(ellipse 38% 40% at 2% 26%, rgba(19, 111, 139, .12), transparent 75%),
+    radial-gradient(ellipse 32% 44% at 99% 45%, rgba(91, 66, 151, .12), transparent 76%),
+    radial-gradient(ellipse 50% 55% at 50% 54%, rgba(8, 44, 60, .16), transparent 78%),
+    linear-gradient(180deg, #081a2a 0%, #061321 31%, #030b16 70%, #01050d 100%) !important;
+}
+/* Far-field stars are tiny and sharp; near-field marine snow is softer,
+   slightly larger and concentrated in the lower water column. */
+body::before {
+  opacity: .62;
+  background:
+    radial-gradient(1px 1px at 5% 14%, rgba(218, 244, 255, .58) 50%, transparent 100%),
+    radial-gradient(1px 1px at 18% 43%, rgba(184, 231, 244, .34) 50%, transparent 100%),
+    radial-gradient(1px 1px at 29% 9%, rgba(226, 245, 255, .5) 50%, transparent 100%),
+    radial-gradient(1px 1px at 41% 31%, rgba(195, 230, 247, .32) 50%, transparent 100%),
+    radial-gradient(1px 1px at 56% 13%, rgba(220, 241, 255, .48) 50%, transparent 100%),
+    radial-gradient(1px 1px at 73% 24%, rgba(209, 238, 251, .36) 50%, transparent 100%),
+    radial-gradient(1px 1px at 88% 11%, rgba(227, 245, 255, .54) 50%, transparent 100%),
+    radial-gradient(1px 1px at 95% 49%, rgba(187, 227, 241, .32) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 12% 76%, rgba(148, 224, 219, .22) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 35% 88%, rgba(151, 219, 219, .18) 50%, transparent 100%),
+    radial-gradient(2px 2px at 67% 73%, rgba(156, 230, 220, .23) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 84% 91%, rgba(167, 224, 230, .18) 50%, transparent 100%),
+    radial-gradient(ellipse 70% 20% at 50% 0%, rgba(159, 238, 222, .09), transparent 75%),
+    linear-gradient(180deg, rgba(113, 204, 209, .018), transparent 34% 100%);
+}
+/* The current is a broad, almost imperceptible curved lens—not a grid,
+   wireframe, or decorative sci-fi HUD. Drift only this ambient layer. */
+body::after {
+  opacity: .48;
+  background:
+    radial-gradient(ellipse 68% 42% at 50% 48%, transparent 55%, rgba(75, 181, 190, .045) 57%, transparent 60%),
+    radial-gradient(ellipse 88% 57% at 50% 50%, transparent 66%, rgba(126, 146, 215, .035) 67%, transparent 69%),
+    linear-gradient(108deg, transparent 0 19%, rgba(112, 227, 212, .025) 25%, transparent 32% 100%),
+    linear-gradient(76deg, transparent 0 64%, rgba(157, 143, 239, .028) 70%, transparent 76% 100%),
+    linear-gradient(180deg, transparent 0%, rgba(2, 8, 17, .06) 44%, rgba(1, 5, 12, .52) 100%);
+  animation: aqua-space-current-drift 58s ease-in-out infinite alternate;
+}
+@keyframes aqua-space-current-drift {
+  from { transform: translate3d(-.18%, -.1%, 0) scale(1); }
+  to { transform: translate3d(.18%, .18%, 0) scale(1.012); }
+}
+/* Float is communicated by optical separation and slight ambient parallax;
+   controls and gameplay pieces remain stationary and exact. */
+.trainer-card {
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(116, 229, 210, .075), transparent 46%),
+    linear-gradient(150deg, rgba(10, 31, 43, .78), rgba(3, 12, 23, .91) 76%) !important;
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, .28),
+    0 1px 0 rgba(205, 250, 240, .035),
+    inset 0 1px 0 rgba(218, 255, 246, .07),
+    inset 0 0 0 1px rgba(117, 209, 214, .025) !important;
+}
+.board-wrap {
+  border-color: rgba(145, 231, 226, .5) !important;
+  box-shadow:
+    0 28px 76px rgba(0, 0, 0, .58),
+    0 0 0 1px rgba(131, 225, 223, .085),
+    0 0 38px rgba(48, 180, 177, .09),
+    0 0 92px rgba(98, 89, 170, .045),
+    inset 0 1px 0 rgba(228, 255, 251, .17),
+    inset 0 0 0 3px rgba(1, 9, 17, .56) !important;
+}
+@media (max-width: 720px) {
+  body::after { animation: none; opacity: .25; }
+  body::before { opacity: .4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none !important; transform: none !important; }
+}
+@media (forced-colors: active) {
+  body::before, body::after { display: none !important; }
+}
