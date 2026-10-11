@@ -67,7 +67,7 @@ function compareKicks(label, actual, expected) {
 
 function parseKickTable(objectLiteral) {
   const table = {};
-  const property = /("(\\d{2})"|\\b(\\d{2}))\\s*:\\s*(\\[(?:\\s*\\[\\s*-?\\d+\\s*,\\s*-?\\d+\\s*\\]\\s*,?)*\\])/g;
+  const property = /("(\d{2})"|\b(\d{2}))\s*:\s*(\[(?:\s*\[\s*-?\d+\s*,\s*-?\d+\s*\]\s*,?)*\])/g;
   for (const match of objectLiteral.matchAll(property)) {
     const key = match[2] ?? match[3];
     table[key] = JSON.parse(match[4]);
