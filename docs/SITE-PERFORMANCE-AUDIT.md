@@ -48,7 +48,7 @@ This is a source-level audit of the current `main` tree and the isolated `chore/
 
 ## Deployment blocker
 
-Cloudflare's Workers Builds check currently reports a failed build for PR #29's latest head commit, while the GitHub Finesse and Playwright checks passed. Do not merge or claim a live deployment until the exact Cloudflare build error is obtained and resolved. The available repository workflow deploys a separate diagnostics Worker; it does not prove that the public website is deployed.
+Cloudflare Workers Builds reported a failed preview for an earlier PR #29 commit (`e42d2d8`). The later head (`8ceff4b`) passed the GitHub Finesse and Playwright checks, but its Cloudflare preview result has not been verified. A Workers Builds preview for service `180trainertool` is not, by itself, proof that the public static website was deployed. Confirm the preview result and identify the production website deployment target before claiming a live release. The repository workflow in `.github/workflows/deploy-diagnostics-worker.yml` deploys a separate diagnostics Worker.
 
 ## Acceptance gates for each section
 
