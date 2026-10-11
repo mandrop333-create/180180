@@ -49,7 +49,7 @@ jobs:
           path: diagnostics-harness
       - name: Record requested test
         env:
-          TEST_REQUEST: ${{ (github.event_name == 'issue_comment' && github.event.comment.body) || inputs.test_request || 'finesse feedback red to green alternate optimal routes' }}
+          TEST_REQUEST: ${{ (github.event_name == 'issue_comment' && github.event.comment.body) || inputs.test_request || 'Test movement, rotation, hold, hard drop, reset, and game over' }}
         run: |
           mkdir -p artifacts
           case "$TEST_REQUEST" in /playwright\ *) TEST_REQUEST="${TEST_REQUEST#/playwright }" ;; esac
@@ -60,7 +60,7 @@ jobs:
             echo "**Requested test:** $TEST_REQUEST"
             echo
             echo "Supported request keywords: move left, move right, soft drop, rotate, hold, hard drop, reset, mobile layout. Unsupported requests fail clearly instead of claiming success."
-            echo "Finesse-feedback tests replay alternate equal-cost routes and verify tap-versus-DAS equivalence for the same physical target through the runtime observer and lock verifier."
+            echo "The default pull-request run checks standard gameplay interactions. Finesse-feedback diagnostics run only when explicitly requested."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -83,7 +83,7 @@ jobs:
           exit 1
       - name: Run Playwright gameplay diagnostics
         env:
-          PLAYWRIGHT_TEST_REQUEST: ${{ (github.event_name == 'issue_comment' && github.event.comment.body) || inputs.test_request || 'finesse feedback red to green alternate optimal routes' }}
+          PLAYWRIGHT_TEST_REQUEST: ${{ (github.event_name == 'issue_comment' && github.event.comment.body) || inputs.test_request || 'Test movement, rotation, hold, hard drop, reset, and game over' }}
         run: |
           case "$PLAYWRIGHT_TEST_REQUEST" in /playwright\ *) export PLAYWRIGHT_TEST_REQUEST="${PLAYWRIGHT_TEST_REQUEST#/playwright }" ;; esac
           node --experimental-default-type=module diagnostics-harness/tests/runtime-diagnostics.browser.js
