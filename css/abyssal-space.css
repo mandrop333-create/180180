@@ -1009,3 +1009,135 @@ body::after {
 @media (forced-colors: active) {
   .trainer-page::before, .trainer-page::after { display: none !important; }
 }
+
+
+/* ==========================================================================
+   ABYSSAL ECOSYSTEM / V2.1 — authored depth, not extra neon
+   A more legible spatial composition: distant vertical water columns,
+   a soft habitat horizon, and localized instrument light. No new markup.
+   ========================================================================== */
+.trainer-top {
+  isolation: isolate;
+}
+.trainer-top::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(113, 194, 174, .10) 12%,
+    rgba(173, 238, 213, .42) 48%,
+    rgba(164, 143, 224, .18) 72%,
+    transparent 100%);
+  box-shadow: 0 0 18px rgba(94, 205, 174, .07);
+}
+.trainer-layout {
+  position: relative;
+  isolation: isolate;
+}
+.trainer-layout::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: -42px -5vw -28px;
+  opacity: .42;
+  background:
+    linear-gradient(180deg, transparent, rgba(100, 206, 181, .025) 22%, transparent 76%),
+    linear-gradient(90deg, transparent 0 8%, rgba(121, 226, 198, .045) 8.2%, transparent 8.8% 26%, rgba(159, 145, 235, .035) 26.2%, transparent 27% 72%, rgba(121, 226, 198, .03) 72.2%, transparent 73% 92%, rgba(121, 226, 198, .035) 92.2%, transparent 93%);
+  mask-image: linear-gradient(180deg, transparent, black 14%, black 72%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, transparent, black 14%, black 72%, transparent);
+}
+.mini-home {
+  position: relative;
+  isolation: isolate;
+}
+.mini-home::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -26px;
+  left: 50%;
+  width: min(52vw, 460px);
+  height: 82px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(106, 215, 181, .105), transparent 62%),
+    radial-gradient(ellipse at 50% 90%, rgba(167, 149, 239, .055), transparent 70%);
+  filter: blur(9px);
+}
+.mini-home::after {
+  content: "";
+  display: block;
+  width: clamp(48px, 7vw, 86px);
+  height: 2px;
+  margin: 13px auto 0;
+  border-radius: 100%;
+  background: linear-gradient(90deg, transparent, rgba(154, 247, 213, .68), rgba(184, 166, 255, .44), transparent);
+  box-shadow: 0 0 12px rgba(154, 247, 213, .13);
+  opacity: .75;
+}
+
+/* The instruments share a habitat, but not the same surface treatment.
+   Hold is a contained chamber; Next is a vertical sightline; metrics are
+   discrete readouts. This separation makes the layout feel authored. */
+.trainer-side:first-of-type .trainer-card:nth-child(2) {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(112, 223, 190, .10), transparent 48%),
+    linear-gradient(155deg, rgba(9, 31, 35, .94), rgba(3, 13, 20, .94) 72%) !important;
+}
+.trainer-layout > .trainer-side:nth-of-type(2) > .trainer-card {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(176, 165, 255, .07), transparent 50%),
+    linear-gradient(155deg, rgba(12, 29, 38, .92), rgba(4, 14, 23, .91) 72%) !important;
+}
+.rules-column > .trainer-card {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(184, 166, 255, .065), transparent 42%),
+    linear-gradient(155deg, rgba(13, 26, 38, .91), rgba(4, 13, 23, .93) 72%) !important;
+}
+
+/* A local reflection appears only when the person points to or focuses an
+   instrument. Avoid a permanent moving sheen over important information. */
+@media (hover: hover) and (pointer: fine) {
+  .trainer-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(112deg, transparent 12%, rgba(190, 255, 231, .045) 42%, transparent 67%);
+    transition: opacity 220ms ease;
+  }
+  .trainer-card:hover::after { opacity: 1; }
+}
+.trainer-card:focus-within {
+  border-color: rgba(154, 247, 213, .34) !important;
+}
+.trainer-card:focus-within::before {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent, rgba(154, 247, 213, .45), transparent);
+}
+@media (max-width: 900px) {
+  .trainer-layout::before { inset-inline: -12px; opacity: .2; }
+  .mini-home::before { width: 90vw; }
+}
+@media (max-width: 560px) {
+  .trainer-layout::before { display: none; }
+  .mini-home::before { width: 100vw; opacity: .7; }
+  .mini-home::after { margin-top: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-card::after { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .trainer-top::after, .trainer-layout::before,
+  .mini-home::before, .mini-home::after { display: none !important; }
+}
