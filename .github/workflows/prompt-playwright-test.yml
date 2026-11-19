@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["main"]
     paths:
-      - "index.html"
+      - "*.html"
       - "css/**"
       - "games/**"
       - "js/**"

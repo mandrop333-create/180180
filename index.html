@@ -1,21 +1,22 @@
 <!doctype html>
 <html lang="en">
 
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>180436 — Falling-Block Training</title>
-<meta name="description" content="180436 is a free browser-based falling-block training tool for deliberate practice, visual-information reduction, rotation, placement, rhythm, and customizable training rules.">
+<title>180436 — Mini Game Arcade</title>
+<meta name="description" content="180436 is a free browser-based mini game arcade. Play Block Practice and more tiny training games right in your browser.">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#101014">
 <link rel="canonical" href="https://180436.xyz/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="180436">
-<meta property="og:title" content="180436 — Falling-Block Training">
-<meta property="og:description" content="A focused falling-block training tool for deliberate practice, visual-information reduction, rotation, placement, rhythm, and customizable rules.">
+<meta property="og:title" content="180436 — Mini Game Arcade">
+<meta property="og:description" content="A free browser-based mini game arcade. Play Block Practice and more tiny training games.">
 <meta property="og:url" content="https://180436.xyz/">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="180436 — Falling-Block Training">
-<meta name="twitter:description" content="A focused falling-block training tool for deliberate practice and customizable training rules.">
+<meta name="twitter:title" content="180436 — Mini Game Arcade">
+<meta name="twitter:description" content="A free browser-based mini game arcade. Play Block Practice and more tiny training games.">
 <script type="application/ld+json">
 {
   "@context":"https://schema.org",
@@ -25,14 +26,14 @@
       "@id":"https://180436.xyz/#website",
       "name":"180436",
       "url":"https://180436.xyz/",
-      "description":"A focused falling-block training tool for deliberate practice and customizable training rules."
+      "description":"A free browser-based mini game arcade with tiny training games."
     },
     {
-      "@type":["SoftwareApplication","WebApplication"],
+      "@type":"WebApplication",
       "@id":"https://180436.xyz/#application",
       "name":"180436",
       "url":"https://180436.xyz/",
-      "description":"A free browser-based falling-block training tool for deliberate practice, rotation, placement, rhythm, and visual-information constraints.",
+      "description":"A free browser-based mini game arcade featuring Block Practice and more tiny training games.",
       "applicationCategory":"GameApplication",
       "operatingSystem":"Web browser",
       "offers":{
@@ -40,311 +41,47 @@
         "price":0,
         "priceCurrency":"USD"
       },
-      "isPartOf":{"@id":"https://180436.xyz/#website"},
-      "sameAs":"https://github.com/mandrop333-create/180180"
+      "isPartOf":{"@id":"https://180436.xyz/#website"}
     }
   ]
 }
 </script>
 <link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/trainer.css">
-<link rel="stylesheet" href="css/settings.css">
-<link rel="stylesheet" href="css/game-flow-prototype.css">
-<link rel="stylesheet" href="css/aqua-space-layout-fix.css">
-<style>
-body{min-height:100vh}
-.trainer-page{min-height:100vh;display:flex;flex-direction:column}
-.trainer-top{position:relative;display:flex;align-items:center;justify-content:space-between;padding:22px clamp(18px,5vw,56px)}
-.trainer-brand{margin:0;text-align:center;font:900 clamp(20px,4vw,32px)/1 ui-monospace,monospace;letter-spacing:.08em;color:#eee8fb}
-.trainer-description{margin:8px auto 0;max-width:520px;text-align:center;color:#81778b;font-size:11px;line-height:1.45}
-.trainer-main{flex:1;width:100%;max-width:none;min-width:0;padding:0 18px 40px;transform:none}
-.homepage-game-first .trainer-side{display:grid;gap:12px;padding-top:54px}
-.trainer-card{border:1px solid #342d42;border-radius:12px;background:linear-gradient(145deg,#191620,#111016);padding:14px;box-shadow:0 12px 30px #0005}
-.trainer-card h2{margin:0 0 10px;color:#9e91b5;font:800 10px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}.rules-card{position:relative;z-index:20;pointer-events:auto}.rules-list{display:grid;gap:10px;pointer-events:auto}.rule-control{display:grid;gap:7px}.rule-control-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.rule-control-head label{color:#cfc6dc;font:700 11px/1 ui-monospace,monospace}.rule-control-head output{color:#eee8fb;font:800 10px/1 ui-monospace,monospace}.rules-card .settings-range{width:100%;margin:0;display:block;position:relative;z-index:2;pointer-events:auto;cursor:pointer}.rules-toggle{position:relative;z-index:2;pointer-events:auto}.rules-toggle{display:flex;align-items:center;gap:8px;color:#cfc6dc;font:700 11px/1.25 ui-monospace,monospace;cursor:pointer}.rules-toggle input{accent-color:#a78bfa}.next-preview{width:96px;height:178px;min-height:0;transform:scale(var(--next-preview-scale,1));transform-origin:top center;zoom:1}.rhythm-card[hidden]{display:none}.rhythm-report{display:grid;gap:8px}.rhythm-metric{display:flex;justify-content:space-between;gap:8px;color:#91879e;font:700 9px/1.2 ui-monospace,monospace}.rhythm-metric strong{color:#eee8fb}.rhythm-outlier{padding:8px;border:1px solid #30283d;border-radius:8px;background:#0d0c11}.rhythm-outlier-title{display:flex;justify-content:space-between;gap:8px;color:#eee8fb;font:900 10px/1.2 ui-monospace,monospace}.rhythm-outlier-detail{margin-top:5px;color:#91879e;font:700 9px/1.35 ui-monospace,monospace}.rhythm-pattern{margin-top:5px;color:#d7a1ff;font:800 9px/1.35 ui-monospace,monospace}.invisible-focal-piece .active-piece-svg,.invisible-focal-piece .turn-layer{visibility:hidden}.color-only-focal-piece .turn-layer{visibility:hidden}.invisible-ghost-piece .cell.ghost{visibility:hidden}.finesse-prompt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;pointer-events:none}.finesse-prompt span{padding:7px 9px;border:2px solid #eee8fb;border-radius:7px;background:#0d0c11e8;color:#e45b66;font:900 clamp(15px,2.4vw,24px)/1 ui-monospace,monospace;letter-spacing:.08em;text-align:center;text-shadow:0 2px 12px #000;box-shadow:0 10px 28px #0008}.finesse-prompt .finesse-key.done{color:#72e69a;border-color:#72e69a}.finesse-prompt .finesse-key.next{color:#ff6673;border-color:#ff6673}.finesse-prompt .finesse-key.pending{color:#d94e5b;border-color:#7d3038}.finesse-prompt .finesse-gap{margin:0 5px;color:#777083;font:900 18px ui-monospace,monospace}.finesse-prompt[hidden]{display:none}
-.hud-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.hud-item{padding:9px 6px;border:1px solid #292432;border-radius:8px;text-align:center}
-.hud-item span{display:block;color:#777083;font:700 8px/1 ui-monospace,monospace;letter-spacing:.1em}
-.hud-item strong{display:block;margin-top:5px;color:#eee8fb;font:900 14px/1 ui-monospace,monospace}
-.hold-preview{height:58px;display:grid;place-items:center;border:1px solid #30283d;border-radius:8px;background:#0d0c11}
-.next-preview{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;min-height:38px}
-.mini-piece{display:grid;place-items:center;width:30px;height:30px;border-radius:5px;font:900 10px ui-monospace,monospace;border:1px solid #62547a}
-.mini-i{color:#8bd5ff}.mini-o{color:#ffe68a}.mini-t{color:#d7a1ff}.mini-s{color:#8be7a7}.mini-z{color:#ff8d9c}.mini-j{color:#73a9ff}.mini-l{color:#ffb05f}
-.mini-home{text-align:center;margin-bottom:12px}.mini-home-number{color:#8e7fa6;font:800 10px ui-monospace,monospace;letter-spacing:.18em}.mini-home-title{margin:5px 0 4px;color:#e8ddfa;font:900 20px/1 ui-monospace,monospace}.mini-home-description{margin:0;color:#81778b;font-size:11px}
-.homepage-game-first .board-column{display:flex;flex-direction:column;align-items:center}
-.board-wrap{box-shadow:0 24px 60px #0008}
-.board{--cell:28px;width:300px;height:600px;position:relative}
-.trainer-actions{margin-top:12px}
-.trainer-controls{max-width:300px}
-.settings-checks{display:grid;gap:7px}.settings-checks label{display:flex;align-items:center;gap:8px;color:#cfc6dc;font-size:11px}.settings-checks input{accent-color:#a78bfa}.action-button{border:1px solid #51446e;border-radius:7px;background:#17151d;color:#eee8fa;padding:7px 12px;font:800 11px ui-monospace,monospace;cursor:pointer}
-.action-button:hover{border-color:#a78bfa;background:#201b29}
-@media(max-width:560px){.trainer-main{padding-left:10px;padding-right:10px}.board{--cell:min(8.4vw,28px);width:calc(var(--cell)*10 + 18px);height:calc(var(--cell)*20 + 18px)}.trainer-side{grid-template-columns:1fr}.trainer-top{padding:18px 14px}.trainer-brand{font-size:20px}.trainer-description{font-size:10px}}
+<link rel="stylesheet" href="css/hub.css">
+</head>
 
-.trainer-top{padding-top:26px;padding-bottom:24px}
-.trainer-brand{font-size:clamp(25px,2.4vw,36px);letter-spacing:.14em;text-shadow:0 0 26px #a78bfa28}
-.trainer-description{font-size:12px;max-width:560px;color:#a49ab5}
-.mini-home{margin-bottom:18px}
-.mini-home-number{color:#b4a0ed}
-.mini-home-title{font-size:23px;letter-spacing:.04em;text-shadow:0 0 20px #a78bfa22}
-.trainer-card{border-color:#3d3352;background:linear-gradient(145deg,#201a2c 0%,#15121d 62%,#121018 100%);box-shadow:0 14px 34px #0006,inset 0 1px 0 #ffffff0a;transition:border-color .18s ease,box-shadow .18s ease}
-.trainer-card:hover{border-color:#665287;box-shadow:0 16px 38px #0007,0 0 0 1px #a78bfa0b}
-.trainer-card h2{color:#b7a5df}
-.hud-item{background:linear-gradient(180deg,#1a1723,#121018);border-color:#393047}
-.hold-preview{background:radial-gradient(ellipse at 50% 20%,#241d33,#0d0c11 75%);border-color:#403450}
-.board-wrap{padding:8px;background:linear-gradient(145deg,#24202d,#111016 70%);border-color:#55446c;border-radius:9px;box-shadow:0 26px 65px #0009,0 0 0 1px #a78bfa12,0 0 36px #8b5cf61c}
-.board{background-color:#100e16}
-.action-button{background:linear-gradient(180deg,#282136,#17131f);border-color:#665184;transition:background .15s ease,border-color .15s ease,transform .15s ease}
-.action-button:hover{background:linear-gradient(180deg,#382b4d,#21182d);border-color:#c4a9ff;transform:translateY(-1px)}
-@media(max-width:560px){
-  .trainer-top{padding-top:18px;padding-bottom:18px}
-  .mini-home-title{font-size:21px}
-  .board-wrap{padding:6px}
-}
-
-</style>
-<style>.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>
-<style>
-.mobile-controls{display:none;position:fixed;inset:0;z-index:400;pointer-events:none;touch-action:none}
-.mobile-controls.active{display:block}
-.mobile-control{position:absolute;width:42px;height:42px;margin:-21px 0 0 -21px;border:1px solid #71618e;border-radius:50%;background:#17131dcc;color:#eee8fa;box-shadow:0 5px 16px #0008,inset 0 1px 0 #ffffff18;display:grid;place-items:center;padding:0;font:900 12px/1 ui-monospace,monospace;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
-.mobile-control:active,.mobile-control.pressed{background:#302541;border-color:#b9a0ff;transform:translate(-50%,-50%) scale(.94)}
-.mobile-controls.editing{pointer-events:auto;background:#0002}
-.mobile-controls.editing .mobile-control{outline:1px dashed #b9a0ff88;cursor:grab}
-.mobile-controls.editing .mobile-control::after{content:'↕';position:absolute;inset:0;display:grid;place-items:center;color:#b9a0ff55;font-size:16px}
-.mobile-controls.editing .mobile-control{color:transparent}
-.mobile-controls-editbar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);display:none;gap:8px;padding:8px;border:1px solid #40364f;border-radius:12px;background:#121016ee;box-shadow:0 10px 30px #0009;pointer-events:auto}
-.mobile-controls.editing .mobile-controls-editbar{display:flex}
-.mobile-controls-editbar button{border:1px solid #51446e;border-radius:8px;background:#1b1722;color:#eee8fa;padding:7px 10px;font:800 10px ui-monospace,monospace}
-@media(min-width:901px){.mobile-controls.active{display:none}.mobile-controls.active.desktop-preview{display:block}}
-@media(max-width:520px){.mobile-control{width:40px;height:40px;margin:-20px 0 0 -20px;font-size:11px}}
-</style>
-<link rel="stylesheet" href="css/abyssal-space.css">
-<link rel="stylesheet" href="css/planet-themes.css">
-<link rel="stylesheet" href="css/premium-piece-skins.css">
-<link rel="stylesheet" href="css/session-stats.css">
-
-<div class="trainer-page">
-  <div class="trainer-flawless" aria-hidden="true"><svg viewBox="0 0 300 60" class="graffiti-svg"><text x="0" y="45" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text">FLAWLESS</text><text x="2" y="47" textLength="288" lengthAdjust="spacingAndGlyphs" class="graffiti-text-2">FLAWLESS</text></svg></div>
-  <div class="trainer-settings-control">
-    <button class="settings-gear trainer-settings-gear" data-settings-open type="button" aria-label="Open settings" aria-expanded="false"><span class="power-orb" aria-hidden="true"><span class="power-orbit"><span class="power-star">✦</span></span></span></button>
-    <span class="trainer-settings-label">SETTINGS</span>
-  </div>
-  <header class="trainer-top" aria-label="180436">
-    <div class="theme-launcher-wrap">
-      <button class="theme-launcher" id="themeLauncher" type="button" aria-haspopup="dialog" aria-controls="themePicker" aria-expanded="false">
-        <span class="theme-planet theme-planet-space" aria-hidden="true"></span>
-        <span class="theme-launcher-copy"><strong>THEMES</strong><small id="activeThemeLabel">AQUA SPACE</small></span>
-      </button>
-    </div>
-    <div>
-      <h1 class="trainer-brand">180436</h1>
-      
-    </div>
-    <div></div>
+<body>
+<div class="hub-page">
+  <header class="hub-header">
+    <h1 class="hub-title">180436</h1>
+    <p class="hub-tagline">mini game arcade — tiny games, deliberate practice</p>
   </header>
-  <main class="trainer-main homepage-game-first">
-    <div class="trainer-shell">
-      <section class="mini-home" aria-labelledby="miniHomeTitle">
-        <h2 class="mini-home-title" id="miniHomeTitle">180 Flip</h2>
-        <p class="mini-home-description" id="miniHomeDescription">Train the 180° rotation as one deliberate movement</p>
-      </section>
-      <div class="trainer-layout">
-        <aside class="trainer-side">
-          <section class="trainer-card">
-            <h2>Stats</h2>
-            <div class="hud-grid">
-              <div class="hud-item"><span>SCORE</span><strong id="hudScore">0</strong></div>
-              <div class="hud-item"><span>LINES</span><strong id="hudLines">0</strong></div>
-              <div class="hud-item"><span>COMBO</span><strong id="hudCombo">—</strong></div>
-              <div class="hud-item"><span>B2B</span><strong id="hudB2B">—</strong></div>
-              <div class="hud-item"><span>PIECES</span><strong id="hudPieces">0</strong></div>
-              <div class="hud-item"><span>FINESSE TRAINER</span><strong id="hudFinesse">0 faults · 0 clean</strong></div>
-            </div>
-          </section>
-          <section class="trainer-card">
-            <h2>Hold</h2>
-            <div class="hold-preview" id="holdPreview" aria-label="Held piece">—</div>
-            <button class="action-button" id="holdButton" type="button" style="width:100%;margin-top:8px">HOLD</button>
-          </section>
-          <section class="trainer-card rhythm-card" id="rhythmCard" hidden aria-label="Calculate Rhythm results"><h2>Calculate Rhythm</h2><div id="rhythmReport" class="rhythm-report"></div></section>
-        </aside>
-        <section class="board-column" aria-labelledby="trainerBoardTitle"><h2 class="sr-only" id="trainerBoardTitle">Tetris training board</h2>
-          <div class="board-wrap"><div class="board" id="board" aria-label="10 by 20 Tetris training board"><div class="finesse-prompt" id="finessePrompt" hidden aria-live="polite" aria-label="Finesse Trainer required inputs"></div></div></div>
-          <div class="trainer-actions"><div class="trainer-controls" aria-label="Keyboard controls">← → move · ↓ soft drop · Space hard drop · X / Z rotate · A 180 · Shift hold</div></div>
-        </section>
-        <aside class="trainer-side">
-          <section class="trainer-card">
-            <h2>Next</h2>
-            <div class="next-preview" id="nextPreview" aria-label="Next pieces"></div>
-          </section>
-        </aside>
-        <aside class="rules-column">
-          <section class="trainer-card rules-card" aria-labelledby="rulesTitle" aria-label="Rules">
-            <h2 id="rulesTitle">Rules</h2>
-            <div class="rules-list" id="trainingRules" data-rule-system="180436" data-rule-content-version="1" data-rule-fields="purpose,pillars,micro-hiccup,removes,keeps,trains,measurement,difficulty,prerequisite,next" data-training-pillars="information-reduction,autopilot">
 
-              <div class="rule-control">
-                <div class="rule-control-head"><label for="mainRuleDepth">3D depth</label><output id="mainRuleDepthOut">55%</output></div>
-                <input class="settings-range" id="mainRuleDepth" type="range" min="0" max="100" value="55" aria-label="3D depth">
-              </div>
-              <div class="rule-control">
-                <div class="rule-control-head"><label for="mainRuleNextSize">Next queue size</label><output id="mainRuleNextSizeOut">100%</output></div>
-                <input class="settings-range" id="mainRuleNextSize" type="range" min="0" max="300" value="100" aria-label="Next queue size">
-              </div>
-              <label class="rules-toggle"><input id="mainRuleFinesse" data-rule-id="finesse" type="checkbox" aria-label="Finesse Trainer"> Finesse Trainer</label><label class="rules-toggle"><input id="mainRule180Flip" data-rule-id="180-flip" type="checkbox" aria-label="180 Flip visual animation"> 180 Flip</label><label class="rules-toggle"><input id="mainRuleJolOnly" data-rule-id="jol-only" type="checkbox" aria-label="JOL ONLY"> JOL ONLY</label><label class="rules-toggle"><input id="mainRuleColorOnlyFocal" data-rule-id="color-only-focal" type="checkbox" aria-label="Color only focal piece"> Color only focal piece</label><label class="rules-toggle"><input id="mainRuleColorOnlyHold" data-rule-id="color-only-hold" type="checkbox" aria-label="Color only Hold queue"> Color only Hold queue</label><label class="rules-toggle"><input id="mainRuleColorOnlyNext" data-rule-id="color-only-next" type="checkbox" aria-label="Color only next queue"> Color only next queue</label><label class="rules-toggle"><input id="mainRuleCalculateRhythm" data-rule-id="calculate-rhythm" type="checkbox" aria-label="Calculate Rhythm"> Calculate Rhythm</label><label class="rules-toggle"><input id="mainRuleInvisibleFocal" data-rule-id="invisible-focal" type="checkbox" aria-label="Invisible focal piece"> Invisible focal piece</label><label class="rules-toggle"><input id="mainRuleInvisibleGhost" data-rule-id="invisible-ghost" type="checkbox" aria-label="Invisible ghost piece"> Invisible ghost piece</label><label class="rules-toggle"><input id="mainRuleColoredGhost" data-rule-id="colored-ghost" type="checkbox" aria-label="Colored ghost piece"> Colored ghost piece</label>
-            </div>
-          </section>
-        </aside>
-      </div>
-    </div>
+  <main class="hub-main">
+    <section class="game-grid" aria-label="Games">
+      <a class="game-card game-card-live" href="block-practice.html">
+        <span class="game-card-kicker">GAME 01</span>
+        <span class="game-card-name">Block Practice</span>
+        <span class="game-card-desc">Falling-block trainer — finesse, rhythm, rotation and placement drills.</span>
+        <span class="game-card-play" aria-hidden="true">PLAY →</span>
+      </a>
+
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">02</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">03</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">04</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">05</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">06</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">07</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">08</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">09</span></div>
+      <div class="game-card game-card-empty" aria-hidden="true"><span class="game-card-slot">10</span></div>
+    </section>
   </main>
+
+  <footer class="hub-footer">
+    <p>more games coming soon</p>
+  </footer>
 </div>
+</body>
 
-<div class="theme-picker" id="themePicker" hidden>
-  <button class="theme-picker-backdrop" type="button" data-theme-close aria-label="Close themes"></button>
-  <section class="theme-picker-panel" role="dialog" aria-modal="true" aria-labelledby="themePickerTitle">
-    <div class="theme-picker-heading">
-      <div><p class="theme-kicker">PIECE SKIN LAB</p><h2 id="themePickerTitle">Choose your piece skin</h2><p class="theme-picker-subtitle">Original block materials, built for clear reads during fast play.</p></div>
-      <button class="theme-picker-close" type="button" data-theme-close aria-label="Close themes">×</button>
-    </div>
-    <div class="theme-options" role="group" aria-label="Available piece themes">
-      <button class="theme-option is-selected" type="button" data-piece-theme="space" aria-pressed="true">
-        <span class="theme-option-planet theme-planet-space" aria-hidden="true"><i></i></span>
-        <span class="theme-option-copy"><strong>Space</strong><small>Cosmic mineral · nebula glow · star flecks</small></span><span class="theme-option-state" aria-hidden="true">✓</span>
-      </button>
-      <button class="theme-option" type="button" data-piece-theme="glass" aria-pressed="false"><span class="theme-option-planet theme-planet-glass" aria-hidden="true"><i></i></span><span class="theme-option-copy"><strong>Glass</strong><small>Crystal edges · translucent shine · cool refraction</small></span><span class="theme-option-state" aria-hidden="true">✓</span></button>
-      <button class="theme-option" type="button" data-piece-theme="nature" aria-pressed="false"><span class="theme-option-planet theme-planet-nature" aria-hidden="true"><i></i></span><span class="theme-option-copy"><strong>Nature</strong><small>Botanical mineral · leaf-vein grain · organic depth</small></span><span class="theme-option-state" aria-hidden="true">✓</span></button>
-      <button class="theme-option" type="button" data-piece-theme="generic" aria-pressed="false">
-        <span class="theme-option-planet theme-planet-generic" aria-hidden="true"><i></i></span>
-        <span class="theme-option-copy"><strong>Generic</strong><small>Classic beveled blocks · clean original palette</small></span>
-        <span class="theme-option-state" aria-hidden="true">✓</span>
-      </button>
-      <button class="theme-option" type="button" data-piece-theme="fruity" aria-pressed="false">
-        <span class="theme-option-planet theme-planet-fruity" aria-hidden="true"><i></i></span>
-        <span class="theme-option-copy"><strong>Fruity</strong><small>Glossy candy shell · juicy color · seed-fleck detail</small></span>
-        <span class="theme-option-state" aria-hidden="true">✓</span>
-      </button>
-      <button class="theme-option" type="button" data-piece-theme="retro" aria-pressed="false">
-        <span class="theme-option-planet theme-planet-retro" aria-hidden="true"><i></i></span>
-        <span class="theme-option-copy"><strong>Retro</strong><small>8-bit cabinet bevels · scanlines · pixel-ink edges</small></span>
-        <span class="theme-option-state" aria-hidden="true">✓</span>
-      </button>
-    </div>
-    <div class="theme-picker-footer"><span class="theme-status-dot"></span><p id="themePickerStatus" aria-live="polite">Aqua Space selected.</p></div>
-  </section>
-</div>
-<div class="settings-panel" data-settings-root hidden>
-  <div class="settings-backdrop" data-settings-backdrop></div>
-  <section class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <div class="settings-heading"><h2 class="settings-title" id="settingsTitle">settings</h2><button class="settings-close" data-settings-close type="button" aria-label="Close settings">×</button></div>
-    <div class="settings-section">
-      <h3 class="settings-section-title">feel</h3>
-      <div class="settings-control"><div class="settings-control-head"><label for="settingDepth">3D depth</label><output data-setting-depth-out>55%</output></div><input class="settings-range" id="settingDepth" data-setting-depth type="range" min="0" max="100" value="55"></div>
-      <div class="settings-control"><div class="settings-control-head"><label for="settingSoft">Soft drop</label><output data-setting-soft-out>1×</output></div><input class="settings-range" id="settingSoft" data-setting-soft type="range" min="0" max="6" step="1" value="0"><p class="settings-hint">1× · 2× · 5× · 10× · 20× · 40× · ∞</p></div>
-      <div class="settings-control"><div class="settings-control-head"><label for="settingDas">DAS</label><output data-setting-das-out>127 ms</output></div><input class="settings-range" id="settingDas" data-setting-das type="range" min="0" max="300" value="127"></div>
-      <div class="settings-control"><div class="settings-control-head"><label for="settingArr">ARR</label><output data-setting-arr-out>0 ms</output></div><input class="settings-range" id="settingArr" data-setting-arr type="range" min="0" max="100" value="0"></div>
-      <div class="settings-control"><div class="settings-control-head"><label for="settingDcd">DAS cut delay</label><output data-setting-dcd-out>0 ms</output></div><input class="settings-range" id="settingDcd" data-setting-dcd type="range" min="0" max="100" step="1" value="0"></div>
-      <div class="settings-control"><div class="settings-control-head"><label for="settingLock">Lock delay</label><output data-setting-lock-out>500 ms</output></div><input class="settings-range" id="settingLock" data-setting-lock type="range" min="50" max="1000" step="10" value="500"></div>
-      <div class="settings-control settings-checks"><label><input type="checkbox" data-setting-safe-lock checked> prevent accidental hard drops</label><label><input type="checkbox" data-setting-cancel-das> cancel DAS when changing directions</label><label><input type="checkbox" data-setting-prefer-soft-drop> prefer soft drop over movement</label></div><div class="settings-control"><div class="settings-control-head"><label for="settingShadow">Ghost opacity</label><output data-setting-shadow-opacity-out>60%</output></div><input class="settings-range" id="settingShadow" data-setting-shadow-opacity type="range" min="0" max="100" value="60"></div><div class="settings-control"><div class="settings-control-head"><label for="settingBrightness">Ghost brightness</label><output data-setting-shadow-brightness-out>100%</output></div><input class="settings-range" id="settingBrightness" data-setting-shadow-brightness type="range" min="0" max="200" value="100"></div>
-    </div>
-    <div class="settings-section"><h3 class="settings-section-title">mobile controls</h3><div class="settings-control settings-checks"><label><input type="checkbox" id="settingMobileControls"> show touch controls</label></div><button class="settings-reset" id="customizeMobileControls" type="button" style="width:100%">customize touch layout</button><p class="settings-hint">8 small circular buttons. Drag them anywhere on the phone screen.</p></div><div class="settings-section"><h3 class="settings-section-title">key binds</h3><div class="settings-bind-list" data-setting-binds></div><p class="settings-hint">Tap a key, then press the key you want. Escape closes the panel.</p></div>
-    <div class="settings-footer"><button class="settings-reset" data-settings-reset type="button">reset settings</button></div>
-  </section>
-</div>
-<div class="mobile-controls" id="mobileControls" aria-label="Mobile Tetris controls">
-  <button class="mobile-control" data-mobile-action="left" aria-label="Left">←</button>
-  <button class="mobile-control" data-mobile-action="right" aria-label="Right">→</button>
-  <button class="mobile-control" data-mobile-action="soft" aria-label="Soft drop">↓</button>
-  <button class="mobile-control" data-mobile-action="hard" aria-label="Hard drop">DROP</button>
-  <button class="mobile-control" data-mobile-action="cw" aria-label="Rotate clockwise">↻</button>
-  <button class="mobile-control" data-mobile-action="ccw" aria-label="Rotate counterclockwise">↺</button>
-  <button class="mobile-control" data-mobile-action="half" aria-label="180 rotation">180</button>
-  <button class="mobile-control" data-mobile-action="hold" aria-label="Hold">HOLD</button>
-  <div class="mobile-controls-editbar"><button type="button" id="mobileControlsDone">DONE</button><button type="button" id="mobileControlsReset">RESET</button></div>
-</div>
-<div id="toast" hidden style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500;padding:9px 14px;border:1px solid #5d4c7b;border-radius:999px;background:#17131e;color:#eee8fa;font:800 11px ui-monospace,monospace">Ready</div>
-
-<script>
-(()=>{const flip180=document.getElementById('mainRule180Flip'),finesse=document.getElementById('mainRuleFinesse'),depth=document.getElementById('mainRuleDepth'),depthOut=document.getElementById('mainRuleDepthOut'),nextSize=document.getElementById('mainRuleNextSize'),nextSizeOut=document.getElementById('mainRuleNextSizeOut'),jolOnly=document.getElementById('mainRuleJolOnly'),colorOnly=document.getElementById('mainRuleColorOnlyFocal'),invisible=document.getElementById('mainRuleInvisibleFocal'),invisibleGhost=document.getElementById('mainRuleInvisibleGhost'),colorOnlyHold=document.getElementById('mainRuleColorOnlyHold'),colorOnlyNext=document.getElementById('mainRuleColorOnlyNext'),calculateRhythm=document.getElementById('mainRuleCalculateRhythm'),coloredGhost=document.getElementById('mainRuleColoredGhost');if(!flip180||!finesse||!depth||!depthOut||!nextSize||!nextSizeOut||!jolOnly||!colorOnly||!invisible||!invisibleGhost||!colorOnlyHold||!colorOnlyNext||!calculateRhythm||!coloredGhost)return;const syncFlip180=()=>{const on=flip180.checked;try{localStorage.setItem('180180.flip180Animation',on?'1':'0');}catch{}window.trainer?.setHalfTurnAnimationEnabled?.(on);};flip180.addEventListener('change',syncFlip180);const syncFinesse=()=>{const on=finesse.checked;try{localStorage.setItem('180180.finesse',on?'1':'0');}catch{}if(window.trainer)window.trainer.setFinesseEnabled(on);};const syncDepth=()=>{const v=Number(depth.value);depthOut.textContent=v+'%';if(window.trainer){window.trainer.depth=v/100;window.trainer.render?.();}};const syncNextSize=()=>{const v=Number(nextSize.value);nextSizeOut.textContent=v+'%';document.documentElement.style.setProperty('--next-preview-scale',String(v/100));};const syncJolOnly=()=>{try{localStorage.setItem('180180.jolOnly',jolOnly.checked?'1':'0');}catch{}if(window.trainer)window.trainer.reset();};const syncColorOnly=()=>{const on=colorOnly.checked;if(window.trainer?.boardEl){window.trainer.setColorOnlyFocalPiece?.(on);window.trainer.boardEl.classList.toggle('color-only-focal-piece',on);}};const syncInvisible=()=>{const on=invisible.checked;if(window.trainer?.boardEl){window.trainer.boardEl.classList.toggle('invisible-focal-piece',on);window.trainer.render?.();}};const syncInvisibleGhost=()=>{const on=invisibleGhost.checked;if(window.trainer?.boardEl){window.trainer.boardEl.classList.toggle('invisible-ghost-piece',on);window.trainer.cells?.forEach(el=>el.classList.toggle('ghost-hide-marker',on));window.trainer.render?.();}};const syncColoredGhost=()=>{const on=coloredGhost.checked;if(window.trainer?.boardEl){window.trainer.boardEl.classList.toggle('colored-ghost-piece',on);window.trainer.render?.();}};finesse.addEventListener('change',syncFinesse);depth.addEventListener('input',syncDepth);nextSize.addEventListener('input',syncNextSize);jolOnly.addEventListener('change',syncJolOnly);colorOnly.addEventListener('change',()=>{syncColorOnly();try{localStorage.setItem('180180.colorOnlyFocalPiece',colorOnly.checked?'1':'0');}catch{}});invisible.addEventListener('change',()=>{syncInvisible();try{localStorage.setItem('180180.invisibleFocalPiece',invisible.checked?'1':'0');}catch{}});invisibleGhost.addEventListener('change',()=>{syncInvisibleGhost();try{localStorage.setItem('180180.invisibleGhostPiece',invisibleGhost.checked?'1':'0');}catch{}});colorOnlyHold.addEventListener('change',()=>{try{localStorage.setItem('180180.colorOnlyHold',colorOnlyHold.checked?'1':'0');}catch{}window.setColorOnlyHold?.(colorOnlyHold.checked);});colorOnlyNext.addEventListener('change',()=>{try{localStorage.setItem('180180.colorOnlyNext',colorOnlyNext.checked?'1':'0');}catch{}window.setColorOnlyNext?.(colorOnlyNext.checked);});calculateRhythm.addEventListener('change',()=>{try{localStorage.setItem('180180.calculateRhythm',calculateRhythm.checked?'1':'0');}catch{}window.trainer?.setCalculateRhythm?.(calculateRhythm.checked);window.setCalculateRhythmDisplay?.(calculateRhythm.checked);});coloredGhost.addEventListener('change',()=>{syncColoredGhost();try{localStorage.setItem('180180.coloredGhostPiece',coloredGhost.checked?'1':'0');}catch{}});window.addEventListener('trainerready',()=>{flip180.checked=localStorage.getItem('180180.flip180Animation')==='1';syncFlip180();finesse.checked=localStorage.getItem('180180.finesse')==='1';syncFinesse();depth.value=Math.round((window.trainer.depth??.55)*100);nextSize.value=Number(localStorage.getItem('180180.nextQueueSize')||100);jolOnly.checked=localStorage.getItem('180180.jolOnly')==='1';colorOnly.checked=localStorage.getItem('180180.colorOnlyFocalPiece')==='1';invisible.checked=localStorage.getItem('180180.invisibleFocalPiece')==='1';invisibleGhost.checked=localStorage.getItem('180180.invisibleGhostPiece')==='1';colorOnlyHold.checked=localStorage.getItem('180180.colorOnlyHold')==='1';colorOnlyNext.checked=localStorage.getItem('180180.colorOnlyNext')==='1';calculateRhythm.checked=localStorage.getItem('180180.calculateRhythm')==='1';window.setCalculateRhythmDisplay?.(calculateRhythm.checked);coloredGhost.checked=localStorage.getItem('180180.coloredGhostPiece')==='1';syncDepth();syncNextSize();syncJolOnly();syncColorOnly();syncInvisible();syncInvisibleGhost();window.trainer?.render?.();window.setColorOnlyNext?.(colorOnlyNext.checked);syncColoredGhost();});nextSize.addEventListener('change',()=>{try{localStorage.setItem('180180.nextQueueSize',nextSize.value);}catch{}});})();
-</script>
-
-<script type="module" src="games/01/game.js"></script>
-<script src="js/planet-themes.js" defer></script>
-
-
-<script>
-(()=> {
-  const root=document.getElementById('mobileControls');
-  const toggle=document.getElementById('settingMobileControls');
-  const customize=document.getElementById('customizeMobileControls');
-  const done=document.getElementById('mobileControlsDone');
-  const reset=document.getElementById('mobileControlsReset');
-  if(!root||!toggle||!customize)return;
-  const buttons=[...root.querySelectorAll('.mobile-control')];
-  const actions=buttons.map(b=>b.dataset.mobileAction);
-  const key='180180.mobileControls';
-  const defaults={
-    left:[7,80],right:[18,80],soft:[7,91],hard:[18,91],
-    cw:[82,80],ccw:[71,80],half:[82,91],hold:[71,91]
-  };
-  let layout=load();
-  let editing=false;
-  let activePointers=new Map();
-  function load(){try{const v=JSON.parse(localStorage.getItem(key)||'null');if(v&&typeof v==='object')return {...defaults,...v};}catch{}return {...defaults};}
-  function save(){try{localStorage.setItem(key,JSON.stringify(layout));}catch{}}
-  function applyLayout(){
-    buttons.forEach(b=>{const p=layout[b.dataset.mobileAction]||defaults[b.dataset.mobileAction];b.style.left=p[0]+'vw';b.style.top=p[1]+'vh';});
-  }
-  function setEnabled(on){root.classList.toggle('active',!!on&&!editing);toggle.checked=!!on;}
-  function send(action,type){
-    if(!window.trainer)return;
-    const code=window.trainer.binds?.[action];
-    if(!code)return;
-    const e={code,repeat:false,preventDefault(){}};
-    if(type==='down')window.trainer.handleKeydown(e);
-    else window.trainer.handleKeyup(e);
-  }
-  function press(b){
-    if(editing)return;
-    b.classList.add('pressed');
-    send(b.dataset.mobileAction,'down');
-  }
-  function release(b){
-    b.classList.remove('pressed');
-    send(b.dataset.mobileAction,'up');
-  }
-  buttons.forEach(b=>{
-    b.addEventListener('pointerdown',e=>{
-      e.preventDefault();
-      if(editing){activePointers.set(e.pointerId,{b,startX:e.clientX,startY:e.clientY,ox:e.clientX,oy:e.clientY});b.setPointerCapture?.(e.pointerId);return;}
-      press(b);activePointers.set(e.pointerId,{b});
-      b.setPointerCapture?.(e.pointerId);
-    });
-    b.addEventListener('pointermove',e=>{
-      const p=activePointers.get(e.pointerId);if(!editing||!p||p.b!==b)return;
-      const dx=e.clientX-p.startX,dy=e.clientY-p.startY;
-      const x=Math.max(3,Math.min(97,p.ox+dx));
-      const y=Math.max(8,Math.min(94,p.oy+dy));
-      layout[b.dataset.mobileAction]=[x/window.innerWidth*100,y/window.innerHeight*100];
-      applyLayout();
-    });
-    b.addEventListener('pointerup',e=>{
-      const p=activePointers.get(e.pointerId);activePointers.delete(e.pointerId);
-      if(editing){save();return;}
-      release(b);
-    });
-    b.addEventListener('pointercancel',e=>{activePointers.delete(e.pointerId);if(!editing)release(b);});
-    b.addEventListener('contextmenu',e=>e.preventDefault());
-  });
-  customize.addEventListener('click',()=>{
-    editing=true;root.classList.add('active','editing');applyLayout();
-  });
-  done?.addEventListener('click',()=>{editing=false;root.classList.remove('editing');setEnabled(toggle.checked);save();});
-  reset?.addEventListener('click',()=>{layout={...defaults};applyLayout();save();});
-  toggle.addEventListener('change',()=>{if(toggle.checked){editing=false;root.classList.remove('editing');setEnabled(true);}else{editing=false;root.classList.remove('editing');setEnabled(false);}});
-  applyLayout();
-  try{toggle.checked=localStorage.getItem('180180.mobileControls.enabled')==='1';}catch{}
-  toggle.addEventListener('change',()=>{try{localStorage.setItem('180180.mobileControls.enabled',toggle.checked?'1':'0');}catch{}});
-  window.addEventListener('trainerready',()=>{setEnabled(toggle.checked);applyLayout();});
-})();
-</script>
 </html>
